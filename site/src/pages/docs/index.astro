@@ -1,0 +1,17 @@
+---
+import { render } from "astro:content";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { getSortedDocs } from "../../lib/docs";
+
+const sorted = await getSortedDocs();
+const entry = sorted[0];
+const { Content } = await render(entry);
+---
+
+<DocsLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  currentId={entry.id}
+>
+  <Content />
+</DocsLayout>

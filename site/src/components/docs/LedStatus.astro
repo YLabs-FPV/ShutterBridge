@@ -1,0 +1,123 @@
+---
+const states = [
+  {
+    color: "#22c55e",
+    pattern: "Solid",
+    label: "Connected",
+    meaning: "Camera connected and idle (not recording)",
+    blink: false,
+  },
+  {
+    color: "#ef4444",
+    pattern: "Blinking",
+    label: "Recording",
+    meaning: "Camera connected and recording",
+    blink: true,
+  },
+  {
+    color: "#f59e0b",
+    pattern: "Blinking",
+    label: "Searching",
+    meaning: "Looking for the camera - not connected yet",
+    blink: true,
+  },
+  {
+    color: "#3b82f6",
+    pattern: "Solid",
+    label: "Config Wi-Fi",
+    meaning: "A device is connected to the ShutterBridge Wi-Fi",
+    blink: false,
+  },
+];
+---
+
+<div class="led-status">
+  {
+    states.map((s) => (
+      <div class="led-row">
+        <span
+          class:list={["led-dot", { "led-dot-blink": s.blink }]}
+          style={`--led: ${s.color}`}
+        />
+        <div class="led-text">
+          <span class="led-head">
+            <strong>{s.label}</strong>
+            <span class="led-pattern">{s.pattern}</span>
+          </span>
+          <span class="led-meaning">{s.meaning}</span>
+        </div>
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .led-status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 1.25rem 0;
+  }
+  .led-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgb(var(--color-border));
+    border-radius: 0.6rem;
+    background: rgb(var(--color-card-bg));
+  }
+  .led-dot {
+    flex: none;
+    width: 0.9rem;
+    height: 0.9rem;
+    margin-top: 0.3rem;
+    border-radius: 9999px;
+    background: var(--led);
+    box-shadow: 0 0 10px var(--led);
+  }
+  .led-dot-blink {
+    animation: led-blink 1s steps(1) infinite;
+  }
+  .led-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+  .led-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .led-pattern {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.1rem 0.45rem;
+    border-radius: 9999px;
+    color: rgb(var(--color-text-muted));
+    background: rgb(var(--color-secondary));
+  }
+  .led-meaning {
+    font-size: 0.9rem;
+    color: rgb(var(--color-text-muted));
+  }
+  @keyframes led-blink {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    51%,
+    100% {
+      opacity: 0.2;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .led-dot-blink {
+      animation: none;
+    }
+  }
+</style>

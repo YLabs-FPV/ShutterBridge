@@ -1,0 +1,98 @@
+---
+title: Troubleshooting
+description: Common issues and how to fix them.
+order: 50
+---
+
+import Admonition from "../../components/docs/Admonition.astro";
+import { GITHUB_URL } from "../../consts";
+
+Most problems fall into one of a few buckets. The board's [Status LED](/docs/status-led)
+is the fastest first check - it tells you which state the board is actually in.
+
+## Camera won't connect or pair
+
+Work through these in order:
+
+- **Right backend selected.** The **Camera type** on the Camera tab must match your
+  camera (Osmo/Action/GoPro use different protocols). The wrong type will never
+  connect. See the [compatibility list](/docs/compatibility).
+- **Camera is discoverable.** Power it on, enable Bluetooth, and put it in its
+  pairing state for the first connection. Then hit **Scan** again.
+- **Approve the pairing.** If the webUI reads **Accept PIN on camera**, confirm the
+  PIN on the DJI camera's own screen. GoPro bonds on the camera the first time.
+- **Distance and power.** If the camera is far from the board, raise **Bluetooth TX
+  power** (System tab) from Low to Medium or High and retry.
+
+<Admonition type="note">
+  After the first successful pairing, reconnection is automatic on every boot -
+  you don't need to re-run the wizard. Just power both devices.
+</Admonition>
+
+## Camera connects, then drops or shows "offline"
+
+The Camera tab only reports **online** while fresh telemetry is arriving (within a
+couple of seconds). Brief dropouts usually mean range or interference.
+
+<Admonition type="warning" title="Shared radio">
+  BLE and the config Wi-Fi share one antenna. Keeping a phone connected to the
+  ShutterBridge Wi-Fi during flight can disturb the camera link. Enable **Wi-Fi
+  off when armed** (System tab) so the radio is dedicated to the camera in the
+  air.
+</Admonition>
+
+## Can't reach the config page
+
+- **No `ShutterBridge` network.** Is the board powered? If **Wi-Fi off when armed**
+  is enabled and your FC is reporting armed, the access point is intentionally
+  down - disarm and it comes back.
+- **Connected but page won't load.** Open `http://10.0.0.1` explicitly, and when
+  your phone warns "no internet", choose to stay connected.
+- **Page is blank or broken.** The web UI lives on the filesystem image. Re-flash
+  with the [web flasher](/flash) - it writes the filesystem too, so a normal flash
+  restores it.
+
+## A setting didn't take effect
+
+Most settings apply live the moment you save. Changing the **camera**, **camera
+type**, or **Wi-Fi name/password** is different: the board **reboots** to apply
+those. The UI does this for you and reconnects automatically - just wait for it to
+come back (re-join the Wi-Fi if prompted).
+
+## Nothing shows on the OSD
+
+- **MSP enabled** on the UART you wired to, in Betaflight's Ports tab.
+- **TX/RX crossed** - board TX to FC RX and vice versa. See [FC Wiring](/docs/wiring).
+- **Custom Message elements** enabled and positioned in the Betaflight OSD tab.
+- **Betaflight 2025.12 or newer**, and the camera actually **online** on the Camera tab.
+
+## "Record on arm" doesn't fire
+
+Record-on-arm needs the board to know your arm state, which it reads from the FC
+over MSP. If MSP isn't connected (bad wiring or MSP not enabled on that UART), the
+board never sees you arm and won't trigger. Fix the [FC link](/docs/wiring) first,
+then check the start/stop delays on the Channels tab.
+
+## Recording is corrupted or very low FPS (Osmo Nano)
+
+If a clip records but plays back stuck at a very low frame rate, the recording was
+almost certainly started while the camera was asleep (standby / screen off). Wake
+the camera and let it fully boot before arming (green light on the front should be on).
+
+<Admonition type="danger" title="Wake it before recording">
+  Starting a recording from standby corrupts the clip on the Osmo Nano. This is a
+  current limitation with no known fix, so make waking the camera part of your
+  pre-flight routine.
+</Admonition>
+
+## Shutter takes no photo (Osmo Nano)
+
+The Osmo Nano can't switch to Photo mode over BLE. Set the camera to **Photo mode
+manually** first; the shutter then captures a photo. On the Action / 360 and GoPro
+the mode can be switched in-flight using an AUX channel.\
+See [compatibility](/docs/compatibility).
+
+## Still stuck
+
+Open an issue or discussion on <a href={GITHUB_URL}>GitHub</a> with your camera
+model, firmware version, and what the Status LED is doing.

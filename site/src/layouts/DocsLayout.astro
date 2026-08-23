@@ -1,0 +1,256 @@
+---
+import MainLayout from "./MainLayout.astro";
+import { Icon } from "astro-icon/components";
+import { getSortedDocs, docHref } from "../lib/docs";
+
+interface Props {
+  title: string;
+  description?: string;
+  currentId: string;
+}
+
+const { title, description, currentId } = Astro.props;
+const sorted = await getSortedDocs();
+const nav = sorted.map((d) => ({
+  id: d.id,
+  title: d.data.title,
+  href: docHref(d.id, sorted),
+}));
+
+const currentIndex = sorted.findIndex((d) => d.id === currentId);
+const prevDoc = currentIndex > 0 ? sorted[currentIndex - 1] : null;
+const nextDoc =
+  currentIndex >= 0 && currentIndex < sorted.length - 1
+    ? sorted[currentIndex + 1]
+    : null;
+const prev = prevDoc
+  ? { title: prevDoc.data.title, href: docHref(prevDoc.id, sorted) }
+  : null;
+const next = nextDoc
+  ? { title: nextDoc.data.title, href: docHref(nextDoc.id, sorted) }
+  : null;
+
+const linkClass = (id: string) => [
+  "block px-3 py-2 rounded-lg text-sm transition-colors no-underline",
+  id === currentId
+    ? "font-semibold bg-[rgb(var(--color-secondary))] text-[rgb(var(--color-primary))]"
+    : "text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-secondary))] hover:text-[rgb(var(--color-text))]",
+];
+---
+
+<MainLayout title={`${title} - ShutterBridge docs`} description={description}>
+  <div
+    class="px-6 py-10 max-w-6xl mx-auto lg:grid lg:grid-cols-[220px_1fr] lg:gap-12"
+  >
+    <aside class="hidden lg:block">
+      <nav class="lg:sticky lg:top-24">
+        <p
+          class="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-light))]"
+        >
+          Documentation
+        </p>
+        <div class="flex flex-col gap-1">
+          {
+            nav.map((item) => (
+              <a href={item.href} class:list={linkClass(item.id)}>
+                {item.title}
+              </a>
+            ))
+          }
+        </div>
+      </nav>
+    </aside>
+
+    <button
+      id="docnav-open"
+      type="button"
+      class="lg:hidden inline-flex items-center gap-2 mb-6 px-3.5 py-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-card-bg))] text-sm font-medium hover:bg-[rgb(var(--color-secondary))] transition-colors"
+    >
+      <Icon name="mdi:menu" class="w-5 h-5" />
+      Docs
+      <span class="text-[rgb(var(--color-text-muted))] font-normal"
+        >/ {title}</span
+      >
+    </button>
+
+    <div id="docnav" class="lg:hidden">
+      <div
+        id="docnav-backdrop"
+        class="fixed inset-0 z-40 bg-black/50 opacity-0 invisible transition-opacity duration-200"
+      >
+      </div>
+      <aside
+        id="docnav-panel"
+        class="fixed top-0 left-0 bottom-0 z-50 w-72 max-w-[80%] bg-[rgb(var(--color-header-bg))] border-r border-[rgb(var(--color-border))] shadow-xl -translate-x-full transition-transform duration-200 ease-in-out overflow-y-auto"
+      >
+        <div
+          class="flex items-center justify-between px-4 py-4 border-b border-[rgb(var(--color-border))]"
+        >
+          <span
+            class="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-light))]"
+          >
+            Documentation
+          </span>
+          <button
+            id="docnav-close"
+            type="button"
+            aria-label="Close menu"
+            class="p-1 rounded-lg text-[rgb(var(--color-text))] hover:bg-[rgb(var(--color-secondary))] transition-colors"
+          >
+            <Icon name="mdi:close" class="w-6 h-6" />
+          </button>
+        </div>
+        <nav class="p-2 flex flex-col gap-1">
+          {
+            nav.map((item) => (
+              <a href={item.href} class:list={linkClass(item.id)}>
+                {item.title}
+              </a>
+            ))
+          }
+        </nav>
+      </aside>
+    </div>
+
+    <article class="prose-doc min-w-0">
+      <h1 class="text-4xl font-bold">{title}</h1>
+      {
+        description && (
+          <p class="mt-3 text-lg text-[rgb(var(--color-text-muted))]">
+            {description}
+          </p>
+        )
+      }
+      <div class="mt-6">
+        <slot />
+      </div>
+
+      {
+        (prev || next) && (
+          <nav
+            class="mt-12 pt-6 border-t border-[rgb(var(--color-border))] grid gap-4 sm:grid-cols-2"
+            aria-label="Page navigation"
+          >
+            {prev ? (
+              <a
+                href={prev.href}
+                class="group flex flex-col gap-1 p-4 rounded-xl border border-[rgb(var(--color-border))] no-underline hover:bg-[rgb(var(--color-secondary))] transition-colors"
+              >
+                <span class="inline-flex items-center gap-1 text-xs font-medium text-[rgb(var(--color-text-light))]">
+                  <Icon name="mdi:chevron-left" class="w-4 h-4" />
+                  Previous
+                </span>
+                <span class="font-semibold text-[rgb(var(--color-primary))]">
+                  {prev.title}
+                </span>
+              </a>
+            ) : (
+              <span />
+            )}
+            {next && (
+              <a
+                href={next.href}
+                class="group flex flex-col gap-1 p-4 rounded-xl border border-[rgb(var(--color-border))] no-underline text-right hover:bg-[rgb(var(--color-secondary))] transition-colors sm:col-start-2"
+              >
+                <span class="inline-flex items-center justify-end gap-1 text-xs font-medium text-[rgb(var(--color-text-light))]">
+                  Next
+                  <Icon name="mdi:chevron-right" class="w-4 h-4" />
+                </span>
+                <span class="font-semibold text-[rgb(var(--color-primary))]">
+                  {next.title}
+                </span>
+              </a>
+            )}
+          </nav>
+        )
+      }
+    </article>
+  </div>
+</MainLayout>
+
+<script>
+  const openBtn = document.getElementById("docnav-open");
+  const panel = document.getElementById("docnav-panel");
+  const backdrop = document.getElementById("docnav-backdrop");
+  const closeBtn = document.getElementById("docnav-close");
+  let open = false;
+
+  const set = (o: boolean) => {
+    open = o;
+    panel?.classList.toggle("-translate-x-full", !o);
+    backdrop?.classList.toggle("opacity-0", !o);
+    backdrop?.classList.toggle("invisible", !o);
+    document.documentElement.style.overflow = o ? "hidden" : "";
+  };
+
+  openBtn?.addEventListener("click", () => set(true));
+  closeBtn?.addEventListener("click", () => set(false));
+  backdrop?.addEventListener("click", () => set(false));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && open) set(false);
+  });
+</script>
+
+<style>
+  .prose-doc :global(h2) {
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    scroll-margin-top: 6rem;
+  }
+  .prose-doc :global(h3) {
+    margin-top: 1.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  .prose-doc :global(p),
+  .prose-doc :global(ul),
+  .prose-doc :global(ol) {
+    margin-bottom: 1rem;
+  }
+  .prose-doc :global(ul) {
+    margin-left: 1.25rem;
+    list-style: disc;
+  }
+  .prose-doc :global(ol) {
+    margin-left: 1.25rem;
+    list-style: decimal;
+  }
+  .prose-doc :global(li) {
+    margin-bottom: 0.25rem;
+  }
+  .prose-doc :global(img) {
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .prose-doc :global(a) {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .prose-doc :global(nav[aria-label="Page navigation"] a) {
+    text-decoration: none;
+  }
+  .prose-doc :global(table) {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+    font-size: 0.95em;
+  }
+  .prose-doc :global(th),
+  .prose-doc :global(td) {
+    border: 1px solid rgb(var(--color-border));
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+  .prose-doc :global(th) {
+    background: rgb(var(--color-secondary));
+  }
+  .prose-doc :global(blockquote) {
+    border-left: 3px solid rgb(var(--color-primary));
+    padding: 0.25rem 0 0.25rem 1rem;
+    margin: 0 0 1rem 0;
+    color: rgb(var(--color-text-muted));
+  }
+</style>

@@ -1,0 +1,113 @@
+name: Build & release firmware
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build a release for (e.g. v0.2.0)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  PIO_ENV: esp32s3-zero
+  # Flash offsets - must match src/components/flasher/Flasher.svelte (OFFSETS)
+  OFFSET_BOOTLOADER: "0x0"
+  OFFSET_PARTITIONS: "0x8000"
+  OFFSET_BOOT_APP0: "0xe000"
+  OFFSET_FIRMWARE: "0x10000"
+  OFFSET_LITTLEFS: "0x310000"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Resolve version
+        id: ver
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG"        >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Verify FW_VERSION matches the tag
+        run: |
+          FW=$(grep -oP '#define FW_VERSION "\K[^"]+' firmware/src/config.h)
+          echo "config.h FW_VERSION = $FW"
+          echo "tag version         = ${{ steps.ver.outputs.version }}"
+          if [ "$FW" != "${{ steps.ver.outputs.version }}" ]; then
+            echo "::error::FW_VERSION in firmware/src/config.h ($FW) does not match the release tag (${{ steps.ver.outputs.version }}). Bump config.h and re-tag."
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-${{ hashFiles('firmware/platformio.ini') }}
+          restore-keys: pio-${{ runner.os }}-
+
+      - name: Install PlatformIO & esptool
+        run: pip install --upgrade platformio esptool
+
+      - name: Build firmware
+        working-directory: firmware
+        run: pio run -e "$PIO_ENV"
+
+      - name: Build filesystem (Web UI)
+        working-directory: firmware
+        run: pio run -e "$PIO_ENV" -t buildfs
+
+      - name: Collect flashable images
+        id: collect
+        run: |
+          set -euo pipefail
+          BUILD="firmware/.pio/build/$PIO_ENV"
+          BOOT_APP0=$(find ~/.platformio/packages/framework-arduinoespressif32/tools/partitions -name boot_app0.bin | head -n1)
+          mkdir -p dist
+          cp "$BUILD/bootloader.bin" dist/bootloader.bin
+          cp "$BUILD/partitions.bin" dist/partitions.bin
+          cp "$BOOT_APP0"            dist/boot_app0.bin
+          cp "$BUILD/firmware.bin"   dist/firmware.bin
+          cp "$BUILD/littlefs.bin"   dist/littlefs.bin
+          echo "Collected:"
+          ls -l dist
+
+      - name: Build single merged image (for manual esptool flashing)
+        run: |
+          set -euo pipefail
+          MERGED="dist/ShutterBridge-${{ steps.ver.outputs.version }}-merged.bin"
+          esptool --chip esp32s3 merge_bin -o "$MERGED" \
+            --flash_mode dio --flash_freq 80m --flash_size 4MB \
+            "$OFFSET_BOOTLOADER" dist/bootloader.bin \
+            "$OFFSET_PARTITIONS" dist/partitions.bin \
+            "$OFFSET_BOOT_APP0"  dist/boot_app0.bin \
+            "$OFFSET_FIRMWARE"   dist/firmware.bin \
+            "$OFFSET_LITTLEFS"   dist/littlefs.bin
+          echo "Merged image:"
+          ls -l "$MERGED"
+
+      - name: Draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: ShutterBridge ${{ steps.ver.outputs.tag }}
+          draft: true
+          generate_release_notes: true
+          files: dist/*

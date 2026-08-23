@@ -1,0 +1,38 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+import Flasher from "../components/flasher/Flasher.svelte";
+import Admonition from "../components/docs/Admonition.astro";
+import { BOARD_NAME } from "../consts";
+---
+
+<MainLayout title="Flasher - ShutterBridge" class="px-6 py-12">
+  <div class="max-w-2xl mx-auto">
+    <div class="text-center">
+      <h1 class="text-4xl font-bold">Web flasher</h1>
+      <p class="mt-3 text-[rgb(var(--color-text-muted))]">
+        Flash the {BOARD_NAME} straight from your browser.
+      </p>
+    </div>
+
+    <Admonition type="warning" title="Before you flash">
+      <p>
+        <strong>Only flash the {BOARD_NAME}.</strong> This firmware is built for that
+        exact board. Flashing a different board won't work and may leave it needing
+        manual recovery.
+      </p>
+      <p class="mt-2">
+        <strong>Flashing replaces the firmware</strong> already on the board.
+      </p>
+    </Admonition>
+
+    <Flasher client:load />
+
+    <Admonition type="info">
+      First time on this board? After flashing, connect to the <code
+        >ShutterBridge</code
+      > Wi-Fi access point to finish setup. The password is <code
+        >shutterbridge</code
+      >.
+    </Admonition>
+  </div>
+</MainLayout>

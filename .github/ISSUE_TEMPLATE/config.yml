@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/YLabs-FPV/ShutterBridge/discussions
+    about: Ask questions, share builds, or discuss ideas here.
+  - name: Documentation
+    url: https://shutterbridge.yarosfpv.com/docs
+    about: Setup, wiring, and troubleshooting guides.

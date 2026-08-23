@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>ShutterBridge</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>ShutterBridge</h1>
+        <span id="ver" class="pill">v-</span>
+      </header>
+
+      <nav class="tabs" id="tabs">
+        <button class="tab active" data-tab="camera">Camera</button>
+        <button class="tab" data-tab="channels">Channels</button>
+        <button class="tab" data-tab="osd">OSD</button>
+        <button class="tab" data-tab="system">System</button>
+      </nav>
+
+      <!-- ===== Camera ===== -->
+      <section class="panel" id="tab-camera">
+        <div class="card">
+          <div class="rec" id="rec"><span class="dot"></span>REC</div>
+          <div class="live">
+            <div class="stat">
+              <div class="k">Elapsed</div>
+              <div class="v" id="elapsed">--:--</div>
+            </div>
+            <div class="stat">
+              <div class="k">Mode</div>
+              <div class="v" id="mode">-</div>
+            </div>
+            <div class="stat">
+              <div class="k">Format</div>
+              <div class="v" id="fmt">-</div>
+            </div>
+            <div class="stat">
+              <div class="k">Battery</div>
+              <div class="v" id="batt">--</div>
+              <div class="bar"><span id="battbar"></span></div>
+            </div>
+            <div class="stat">
+              <div class="k">SD free</div>
+              <div class="v" id="sd">--</div>
+            </div>
+            <div class="stat">
+              <div class="k">Time left</div>
+              <div class="v" id="left">--:--</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Connection</h2>
+          <div class="bound-row">
+            <div>
+              <div class="bound-model" id="boundModel">No camera</div>
+              <div class="bound-mac" id="bound">not bound</div>
+            </div>
+            <span id="conn" class="pill">connecting</span>
+          </div>
+          <button id="bind" type="button" class="wide primary">
+            Bind new camera
+          </button>
+        </div>
+
+        <div class="card" id="controlscard" hidden>
+          <h2>Controls</h2>
+          <div class="row">
+            <label>Mode</label>
+            <div class="ctl btns">
+              <button type="button" id="modevideo">Video</button>
+              <button type="button" id="modephoto">Photo</button>
+            </div>
+          </div>
+          <div id="presetctl" hidden>
+            <div class="row">
+              <label>Preset group</label>
+              <div class="ctl btns">
+                <button type="button" class="preset" data-group="0">
+                  Video
+                </button>
+                <button type="button" class="preset" data-group="1">
+                  Photo
+                </button>
+                <button type="button" class="preset" data-group="2">
+                  Timelapse
+                </button>
+              </div>
+            </div>
+            <div class="row">
+              <label>Preset by ID</label>
+              <div class="ctl split">
+                <input id="presetid" placeholder="0x00000000" autocomplete="off"
+                  autocapitalize="off" spellcheck="false" />
+                <button type="button" id="presetload">Load</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Channels ===== -->
+      <section class="panel" id="tab-channels" hidden>
+        <div class="card">
+          <h2>Recording</h2>
+          <div class="row">
+            <label>Mode</label>
+            <div class="ctl">
+              <select id="op">
+                <option value="1">Record on arm</option>
+                <option value="0">Manual</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <label>Record start delay</label>
+            <div class="ctl unit">
+              <input id="rdly" type="number" inputmode="numeric" min="0" max="60000" step="100" />
+              <span>ms</span>
+            </div>
+          </div>
+          <div class="row">
+            <label>Record stop delay</label>
+            <div class="ctl unit">
+              <input id="sdly" type="number" inputmode="numeric" min="0" max="60000" step="100" />
+              <span>ms</span>
+            </div>
+          </div>
+          <p class="hint" id="ophint"></p>
+        </div>
+        <div class="card" id="funccard">
+          <h2>Channels</h2>
+          <p class="hint">
+            Pick an AUX channel and drag its range. The function is active while
+            the channel sits inside the range. The green mark is the live value.
+          </p>
+          <div id="modes"></div>
+        </div>
+      </section>
+
+      <!-- ===== OSD ===== -->
+      <section class="panel" id="tab-osd" hidden>
+        <div class="card">
+          <h2>OSD slots</h2>
+          <p class="hint">
+            Place Custom Msg 0 to 3 in the Betaflight OSD. Each shows the field
+            below.
+          </p>
+          <div id="osd"></div>
+        </div>
+      </section>
+
+      <!-- ===== System ===== -->
+      <section class="panel" id="tab-system" hidden>
+        <div class="card">
+          <h2>Wi-Fi</h2>
+          <div class="row">
+            <label>Name</label>
+            <div class="ctl">
+              <input id="ssid" maxlength="32" autocomplete="off"
+                autocapitalize="off" spellcheck="false" />
+            </div>
+          </div>
+          <div class="row">
+            <label>Password</label>
+            <div class="ctl pwd">
+              <input id="pass" type="password" maxlength="63" autocomplete="off"
+                autocapitalize="off" spellcheck="false" />
+              <button type="button" id="passtog" class="pwd-tog"
+                aria-label="Show password">Show</button>
+            </div>
+          </div>
+          <div class="row">
+            <label>Off when armed</label>
+            <div class="ctl">
+              <label class="switch"
+                ><input type="checkbox" id="dis" /><span class="track"></span
+              ></label>
+            </div>
+          </div>
+          <p class="hint">
+            Changing the Wi-Fi name or password needs a reboot.
+          </p>
+        </div>
+        <div class="card">
+          <h2>Bluetooth</h2>
+          <div class="row">
+            <label>TX power</label>
+            <div class="ctl">
+              <select id="ble">
+                <option value="0">Low</option>
+                <option value="1">Medium</option>
+                <option value="2">High</option>
+              </select>
+            </div>
+          </div>
+          <p class="hint">
+            The camera is close, so a lower power still connects while
+            interfering less with a nearby RC receiver. Lower it if your link
+            range drops with the bridge powered on.
+          </p>
+        </div>
+        <div class="card" id="clockcard">
+          <h2>Clock</h2>
+          <div class="row">
+            <label>Sync from GPS</label>
+            <div class="ctl">
+              <label class="switch"
+                ><input type="checkbox" id="clk" /><span class="track"></span
+              ></label>
+            </div>
+          </div>
+          <div class="row">
+            <label>UTC offset</label>
+            <div class="ctl unit">
+              <input id="tz" type="number" inputmode="decimal" step="0.25" />
+              <span>hours</span>
+            </div>
+          </div>
+          <p class="hint">
+            Sets a GoPro's clock from the flight controller's GPS time. Needs a
+            GPS fix on the FC.
+          </p>
+        </div>
+        <div class="card">
+          <h2>Device</h2>
+          <div class="row">
+            <label>Reboot</label>
+            <div class="ctl">
+              <button id="reboot" type="button">Reboot</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="actionbar">
+      <div class="in">
+        <button class="primary" id="save">Save</button>
+      </div>
+    </div>
+
+    <div id="toast">Saved</div>
+
+    <div id="wizard" class="overlay" hidden>
+      <div class="overlay-box">
+        <div class="wiz-step" id="wizType">
+          <div class="overlay-title">Camera type</div>
+          <div class="wiz-types">
+            <button type="button" data-type="0">DJI Osmo (Nano)</button>
+            <button type="button" data-type="1">DJI Action / 360</button>
+            <button type="button" data-type="2">GoPro</button>
+          </div>
+          <button type="button" class="wide wiz-cancel">Cancel</button>
+        </div>
+        <div class="wiz-step" id="wizScan" hidden>
+          <div class="overlay-title">Select camera</div>
+          <div id="wizList"></div>
+          <button type="button" class="wide wiz-cancel">Cancel</button>
+        </div>
+        <div class="wiz-step" id="wizDone" hidden>
+          <div class="spinner"></div>
+          <div class="overlay-title">Saved</div>
+          <div class="overlay-text">
+            Rebooting in <span id="wizCount">3</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="rebooting" class="overlay" hidden>
+      <div class="overlay-box">
+        <div class="spinner"></div>
+        <div class="overlay-title">Rebooting</div>
+        <div class="overlay-text" id="rebootText">
+          Reconnect to the ShutterBridge Wi-Fi if it drops, then this page
+          returns on its own.
+        </div>
+        <button id="rebootRefresh" class="wide" type="button" hidden>
+          Refresh now
+        </button>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

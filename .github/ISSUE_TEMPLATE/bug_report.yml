@@ -1,0 +1,73 @@
+name: Bug report
+description: Something isn't working as expected.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please check the
+        [troubleshooting guide](https://shutterbridge.yarosfpv.com/docs/troubleshooting)
+        first - it covers the most common snags.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+      placeholder: When I arm, recording doesn't start...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Pair the camera
+        2. Set Record on arm
+        3. Arm the quad
+    validations:
+      required: true
+  - type: input
+    id: fw-version
+    attributes:
+      label: Firmware version
+      description: Shown on the version pill in the Web UI header.
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: camera-backend
+    attributes:
+      label: Camera type / backend
+      options:
+        - DJI Osmo (Nano)
+        - DJI Action / 360
+        - GoPro (HERO9+)
+        - Not camera-related
+    validations:
+      required: true
+  - type: input
+    id: camera-model
+    attributes:
+      label: Exact camera model
+      placeholder: "DJI Osmo Action 4"
+  - type: input
+    id: board
+    attributes:
+      label: Board
+      value: "Waveshare ESP32-S3-Zero"
+  - type: input
+    id: betaflight
+    attributes:
+      label: Betaflight version
+      placeholder: "4.6 / 2025.12"
+  - type: input
+    id: status-led
+    attributes:
+      label: What is the Status LED doing?
+      description: See the Status LED guide - this is often the fastest clue.
+      placeholder: "solid green / blinking red / ..."
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Logs, photos, or video help a lot. Drag files in here.

@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --color-bg: 252, 252, 252;
+  --color-text: 34, 39, 42;
+  --color-text-muted: 100, 116, 139;
+  --color-text-light: 100, 116, 139;
+  --color-primary: 42, 82, 190;
+  --color-primary-hover: 30, 64, 175;
+  --color-secondary: 240, 240, 242;
+  --color-secondary-hover: 226, 232, 240;
+  --color-accent: 234, 88, 12;
+  --color-accent-hover: 194, 65, 12;
+  --color-danger: 220, 38, 38;
+  --color-success: 16, 185, 129;
+  --color-border: 226, 232, 240;
+  --color-card-bg: 255, 255, 255;
+  --color-card-shadow: 0, 0, 0, 0.05;
+  --color-header-bg: 255, 255, 255;
+  --color-footer-bg: 241, 245, 249;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    color-scheme: dark;
+    --color-bg: 17, 24, 39;
+    --color-text: 241, 245, 249;
+    --color-text-muted: 148, 163, 184;
+    --color-text-light: 148, 163, 184;
+    --color-primary: 96, 165, 250;
+    --color-primary-hover: 147, 197, 253;
+    --color-secondary: 31, 41, 55;
+    --color-secondary-hover: 55, 65, 81;
+    --color-accent: 249, 115, 22;
+    --color-accent-hover: 251, 146, 60;
+    --color-danger: 248, 113, 113;
+    --color-success: 52, 211, 153;
+    --color-border: 55, 65, 81;
+    --color-card-bg: 23, 30, 45;
+    --color-card-shadow: 0, 0, 0, 0.2;
+    --color-header-bg: 17, 24, 39;
+    --color-footer-bg: 17, 24, 39;
+  }
+}
+
+:root.dark {
+  color-scheme: dark;
+  --color-bg: 17, 24, 39;
+  --color-text: 241, 245, 249;
+  --color-text-muted: 148, 163, 184;
+  --color-text-light: 148, 163, 184;
+  --color-primary: 96, 165, 250;
+  --color-primary-hover: 147, 197, 253;
+  --color-secondary: 31, 41, 55;
+  --color-secondary-hover: 55, 65, 81;
+  --color-accent: 249, 115, 22;
+  --color-accent-hover: 251, 146, 60;
+  --color-danger: 248, 113, 113;
+  --color-success: 52, 211, 153;
+  --color-border: 55, 65, 81;
+  --color-card-bg: 23, 30, 45;
+  --color-card-shadow: 0, 0, 0, 0.2;
+  --color-header-bg: 17, 24, 39;
+  --color-footer-bg: 17, 24, 39;
+}
+
+@font-face {
+  font-family: "Atkinson";
+  src: url("/fonts/atkinson-regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson";
+  src: url("/fonts/atkinson-bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  html {
+    font-family: "Atkinson", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: rgb(var(--color-bg));
+    color: rgb(var(--color-text));
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+
+  input,
+  select {
+    outline: none;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    line-height: 1.2;
+  }
+
+  a {
+    color: rgb(var(--color-primary));
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  a:hover {
+    color: rgb(var(--color-primary-hover));
+  }
+
+  button:hover {
+    cursor: pointer;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  code {
+    font-family: monospace;
+    background-color: rgb(var(--color-secondary));
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+  }
+
+  pre {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    background-color: rgb(var(--color-secondary));
+  }
+
+  pre code {
+    background-color: transparent;
+    padding: 0;
+  }
+
+  main {
+    flex: 1;
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--color-secondary));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-text-muted));
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-primary));
+}

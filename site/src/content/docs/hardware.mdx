@@ -1,0 +1,23 @@
+---
+title: Hardware
+description: The board and parts ShutterBridge runs on.
+order: 10
+---
+
+import { BOARD_NAME } from "../../consts";
+
+ShutterBridge targets the **{BOARD_NAME}** (ESP32-S3FH4R2: 4 MB flash, 2 MB PSRAM,
+native USB). Other ESP32-S3 boards may work but are untested.
+
+<img src="/docs/hardware/esp32-s3.webp" style={{ height: "150px" }} alt="Waveshare ESP32 S3 Mini Board" />
+
+## You'll need
+
+- The {BOARD_NAME} board.
+- A flight controller running **Betaflight 2025.12 or newer** with a
+  free UART.
+- A supported action camera - a DJI Osmo / Action, or a GoPro HERO9 or newer.
+- A data-capable USB-C cable for flashing.
+- A soldering iron, basic soldering skills
+
+See the [compatibility chart](/docs/compatibility) for the full camera compatibility matrix.

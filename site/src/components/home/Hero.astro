@@ -1,0 +1,64 @@
+---
+import { Icon } from "astro-icon/components";
+import { SLOGAN } from "../../consts";
+---
+
+<section class="px-6 pt-12 pb-4 md:pt-18 md:pb-4">
+  <div class="max-w-4xl mx-auto text-center">
+    <Icon
+      name="aperture"
+      class="mx-auto h-16 w-16 md:h-24 md:w-24 mb-6 text-[rgb(var(--color-primary))]"
+    />
+    <h1 class="text-5xl md:text-7xl font-bold tracking-tight">
+      <span class="text-[rgb(var(--color-primary))]">Shutter</span><span
+        class="text-[rgb(var(--color-text))]">Bridge</span
+      >
+    </h1>
+    <p class="italic text-[rgb(var(--color-text-muted))]">
+      by <a
+        href="https://yarosfpv.com"
+        target="_blank"
+        class="text-[rgb(var(--color-primary))] hover:underline">YarosFPV</a
+      >
+    </p>
+
+    <p class="mt-5 text-xl md:text-2xl font-medium">
+      {SLOGAN}
+    </p>
+
+    <p
+      class="mt-4 text-base md:text-lg text-[rgb(var(--color-text-muted))] max-w-2xl mx-auto"
+    >
+      ESP32 firmware that links your flight controller and action camera -
+      camera status drawn straight on your goggles, and RC switches mapped to
+      record, photo and mode
+    </p>
+
+    <div
+      class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3"
+    >
+      <a
+        href="/flash"
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white bg-[rgb(var(--color-primary))] hover:bg-[rgb(var(--color-primary-hover))] transition-colors no-underline"
+      >
+        <Icon name="mdi:flash" class="w-5 h-5" />
+        Flash the firmware
+      </a>
+      <a
+        href="/docs"
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-secondary))] transition-colors no-underline text-[rgb(var(--color-text))]"
+      >
+        <Icon name="mdi:book-open-variant" class="w-5 h-5" />
+        Read the docs
+      </a>
+      <a
+        href="https://github.com/YLabs-FPV/ShutterBridge"
+        target="_blank"
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-secondary))] transition-colors no-underline text-[rgb(var(--color-text))]"
+      >
+        <Icon name="mdi:github" class="w-5 h-5" />
+        Source code
+      </a>
+    </div>
+  </div>
+</section>

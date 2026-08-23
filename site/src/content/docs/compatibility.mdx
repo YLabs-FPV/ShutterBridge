@@ -1,0 +1,46 @@
+---
+title: Compatible cameras
+description: Which action cameras work, and what each one can do.
+order: 5
+---
+
+import CameraMatrix from "../../components/CameraMatrix.astro";
+import Admonition from "../../components/docs/Admonition.astro";
+import { GITHUB_URL } from "../../consts";
+
+ShutterBridge is compatible with three families of action camera over Bluetooth LE. Support
+varies by backend:
+
+<CameraMatrix />
+
+<Admonition type="note">
+  The DJI Osmo Nano can't switch photo/video over BLE, so the shutter only takes a
+  photo when the camera is already in Photo mode.
+</Admonition>
+
+<Admonition type="warning" title="Wake the Osmo Nano before recording">
+  On the Osmo Nano, starting a recording while the camera is asleep (standby /
+  screen off) produces a corrupted, very-low-FPS clip. Wake it and wait until the
+  LED on the front is green before you arm. A current limitation with no known fix.
+</Admonition>
+
+## Tested cameras
+
+The matrix above shows what each _backend_ supports. Below is which specific
+camera models have actually been run on hardware - by the maintainer and by the
+community.
+
+| Camera             | Backend          | Result                | Tested by  |
+| ------------------ | ---------------- | --------------------- | ---------- |
+| DJI Osmo Nano      | Osmo (Nano)      | Works (limitations\*) | Maintainer |
+| DJI Osmo Action 4  | Action / 360     | Works fully           | Maintainer |
+| GoPro (HERO9+)     | GoPro            | Not yet tested        | -          |
+
+_\* See the recording limitation noted above._
+
+<Admonition type="tip" title="Tried it with your camera? Let us know">
+  Reports build this table - even "it just works" is useful. Share your result
+  with the <a href={`${GITHUB_URL}/issues/new?template=camera_report.yml`}>camera
+  compatibility report</a>. Include the model, the backend you selected, the
+  firmware version, and anything that didn't work.
+</Admonition>

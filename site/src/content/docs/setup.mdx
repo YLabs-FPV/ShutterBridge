@@ -1,0 +1,95 @@
+---
+title: First-time setup
+description: Pair the camera and configure over Wi-Fi.
+order: 40
+---
+
+import Admonition from "../../components/docs/Admonition.astro";
+
+With the firmware flashed and the board wired to your FC, the rest is done from
+the on-device web interface over Wi-Fi. No app to install.
+
+## 1. Connect to the config Wi-Fi
+
+Power the board (USB or off the FC). It hosts a Wi-Fi access point for setup:
+
+- **Network:** `ShutterBridge`
+- **Password:** `shutterbridge`
+
+Connect to it from a phone or laptop, then open **`http://10.0.0.1`** in a
+browser. You'll land on the **Camera** tab.
+
+<Admonition type="tip">
+  If your phone drops the connection because there's no internet, choose "stay
+  connected" when prompted. The board's LED turns solid blue while a device is
+  connected to the config Wi-Fi.
+</Admonition>
+
+## 2. Pair your camera
+
+On the **Camera** tab, run the connection wizard:
+
+1. **Camera type** - pick your backend: `Osmo (Nano)`, `Action / 360` or `GoPro`.
+2. **Scan** - the board scans for nearby cameras over Bluetooth. Make sure the
+   camera is on and its Bluetooth is enabled.
+3. **Select camera** - choose yours from the list. The board saves it and will
+   auto-reconnect on every future boot, so this is a one-time step.
+
+### Accept the pairing
+
+The **Connection** pill at the top shows where you are:
+
+- **connecting** - reaching the camera.
+- **Accept PIN on camera** - a DJI camera is asking you to confirm pairing.
+  Approve the PIN prompt on the camera's own screen.
+- **Camera online** - paired and ready.
+- **Camera offline** - not connected (out of range, off, or not yet paired).
+
+<Admonition type="note">
+  DJI Action series cameras confirm pairing with a PIN on the camera itself; GoPro bonds on the
+  camera the first time. After that first pairing, reconnection is automatic.
+</Admonition>
+
+Once the camera is online, its live status (record state, battery, SD, mode)
+appears on the Camera tab, and the board's LED goes solid green.
+
+## 3. Map your controls
+
+Switch to the **Channels** tab to decide how the camera is triggered:
+
+- **Mode** - `Record on arm` starts/stops recording with your quad's arm switch,
+  or `Manual` to drive it entirely from a switch.
+- **Record start / stop delay** - small delays so you don't clip the start or end
+  of a shot.
+- **Channel mapping** - assign an AUX channel and range to actions like shutter,
+  photo/video mode and preset switching.
+
+See the [Web UI reference](/docs/web-ui) for every control on each tab.
+
+## 4. Set up the OSD
+
+The camera status is drawn into Betaflight's Custom Message OSD slots. Assign a
+field (record status, battery, mode, SD free, time left, resolution, FPS) to each
+slot on the **OSD** tab, make sure to enable and position those elements in Betaflight -
+see [FC Wiring & Betaflight](/docs/wiring).
+
+## 5. System options
+
+On the **System** tab you can set the Wi-Fi name/password, turn Wi-Fi off when
+armed, choose the Bluetooth TX power, and (GoPro only) sync the camera clock from
+your FC's GPS time.
+
+## You're set
+
+<Admonition type="danger" title="Wake the camera before every flight">
+  On the DJI Osmo Nano, if recording starts while the camera is asleep (standby /
+  screen off), the clip still records but comes out corrupted - stuck at a very
+  low frame rate. This is a current limitation with no known fix.
+
+  Wake the camera and let it finish booting before arming.
+  Good practice on any camera; on the Osmo Nano it's essential.
+</Admonition>
+
+Arm on the bench (props off) and confirm the OSD reflects the camera. If anything
+misbehaves, the [Status LED](/docs/status-led) tells you what state the board is
+in, and [Troubleshooting](/docs/troubleshooting) covers the common snags.

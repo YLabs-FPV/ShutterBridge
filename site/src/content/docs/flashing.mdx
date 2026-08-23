@@ -1,0 +1,32 @@
+---
+title: Flashing
+description: Install the firmware from your browser over USB.
+order: 30
+---
+
+import Admonition from "../../components/docs/Admonition.astro";
+
+Use the [web flasher](/flash) in a Chromium browser (Chrome or Edge) - no drivers
+or desktop app needed.
+
+<Admonition type="warning" title="Chromium only">
+  Web Serial isn't available in Firefox, Safari or mobile browsers. Use desktop
+  Chrome or Edge.
+</Admonition>
+
+## Steps
+
+1. Plug the board into a USB port with a data-capable USB-C cable.
+2. Open the [flasher](/flash) and click **Install**.
+3. Pick the board's serial port when the browser asks.
+4. Wait for it to finish, then unplug and re-plug the board.
+
+The flasher writes the bootloader, app and the on-device config Web UI in one go.
+
+## Full wipe
+
+Leave **Full wipe** off to keep your saved settings and camera pairing across
+updates. Turn it on to erase everything and start clean. Note that a firmware
+update which changes the settings schema resets settings to defaults on its own.
+
+Recommended on the first flash.

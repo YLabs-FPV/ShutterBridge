@@ -1,0 +1,53 @@
+---
+title: FC Wiring & Betaflight
+description: Connect the board to a Betaflight UART & setup MSP/OSD.
+order: 20
+---
+
+import ThemedImage from "../../components/docs/ThemedImage.astro"
+
+Connect the board to a spare UART on your flight controller.
+
+## Connections
+
+| Board | Flight controller |
+| ----- | ----------------- |
+| TX    | UART RX           |
+| RX    | UART TX           |
+| GND   | GND               |
+| 5V    | 5V                |
+
+TX goes to RX and RX goes to TX - the lines cross over.
+
+<ThemedImage
+    alt="Wiring diagram"
+    lightSrc="/docs/wiring/light/diagram.svg"
+    darkSrc="/docs/wiring/dark/diagram.svg"
+    maxWidth="650px" />
+
+## Betaflight
+
+Requires Betaflight 25.12 or newer.
+
+### Ports tab
+In the **Ports** tab, enable **MSP** on the UART you wired to. Save and reboot.
+The bridge uses MSP to read FC state and to draw the camera status onto the OSD.
+
+<ThemedImage
+    alt="Ports tab setup"
+    lightSrc="/docs/wiring/light/ports.webp"
+    darkSrc="/docs/wiring/dark/ports.webp"
+    maxWidth="550px" />
+
+*In the example screenshot above, I have ShutterBridge wired to UART3*
+
+### OSD tab
+
+In the OSD tab, enable and place the **Custom Message** elements, these will be used
+to show the telemetry from the camera (like the recording status).
+
+<ThemedImage
+    alt="OSD tab setup"
+    lightSrc="/docs/wiring/light/osd.webp"
+    darkSrc="/docs/wiring/dark/osd.webp"
+    maxWidth="850px" />

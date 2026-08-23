@@ -1,0 +1,15 @@
+---
+title: Status LED
+description: What the on-board LED colours and patterns mean.
+order: 46
+---
+
+import LedStatus from "../../components/docs/LedStatus.astro";
+
+The board's on-board RGB LED shows what ShutterBridge is doing at a glance:
+
+<LedStatus />
+
+The LED reflects the camera link first: once a camera is connected it shows green
+(or blinking red while recording), regardless of Wi-Fi. Blue only appears when no
+camera is connected but someone is on the config Wi-Fi.

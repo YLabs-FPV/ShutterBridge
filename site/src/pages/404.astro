@@ -1,0 +1,378 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+---
+
+<MainLayout title="404 - Signal Lost">
+  <section class="nf-wrap px-4 py-10 md:py-16">
+    <div class="nf-stack">
+      <div class="nf-feed" role="img" aria-label="404 - camera link lost">
+        <div class="nf-noise" aria-hidden="true"></div>
+        <div class="nf-scan" aria-hidden="true"></div>
+        <div class="nf-vignette" aria-hidden="true"></div>
+
+        <div class="nf-osd" aria-hidden="true">
+          <span class="nf-osd-tl"><span class="nf-rec"></span> REC 00:00</span>
+          <span class="nf-osd-tr">CAM&nbsp;<b>0%</b></span>
+          <span class="nf-osd-bl">SD 0 MB</span>
+          <span class="nf-osd-br">LINK 0%</span>
+        </div>
+
+        <span class="nf-bracket nf-bracket-tl" aria-hidden="true"></span>
+        <span class="nf-bracket nf-bracket-tr" aria-hidden="true"></span>
+        <span class="nf-bracket nf-bracket-bl" aria-hidden="true"></span>
+        <span class="nf-bracket nf-bracket-br" aria-hidden="true"></span>
+
+        <div class="nf-center">
+          <div class="nf-code" data-text="404">404</div>
+          <div class="nf-signal">No signal</div>
+        </div>
+      </div>
+
+      <div class="nf-info">
+        <h1 class="nf-title">This page flew out of range</h1>
+        <p class="nf-message">
+          The camera never caught it, and nothing was recorded. The page you're
+          after either never existed or got deleted between takes. Let's get you
+          back on the flight line.
+        </p>
+        <div class="nf-actions">
+          <a href="/" class="nf-btn nf-btn-primary">Return to home</a>
+          <a href="/docs" class="nf-btn nf-btn-secondary">Read the docs</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</MainLayout>
+
+<style>
+  .nf-wrap {
+    display: flex;
+    justify-content: center;
+  }
+  .nf-stack {
+    width: 100%;
+    max-width: 46rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .nf-feed {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 1rem;
+    overflow: hidden;
+    background: radial-gradient(120% 120% at 50% 40%, #10151f 0%, #05070b 100%);
+    border: 1px solid rgba(var(--color-primary), 0.35);
+    box-shadow:
+      0 20px 50px rgba(0, 0, 0, 0.35),
+      inset 0 0 60px rgba(0, 0, 0, 0.6);
+    font-family: monospace;
+  }
+
+  .nf-noise {
+    position: absolute;
+    inset: -50%;
+    opacity: 0.14;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation: nf-static 0.6s steps(4) infinite;
+    pointer-events: none;
+  }
+
+  .nf-scan {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      rgba(255, 255, 255, 0) 0%,
+      rgba(124, 196, 255, 0.06) 48%,
+      rgba(124, 196, 255, 0.14) 50%,
+      rgba(255, 255, 255, 0) 52%
+    );
+    background-size: 100% 8px;
+    mix-blend-mode: screen;
+    animation: nf-scanmove 6s linear infinite;
+    pointer-events: none;
+  }
+
+  .nf-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      120% 100% at 50% 50%,
+      transparent 55%,
+      rgba(0, 0, 0, 0.55) 100%
+    );
+    pointer-events: none;
+  }
+
+  .nf-osd {
+    position: absolute;
+    inset: 0;
+    color: #eaf6ff;
+    font-size: clamp(0.7rem, 2.4vw, 0.95rem);
+    letter-spacing: 0.05em;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.9);
+  }
+  .nf-osd > span {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+  }
+  .nf-osd-tl {
+    top: 0.85rem;
+    left: 1rem;
+  }
+  .nf-osd-tr {
+    top: 0.85rem;
+    right: 1rem;
+    color: #ff5a5a;
+  }
+  .nf-osd-bl {
+    bottom: 0.85rem;
+    left: 1rem;
+  }
+  .nf-osd-br {
+    bottom: 0.85rem;
+    right: 1rem;
+  }
+  .nf-rec {
+    flex: none;
+    width: 0.6em;
+    height: 0.6em;
+    border-radius: 9999px;
+    background: #ff3b3b;
+    box-shadow: 0 0 8px #ff3b3b;
+    animation: nf-blink 1.1s steps(1) infinite;
+  }
+
+  .nf-bracket {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border: 2px solid rgba(234, 246, 255, 0.55);
+  }
+  .nf-bracket-tl {
+    top: 12px;
+    left: 12px;
+    border-right: 0;
+    border-bottom: 0;
+  }
+  .nf-bracket-tr {
+    top: 12px;
+    right: 12px;
+    border-left: 0;
+    border-bottom: 0;
+  }
+  .nf-bracket-bl {
+    bottom: 12px;
+    left: 12px;
+    border-right: 0;
+    border-top: 0;
+  }
+  .nf-bracket-br {
+    bottom: 12px;
+    right: 12px;
+    border-left: 0;
+    border-top: 0;
+  }
+
+  .nf-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    text-align: center;
+  }
+  .nf-code {
+    position: relative;
+    font-size: clamp(4rem, 18vw, 9rem);
+    font-weight: 800;
+    line-height: 1;
+    color: #eaf6ff;
+    letter-spacing: 0.06em;
+    text-shadow: 0 0 24px rgba(124, 196, 255, 0.35);
+  }
+  .nf-code::before,
+  .nf-code::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    opacity: 0.8;
+  }
+  .nf-code::before {
+    color: #00e0ff;
+    animation: nf-glitch-x 2.6s infinite steps(2);
+  }
+  .nf-code::after {
+    color: #ff2e63;
+    animation: nf-glitch-y 3.1s infinite steps(2);
+  }
+  .nf-signal {
+    display: inline-block;
+    padding: 0.25rem 0.7rem;
+    font-size: clamp(0.7rem, 2.6vw, 0.95rem);
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #ffd166;
+    border-radius: 9999px;
+    animation: nf-blink 1.6s steps(1) infinite;
+  }
+
+  .nf-info {
+    text-align: center;
+    max-width: 34rem;
+  }
+  .nf-title {
+    font-size: clamp(1.75rem, 6vw, 2.75rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 0 0 0.75rem;
+    background: linear-gradient(115deg, #7cc4ff 0%, #2563eb 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    display: inline-block;
+    padding-bottom: 0.08em;
+  }
+  .nf-message {
+    color: rgb(var(--color-text-muted));
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin: 0 0 1.75rem;
+  }
+  .nf-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+  @media (min-width: 480px) {
+    .nf-actions {
+      flex-direction: row;
+    }
+  }
+
+  .nf-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6875rem 1.625rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.2s ease;
+  }
+  .nf-btn-primary {
+    background-color: rgb(var(--color-primary));
+    color: #fff;
+  }
+  .nf-btn-primary:hover {
+    background-color: rgb(var(--color-primary-hover));
+    color: #fff;
+    transform: translateY(-2px);
+  }
+  .nf-btn-secondary {
+    background-color: rgb(var(--color-card-bg));
+    color: rgb(var(--color-text));
+    border: 1px solid rgb(var(--color-border));
+  }
+  .nf-btn-secondary:hover {
+    background-color: rgb(var(--color-secondary));
+    color: rgb(var(--color-text));
+    border-color: rgba(var(--color-primary), 0.4);
+    transform: translateY(-2px);
+  }
+
+  @keyframes nf-static {
+    0% {
+      transform: translate(0, 0);
+    }
+    25% {
+      transform: translate(-4%, 3%);
+    }
+    50% {
+      transform: translate(3%, -2%);
+    }
+    75% {
+      transform: translate(-2%, 4%);
+    }
+    100% {
+      transform: translate(2%, -3%);
+    }
+  }
+  @keyframes nf-scanmove {
+    from {
+      background-position: 0 0;
+    }
+    to {
+      background-position: 0 100%;
+    }
+  }
+  @keyframes nf-blink {
+    0%,
+    60% {
+      opacity: 1;
+    }
+    61%,
+    100% {
+      opacity: 0.25;
+    }
+  }
+  @keyframes nf-glitch-x {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    20% {
+      transform: translate(-3px, 1px);
+    }
+    40% {
+      transform: translate(3px, -1px);
+    }
+    60% {
+      transform: translate(-2px, 0);
+    }
+    80% {
+      transform: translate(2px, 1px);
+    }
+  }
+  @keyframes nf-glitch-y {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    25% {
+      transform: translate(2px, -2px);
+    }
+    50% {
+      transform: translate(-2px, 2px);
+    }
+    75% {
+      transform: translate(1px, -1px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nf-noise,
+    .nf-scan,
+    .nf-rec,
+    .nf-signal,
+    .nf-code::before,
+    .nf-code::after {
+      animation: none;
+    }
+    .nf-noise {
+      opacity: 0.08;
+    }
+  }
+</style>

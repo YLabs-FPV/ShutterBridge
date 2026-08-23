@@ -1,0 +1,17 @@
+---
+import MainLayout from "../layouts/MainLayout.astro";
+import Hero from "../components/home/Hero.astro";
+import Compatibility from "../components/home/Compatibility.astro";
+import Requirements from "../components/home/Requirements.astro";
+import Gallery from "../components/home/Gallery.astro";
+import { SITE_TITLE } from "../consts";
+---
+
+<MainLayout
+  title={`${SITE_TITLE} - Action camera OSD & control bridge for FPV`}
+>
+  <Hero />
+  <Gallery />
+  <Compatibility />
+  <Requirements />
+</MainLayout>
