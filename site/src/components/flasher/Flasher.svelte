@@ -142,7 +142,7 @@
         parts: (rel.assets ?? [])
           .filter((a) => a.name in OFFSETS)
           .map((a) => ({
-            path: a.browser_download_url,
+            path: `/api/gh-asset?url=${encodeURIComponent(a.browser_download_url)}`,
             offset: OFFSETS[a.name],
           }))
           .sort((a, b) => a.offset - b.offset),
@@ -306,14 +306,14 @@
       <p class="mt-2 text-[rgb(var(--color-text-muted))] max-w-md min-h-6">
         {#if state === "idle"}
           {#if versions.length}
-            Installs the firmware straight from your browser over USB. No app, no
-            drivers.
+            Installs the firmware straight from your browser over USB. No app,
+            no drivers.
             {#if versions.length === 1}<span class="block my-2 text-sm"
                 >Version {versions[0].version}</span
               >{/if}
           {:else}
-            No firmware has been published yet. Check back once the first release
-            is out.
+            No firmware has been published yet. Check back once the first
+            release is out.
           {/if}
         {:else if state === "done"}
           Unplug and re-plug the board, then connect to the <code
