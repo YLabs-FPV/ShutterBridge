@@ -1,7 +1,7 @@
 export const SITE_TITLE = "ShutterBridge";
 export const AUTHOR = "YarosFPV";
 export const SITE_DESCRIPTION =
-  "ESP32 firmware that bridges your flight controller and action camera - camera status on the OSD, RC switches mapped to camera actions.";
+  "ESP32-S3 firmware linking Betaflight to DJI Osmo, DJI Action and GoPro cameras - live camera status on your FPV OSD, RC switches mapped to record, photo and mode.";
 
 export const SLOGAN = "Your camera, on the OSD. Your switches, on the shutter.";
 
