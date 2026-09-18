@@ -1,0 +1,32 @@
+---
+import { getCollection, render } from "astro:content";
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import { docLang, docSlug } from "../../../lib/docs";
+import { languages } from "../../../i18n";
+
+export async function getStaticPaths() {
+  const all = await getCollection("docs");
+  const paths = [];
+  for (const lang of Object.keys(languages)) {
+    const sorted = all
+      .filter((d) => docLang(d.id) === lang)
+      .sort((a, b) => a.data.order - b.data.order);
+    // The first doc is served by docs/index.astro; the rest get slug pages.
+    for (const entry of sorted.slice(1)) {
+      paths.push({ params: { lang, slug: docSlug(entry.id) }, props: { entry } });
+    }
+  }
+  return paths;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<DocsLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  currentId={entry.id}
+>
+  <Content />
+</DocsLayout>

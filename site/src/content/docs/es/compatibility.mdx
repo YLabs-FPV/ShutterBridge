@@ -1,0 +1,46 @@
+---
+title: Cámaras compatibles
+description: Qué cámaras de acción funcionan y qué puede hacer cada una.
+order: 5
+---
+
+import CameraMatrix from "../../../components/CameraMatrix.astro";
+import Admonition from "../../../components/docs/Admonition.astro";
+import { GITHUB_URL } from "../../../consts";
+
+ShutterBridge es compatible con tres familias de cámaras de acción por Bluetooth LE. El
+soporte varía según el backend:
+
+<CameraMatrix />
+
+<Admonition type="note">
+  La DJI Osmo Nano no puede cambiar entre foto y vídeo por BLE, así que el disparador
+  solo saca una foto cuando la cámara ya está en modo Foto.
+</Admonition>
+
+<Admonition type="warning" title="Despierta la Osmo Nano antes de grabar">
+  En la Osmo Nano, empezar una grabación con la cámara dormida (en espera /
+  pantalla apagada) produce un clip corrupto con muy pocos FPS. Despiértala y espera
+  hasta que el LED frontal esté verde antes de armar. Es una limitación actual sin solución conocida.
+</Admonition>
+
+## Cámaras probadas
+
+La matriz de arriba muestra lo que soporta cada _backend_. Debajo tienes qué
+modelos concretos de cámara se han probado realmente en hardware - por el
+mantenedor y por la comunidad.
+
+| Cámara             | Backend          | Resultado             | Probada por  |
+| ------------------ | ---------------- | --------------------- | ------------ |
+| DJI Osmo Nano      | Osmo (Nano)      | Funciona (limitaciones\*) | Mantenedor |
+| DJI Osmo Action 4  | Action / 360     | Funciona por completo | Mantenedor   |
+| GoPro (HERO9+)     | GoPro            | Aún sin probar        | -            |
+
+_\* Consulta la limitación de grabación indicada arriba._
+
+<Admonition type="tip" title="¿La probaste con tu cámara? Cuéntanoslo">
+  Los reportes construyen esta tabla - incluso un "simplemente funciona" es útil. Comparte tu resultado
+  con el <a href={`${GITHUB_URL}/issues/new?template=camera_report.yml`}>reporte de
+  compatibilidad de cámaras</a>. Incluye el modelo, el backend que seleccionaste, la
+  versión del firmware y cualquier cosa que no funcionara.
+</Admonition>

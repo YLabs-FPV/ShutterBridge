@@ -1,13 +1,19 @@
 ---
 import HeaderLink from "./HeaderLink.astro";
 import ThemeToggle from "./ThemeToggle.svelte";
+import LanguageSelector from "./LanguageSelector.svelte";
 import Socials from "./Socials.astro";
 import { Icon } from "astro-icon/components";
+import { getLangFromUrl, useTranslations, getLocalizedUrl } from "../i18n";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const homeUrl = getLocalizedUrl(lang, "/");
 
 const links = [
-  { href: "/", label: "Home", icon: "mdi:home-variant" },
-  { href: "/flash", label: "Flasher", icon: "mdi:flash" },
-  { href: "/docs", label: "Documentation", icon: "mdi:book-open-variant" },
+  { href: getLocalizedUrl(lang, "/"), label: t("nav.home"), icon: "mdi:home-variant" },
+  { href: getLocalizedUrl(lang, "/flash"), label: t("nav.flasher"), icon: "mdi:flash" },
+  { href: getLocalizedUrl(lang, "/docs"), label: t("nav.docs"), icon: "mdi:book-open-variant" },
 ];
 ---
 
@@ -17,7 +23,7 @@ const links = [
   <div class="max-w-7xl mx-auto">
     <nav class="flex items-center justify-between">
       <a
-        href="/"
+        href={homeUrl}
         class="flex items-center gap-2 text-[rgb(var(--color-text))] no-underline hover:text-[rgb(var(--color-primary))] transition-colors"
       >
         <Icon
@@ -45,16 +51,18 @@ const links = [
       </div>
 
       <div class="hidden lg:flex items-center gap-2">
+        <LanguageSelector currentLang={lang} client:idle />
         <ThemeToggle client:idle />
         <Socials />
       </div>
 
       <div class="lg:hidden flex items-center gap-2">
+        <LanguageSelector currentLang={lang} client:idle />
         <ThemeToggle client:idle />
         <button
           id="mobile-menu-toggle"
           class="flex items-center justify-center w-8 h-8 rounded-lg text-[rgb(var(--color-text))] hover:bg-[rgb(var(--color-secondary))] transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))]"
-          aria-label="Toggle menu"
+          aria-label={t("nav.toggleMenu")}
           aria-expanded="false"
         >
           <Icon name="mdi:menu" id="hamburger-icon" class="w-7 h-7" />
@@ -82,7 +90,7 @@ const links = [
         </div>
         <div class="flex items-center justify-between">
           <span class="text-sm text-[rgb(var(--color-text-light))] font-medium"
-            >Links:</span
+            >{t("nav.links")}:</span
           >
           <Socials />
         </div>

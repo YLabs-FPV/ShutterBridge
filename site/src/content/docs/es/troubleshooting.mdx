@@ -1,0 +1,98 @@
+---
+title: Solución de problemas
+description: Problemas comunes y cómo resolverlos.
+order: 50
+---
+
+import Admonition from "../../../components/docs/Admonition.astro";
+import { GITHUB_URL } from "../../../consts";
+
+La mayoría de los problemas caen en unos pocos grupos. El [LED de estado](/docs/status-led) de la placa
+es la comprobación más rápida - te dice en qué estado está realmente la placa.
+
+## La cámara no conecta o no se empareja
+
+Repasa esto en orden:
+
+- **Backend correcto seleccionado.** El **Camera type** en la pestaña Camera debe coincidir con tu
+  cámara (Osmo/Action/GoPro usan protocolos distintos). El tipo equivocado nunca
+  conectará. Consulta la [lista de compatibilidad](/docs/compatibility).
+- **La cámara es detectable.** Enciéndela, activa el Bluetooth y ponla en su
+  estado de emparejamiento para la primera conexión. Luego pulsa **Scan** de nuevo.
+- **Aprueba el emparejamiento.** Si la webUI muestra **Accept PIN on camera**, confirma el
+  PIN en la propia pantalla de la cámara DJI. GoPro se vincula en la cámara la primera vez.
+- **Distancia y potencia.** Si la cámara está lejos de la placa, sube la **Bluetooth TX
+  power** (pestaña System) de Low a Medium o High y reintenta.
+
+<Admonition type="note">
+  Tras el primer emparejamiento correcto, la reconexión es automática en cada arranque -
+  no necesitas volver a ejecutar el asistente. Solo alimenta ambos dispositivos.
+</Admonition>
+
+## La cámara conecta y luego se cae o muestra "offline"
+
+La pestaña Camera solo reporta **online** mientras llega telemetría fresca (en un par
+de segundos). Las caídas breves suelen ser rango o interferencia.
+
+<Admonition type="warning" title="Radio compartida">
+  El BLE y el Wi-Fi de configuración comparten una antena. Mantener un móvil conectado al
+  Wi-Fi de ShutterBridge durante el vuelo puede perturbar el enlace con la cámara. Activa **Wi-Fi
+  off when armed** (pestaña System) para que la radio se dedique a la cámara en el
+  aire.
+</Admonition>
+
+## No puedo llegar a la página de configuración
+
+- **No hay red `ShutterBridge`.** ¿Está alimentada la placa? Si **Wi-Fi off when armed**
+  está activado y tu FC reporta armado, el punto de acceso está caído a propósito -
+  desarma y volverá.
+- **Conectado pero la página no carga.** Abre `http://10.0.0.1` explícitamente, y cuando
+  tu móvil avise de "sin internet", elige mantener la conexión.
+- **La página está en blanco o rota.** La interfaz web vive en la imagen del sistema de archivos. Reinstala
+  con el [instalador web](/flash) - también escribe el sistema de archivos, así que una instalación normal
+  lo restaura.
+
+## Un ajuste no surtió efecto
+
+La mayoría de los ajustes se aplican en vivo en cuanto guardas. Cambiar la **cámara**, el **tipo de
+cámara** o el **nombre/contraseña del Wi-Fi** es distinto: la placa **se reinicia** para aplicar
+esos. La UI lo hace por ti y se reconecta automáticamente - solo espera a que
+vuelva (reincorpórate al Wi-Fi si te lo pide).
+
+## No aparece nada en el OSD
+
+- **MSP activado** en el UART que cableaste, en la pestaña Ports de Betaflight.
+- **TX/RX cruzados** - TX de la placa a RX del FC y viceversa. Consulta [Cableado del FC](/docs/wiring).
+- **Elementos Custom Message** activados y colocados en la pestaña OSD de Betaflight.
+- **Betaflight 2025.12 o posterior**, y la cámara realmente **online** en la pestaña Camera.
+
+## "Record on arm" no se dispara
+
+Record-on-arm necesita que la placa conozca tu estado de armado, que lee del FC
+por MSP. Si MSP no está conectado (mal cableado o MSP no activado en ese UART), la
+placa nunca ve que armas y no se disparará. Arregla primero el [enlace con el FC](/docs/wiring),
+luego revisa los retardos de inicio/parada en la pestaña Channels.
+
+## La grabación sale corrupta o con muy pocos FPS (Osmo Nano)
+
+Si un clip se graba pero al reproducirlo se queda atascado a una tasa de fotogramas muy baja, la grabación
+casi seguro empezó con la cámara dormida (en espera / pantalla apagada). Despierta
+la cámara y deja que arranque del todo antes de armar (la luz verde del frente debe estar encendida).
+
+<Admonition type="danger" title="Despiértala antes de grabar">
+  Empezar una grabación desde el modo en espera corrompe el clip en la Osmo Nano. Es una
+  limitación actual sin solución conocida, así que haz de despertar la cámara parte de tu
+  rutina previa al vuelo.
+</Admonition>
+
+## El disparador no saca foto (Osmo Nano)
+
+La Osmo Nano no puede cambiar a modo Photo por BLE. Pon la cámara en **modo Photo
+manualmente** primero; el disparador captura entonces una foto. En la Action / 360 y GoPro
+el modo se puede cambiar en vuelo usando un canal AUX.\
+Consulta [compatibilidad](/docs/compatibility).
+
+## Sigues atascado
+
+Abre una issue o discusión en <a href={GITHUB_URL}>GitHub</a> con tu modelo de cámara,
+la versión del firmware y qué está haciendo el LED de estado.

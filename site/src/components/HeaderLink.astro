@@ -1,5 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { getRouteFromUrl } from "../i18n";
 
 type Props = HTMLAttributes<"a">;
 
@@ -10,8 +11,10 @@ const normalize = (route: string) => {
   return route.replace(/\/$/, "");
 };
 
-const current = normalize(Astro.url.pathname);
-const target = normalize(new URL(href || "/", Astro.url.origin).pathname);
+const current = normalize(getRouteFromUrl(Astro.url));
+const target = normalize(
+  getRouteFromUrl(new URL(href || "/", Astro.url.origin)),
+);
 
 const isActive =
   current === target || (target !== "/" && current.startsWith(target + "/"));

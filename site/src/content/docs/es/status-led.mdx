@@ -1,0 +1,15 @@
+---
+title: LED de estado
+description: Qué significan los colores y patrones del LED de la placa.
+order: 46
+---
+
+import LedStatus from "../../../components/docs/LedStatus.astro";
+
+El LED RGB integrado de la placa muestra de un vistazo lo que está haciendo ShutterBridge:
+
+<LedStatus />
+
+El LED refleja primero el enlace con la cámara: una vez que hay una cámara conectada muestra verde
+(o rojo parpadeante mientras graba), independientemente del Wi-Fi. El azul solo aparece cuando no hay
+ninguna cámara conectada pero alguien está en el Wi-Fi de configuración.

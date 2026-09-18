@@ -1,0 +1,95 @@
+---
+title: Configuración inicial
+description: Empareja la cámara y configúrala por Wi-Fi.
+order: 40
+---
+
+import Admonition from "../../../components/docs/Admonition.astro";
+
+Con el firmware instalado y la placa cableada a tu FC, el resto se hace desde
+la interfaz web del dispositivo por Wi-Fi. No hay que instalar ninguna app.
+
+## 1. Conéctate al Wi-Fi de configuración
+
+Alimenta la placa (por USB o desde el FC). Aloja un punto de acceso Wi-Fi para la configuración:
+
+- **Red:** `ShutterBridge`
+- **Contraseña:** `shutterbridge`
+
+Conéctate a él desde un móvil o portátil, luego abre **`http://10.0.0.1`** en un
+navegador. Llegarás a la pestaña **Camera**.
+
+<Admonition type="tip">
+  Si tu móvil corta la conexión porque no hay internet, elige "mantener
+  conectado" cuando te lo pregunte. El LED de la placa se pone azul fijo mientras hay un dispositivo
+  conectado al Wi-Fi de configuración.
+</Admonition>
+
+## 2. Empareja tu cámara
+
+En la pestaña **Camera**, ejecuta el asistente de conexión:
+
+1. **Camera type** - elige tu backend: `Osmo (Nano)`, `Action / 360` o `GoPro`.
+2. **Scan** - la placa busca cámaras cercanas por Bluetooth. Asegúrate de que la
+   cámara esté encendida y con el Bluetooth activado.
+3. **Select camera** - elige la tuya de la lista. La placa la guarda y se
+   reconectará automáticamente en cada arranque futuro, así que es un paso único.
+
+### Acepta el emparejamiento
+
+La píldora **Connection** de arriba muestra dónde estás:
+
+- **connecting** - contactando con la cámara.
+- **Accept PIN on camera** - una cámara DJI te pide confirmar el emparejamiento.
+  Aprueba el PIN en la propia pantalla de la cámara.
+- **Camera online** - emparejada y lista.
+- **Camera offline** - no conectada (fuera de rango, apagada o aún sin emparejar).
+
+<Admonition type="note">
+  Las cámaras de la serie DJI Action confirman el emparejamiento con un PIN en la propia cámara; GoPro se vincula en la
+  cámara la primera vez. Después de ese primer emparejamiento, la reconexión es automática.
+</Admonition>
+
+Una vez que la cámara está online, su estado en vivo (grabación, batería, SD, modo)
+aparece en la pestaña Camera, y el LED de la placa se pone verde fijo.
+
+## 3. Asigna tus controles
+
+Cambia a la pestaña **Channels** para decidir cómo se dispara la cámara:
+
+- **Mode** - `Record on arm` inicia/detiene la grabación con el interruptor de armado de tu quad,
+  o `Manual` para controlarla enteramente desde un interruptor.
+- **Record start / stop delay** - pequeños retardos para no cortar el principio ni el final
+  de una toma.
+- **Channel mapping** - asigna un canal AUX y un rango a acciones como disparador,
+  modo foto/vídeo y cambio de preset.
+
+Consulta la [referencia de la Web UI](/docs/web-ui) para cada control de cada pestaña.
+
+## 4. Configura el OSD
+
+El estado de la cámara se dibuja en los slots de OSD Custom Message de Betaflight. Asigna un
+campo (estado de grabación, batería, modo, SD libre, tiempo restante, resolución, FPS) a cada
+slot en la pestaña **OSD**, y asegúrate de activar y colocar esos elementos en Betaflight -
+consulta [Cableado del FC y Betaflight](/docs/wiring).
+
+## 5. Opciones del sistema
+
+En la pestaña **System** puedes establecer el nombre/contraseña del Wi-Fi, apagar el Wi-Fi al
+armar, elegir la potencia TX del Bluetooth y (solo GoPro) sincronizar el reloj de la cámara desde
+la hora GPS de tu FC.
+
+## Listo
+
+<Admonition type="danger" title="Despierta la cámara antes de cada vuelo">
+  En la DJI Osmo Nano, si la grabación empieza con la cámara dormida (en espera /
+  pantalla apagada), el clip se graba igualmente pero sale corrupto - atascado a una
+  tasa de fotogramas muy baja. Es una limitación actual sin solución conocida.
+
+  Despierta la cámara y deja que termine de arrancar antes de armar.
+  Es buena práctica en cualquier cámara; en la Osmo Nano es esencial.
+</Admonition>
+
+Arma en el banco (sin hélices) y confirma que el OSD refleja la cámara. Si algo
+se comporta mal, el [LED de estado](/docs/status-led) te dice en qué estado está la placa,
+y [Solución de problemas](/docs/troubleshooting) cubre los fallos habituales.

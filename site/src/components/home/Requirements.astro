@@ -1,20 +1,25 @@
 ---
 import { Icon } from "astro-icon/components";
-import { REQUIRED } from "../../consts";
+import { getLangFromUrl, useTranslations, useData } from "../../i18n";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const d = useData(lang);
 
 const icons = ["mdi:chip", "betaflight", "mdi:camera"];
+const required = d<{ name: string; detail: string }[]>("requirements.items");
 ---
 
 <section class="px-6 py-12" id="requirements">
   <div class="max-w-6xl mx-auto">
-    <h2 class="text-3xl font-bold text-center">What you need</h2>
+    <h2 class="text-3xl font-bold text-center">{t("requirements.title")}</h2>
     <p class="mt-2 text-center text-[rgb(var(--color-text-muted))]">
-      Three things to get flying
+      {t("requirements.subtitle")}
     </p>
 
     <div class="mt-4 grid gap-5 md:grid-cols-3">
       {
-        REQUIRED.map((item, i) => (
+        required.map((item, i) => (
           <div class="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-card-bg))] p-6 shadow-sm">
             <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-[rgba(var(--color-primary),0.1)] text-[rgb(var(--color-primary))]">
               <Icon

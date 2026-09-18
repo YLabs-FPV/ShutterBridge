@@ -1,0 +1,45 @@
+---
+import MainLayout from "../../layouts/MainLayout.astro";
+import Flasher from "../../components/flasher/Flasher.svelte";
+import Admonition from "../../components/docs/Admonition.astro";
+import { BOARD_NAME, SITE_TITLE } from "../../consts";
+import { getLangFromUrl, useTranslations } from "../../i18n";
+import { getLangPaths } from "../../i18n/getLangPaths";
+
+export const getStaticPaths = getLangPaths;
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const withBoard = (key: string) => t(key).replace("{board}", BOARD_NAME);
+---
+
+<MainLayout title={`${t("flash.pageTitle")} - ${SITE_TITLE}`} class="px-6 py-12">
+  <div class="max-w-2xl mx-auto">
+    <div class="text-center">
+      <h1 class="text-4xl font-bold">{t("flash.heading")}</h1>
+      <p class="mt-3 text-[rgb(var(--color-text-muted))]">
+        {withBoard("flash.subtitle")}
+      </p>
+    </div>
+
+    <Admonition type="warning" title={t("flash.warnTitle")}>
+      <p>
+        <strong>{withBoard("flash.warnOnlyStrong")}</strong>
+        {t("flash.warnOnlyRest")}
+      </p>
+      <p class="mt-2">
+        <strong>{t("flash.warnReplaceStrong")}</strong>
+        {t("flash.warnReplaceRest")}
+      </p>
+    </Admonition>
+
+    <Flasher client:load />
+
+    <Admonition type="info">
+      {t("flash.infoBefore")}
+      <code>{t("flash.infoWifiName")}</code>
+      {t("flash.infoMiddle")}
+      <code>shutterbridge</code>{t("flash.infoAfter")}
+    </Admonition>
+  </div>
+</MainLayout>
