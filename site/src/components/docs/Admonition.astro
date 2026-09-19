@@ -1,5 +1,6 @@
 ---
 import { Icon } from "astro-icon/components";
+import { getLangFromUrl, useTranslations } from "../../i18n";
 
 type Type = "note" | "info" | "tip" | "warning" | "danger";
 
@@ -10,15 +11,19 @@ interface Props {
 
 const { type = "note", title } = Astro.props;
 
-const meta: Record<Type, { icon: string; color: string; label: string }> = {
-  note: { icon: "mdi:note-text", color: "var(--color-primary)", label: "Note" },
-  info: { icon: "mdi:information", color: "var(--color-primary)", label: "Info" },
-  tip: { icon: "mdi:lightbulb", color: "var(--color-success)", label: "Tip" },
-  warning: { icon: "mdi:alert", color: "var(--color-accent)", label: "Warning" },
-  danger: { icon: "mdi:fire", color: "var(--color-danger)", label: "Danger" },
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const meta: Record<Type, { icon: string; color: string }> = {
+  note: { icon: "mdi:note-text", color: "var(--color-primary)" },
+  info: { icon: "mdi:information", color: "var(--color-primary)" },
+  tip: { icon: "mdi:lightbulb", color: "var(--color-success)" },
+  warning: { icon: "mdi:alert", color: "var(--color-accent)" },
+  danger: { icon: "mdi:fire", color: "var(--color-danger)" },
 };
 
-const { icon, color, label } = meta[type];
+const { icon, color } = meta[type];
+const label = t(`admonition.${type}`);
 ---
 
 <aside class="admonition" style={`--ad: ${color}`}>

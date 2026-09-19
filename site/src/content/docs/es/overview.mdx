@@ -1,0 +1,41 @@
+---
+title: Introducción
+description: Qué es ShutterBridge y cómo encajan las piezas.
+order: 0
+---
+
+import Admonition from "../../../components/docs/Admonition.astro";
+import { Icon } from "astro-icon/components";
+
+<div class="flex items-center gap-2 text-[rgb(var(--color-text))] mb-4">
+  <Icon
+    name="aperture"
+    class="h-12 w-12 text-[rgb(var(--color-primary))]"
+  />
+  <span class="m-0 text-3xl font-bold">
+    <span class="text-[rgb(var(--color-primary))]">Shutter</span><span
+      class="text-[rgb(var(--color-text))]">Bridge</span>
+  </span>
+</div>
+
+ShutterBridge es firmware para una placa ESP32-S3. Se conecta por Bluetooth LE
+a una cámara de acción DJI o GoPro y se comunica con un controlador de vuelo
+Betaflight por MSP. El estado de la cámara se dibuja en tu OSD, y las posiciones
+de los interruptores de la radio se asignan a acciones de la cámara como grabar,
+foto y cambio de modo.
+
+
+## Cómo funciona
+
+- **Enlace con la cámara** - Bluetooth LE hacia la cámara de acción (DJI DUML/R-SDK u Open GoPro).
+- **Enlace con el FC** - MSP sobre un UART libre hacia Betaflight.
+- **OSD** - el estado de grabación, la batería, la SD y los temporizadores se envían al feed de las gafas.
+- **Acciones** - los interruptores de la radio disparan grabación, foto y modo foto/vídeo.
+
+## Siguientes pasos
+
+Antes de empezar, revisa las [cámaras compatibles](/docs/compatibility) para
+asegurarte de que la tuya está soportada.
+
+Consigue el [hardware](/docs/hardware), [instala el firmware](/docs/flashing), luego
+[conéctalo a tu FC](/docs/wiring) y termina la [configuración inicial](/docs/setup).

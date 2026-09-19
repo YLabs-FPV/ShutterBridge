@@ -1,34 +1,21 @@
 ---
-const states = [
-  {
-    color: "#22c55e",
-    pattern: "Solid",
-    label: "Connected",
-    meaning: "Camera connected and idle (not recording)",
-    blink: false,
-  },
-  {
-    color: "#ef4444",
-    pattern: "Blinking",
-    label: "Recording",
-    meaning: "Camera connected and recording",
-    blink: true,
-  },
-  {
-    color: "#f59e0b",
-    pattern: "Blinking",
-    label: "Searching",
-    meaning: "Looking for the camera - not connected yet",
-    blink: true,
-  },
-  {
-    color: "#3b82f6",
-    pattern: "Solid",
-    label: "Config Wi-Fi",
-    meaning: "A device is connected to the ShutterBridge Wi-Fi",
-    blink: false,
-  },
+import { getLangFromUrl, useData } from "../../i18n";
+
+const lang = getLangFromUrl(Astro.url);
+const d = useData(lang);
+
+// Structural (colour + blink) stays here; the labels live in the locale files.
+const style = [
+  { color: "#22c55e", blink: false },
+  { color: "#ef4444", blink: true },
+  { color: "#f59e0b", blink: true },
+  { color: "#3b82f6", blink: false },
 ];
+
+const text = d<{ label: string; pattern: string; meaning: string }[]>(
+  "led.states",
+);
+const states = style.map((s, i) => ({ ...s, ...text[i] }));
 ---
 
 <div class="led-status">

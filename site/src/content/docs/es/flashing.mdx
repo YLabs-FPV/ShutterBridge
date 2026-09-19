@@ -1,0 +1,32 @@
+---
+title: Instalación
+description: Instala el firmware desde tu navegador por USB.
+order: 30
+---
+
+import Admonition from "../../../components/docs/Admonition.astro";
+
+Usa el [instalador web](/flash) en un navegador Chromium (Chrome o Edge) - sin drivers
+ni aplicación de escritorio.
+
+<Admonition type="warning" title="Solo Chromium">
+  Web Serial no está disponible en Firefox, Safari ni navegadores móviles. Usa
+  Chrome o Edge de escritorio.
+</Admonition>
+
+## Pasos
+
+1. Conecta la placa a un puerto USB con un cable USB-C con datos.
+2. Abre el [instalador](/flash) y haz clic en **Install**.
+3. Elige el puerto serie de la placa cuando el navegador te lo pida.
+4. Espera a que termine, luego desconecta y vuelve a conectar la placa.
+
+El instalador escribe el bootloader, la app y la interfaz web de configuración del dispositivo de una sola vez.
+
+## Borrado completo
+
+Deja **Full wipe** desactivado para conservar tus ajustes guardados y el emparejamiento de la cámara entre
+actualizaciones. Actívalo para borrar todo y empezar limpio. Ten en cuenta que una actualización de firmware
+que cambia el esquema de ajustes ya restablece los ajustes a los valores por defecto por su cuenta.
+
+Recomendado en la primera instalación.

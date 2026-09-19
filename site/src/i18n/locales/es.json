@@ -1,0 +1,145 @@
+{
+  "site": {
+    "titleSuffix": "OSD y control de cámara de acción para Betaflight (DJI, GoPro)",
+    "description": "Firmware para ESP32-S3 que conecta Betaflight con cámaras DJI Osmo, DJI Action y GoPro - estado de la cámara en tiempo real en tu OSD de FPV, con interruptores de radio asignados a grabar, foto y modo.",
+    "docsTitleSuffix": "Documentación de ShutterBridge"
+  },
+  "nav": {
+    "home": "Inicio",
+    "flasher": "Instalador",
+    "docs": "Documentación",
+    "links": "Enlaces",
+    "toggleMenu": "Abrir menú"
+  },
+  "hero": {
+    "by": "por",
+    "slogan": "Tu cámara, en el OSD. Tus interruptores, en el disparador.",
+    "subtitle": "Firmware para ESP32-S3 que conecta un controlador de vuelo Betaflight con una cámara DJI Osmo, DJI Action o GoPro - el estado de la cámara se dibuja directamente en tus gafas de FPV, con interruptores de radio asignados a grabar, foto y cambio de modo",
+    "flash": "Instalar el firmware",
+    "docs": "Leer la documentación",
+    "source": "Código fuente"
+  },
+  "gallery": {
+    "title": "Míralo en acción",
+    "subtitle": "Estado de la cámara en tiempo real, justo donde estás mirando",
+    "items": [
+      {
+        "label": "Armar para grabar",
+        "caption": "La grabación empieza en el momento en que armas; sin pulsar ningún botón extra."
+      },
+      {
+        "label": "OSD en las gafas",
+        "caption": "Estado de la cámara en tiempo real superpuesto justo donde estás mirando."
+      },
+      {
+        "label": "Interfaz web",
+        "caption": "Configura todo desde una interfaz de navegador limpia."
+      }
+    ]
+  },
+  "compat": {
+    "title": "Cámaras compatibles",
+    "subtitle": "Tres backends BLE, un solo puente. De un vistazo:",
+    "tested": "Probada",
+    "untested": "Sin probar",
+    "featureHeader": "Función",
+    "legendSupported": "Compatible",
+    "legendPartial": "Parcial / condicional",
+    "legendUnsupported": "No compatible",
+    "columns": ["Osmo (Nano)", "Action / 360", "GoPro"],
+    "cameraNotes": [
+      "Conexión, telemetría en el OSD, lectura del modo, grabación y foto. No puede cambiar entre foto y vídeo por BLE - el disparador solo saca una foto cuando la cámara ya está en modo Foto.",
+      "Control total: cambio de modo, lectura de resolución/FPS, grabación y foto. Protocolo R-SDK con DUML para la batería. Emparejamiento por PIN. Probada en la Action 4.",
+      "Cambio de presets, carga por ID y sincronización del reloj desde la hora GPS del controlador de vuelo. Se empareja en la cámara. Todavía sin probar en hardware real."
+    ],
+    "featureLabels": [
+      "Conexión + reconexión automática",
+      "Telemetría en el OSD (grabación, batería, SD, temporizadores)",
+      "Lectura del modo (vídeo / foto)",
+      "Cambio de modo foto / vídeo",
+      "Lectura de resolución / FPS",
+      "Iniciar / detener grabación",
+      "Sacar foto",
+      "Cambio de presets",
+      "Sincronización del reloj desde la hora GPS del controlador de vuelo"
+    ]
+  },
+  "requirements": {
+    "title": "Lo que necesitas",
+    "subtitle": "Tres cosas para empezar a volar",
+    "items": [
+      {
+        "name": "Waveshare ESP32-S3-Zero",
+        "detail": "ESP32-S3FH4R2 - 4 MB de flash, 2 MB de PSRAM, USB nativo. La placa para la que está hecho ShutterBridge."
+      },
+      {
+        "name": "Betaflight 2025.12 o posterior",
+        "detail": "Controlador de vuelo con Betaflight 25.12+. Se comunica con el puente por MSP; los elementos del OSD muestran el estado de la cámara."
+      },
+      {
+        "name": "Una cámara de acción compatible",
+        "detail": "Una DJI Osmo / Action o una GoPro HERO9 o posterior. Consulta la lista de compatibilidad de arriba."
+      }
+    ]
+  },
+  "flash": {
+    "pageTitle": "Instalador",
+    "heading": "Instalador web",
+    "subtitle": "Instala el firmware en la {board} directamente desde tu navegador.",
+    "warnTitle": "Antes de instalar",
+    "warnOnlyStrong": "Instala solo en la {board}.",
+    "warnOnlyRest": "Este firmware está hecho para esa placa exacta. Instalarlo en otra placa no funcionará y podría dejarla necesitando una recuperación manual.",
+    "warnReplaceStrong": "La instalación reemplaza el firmware",
+    "warnReplaceRest": "que ya tiene la placa.",
+    "infoBefore": "¿Primera vez con esta placa? Después de instalar, conéctate al punto de acceso Wi-Fi",
+    "infoWifiName": "ShutterBridge",
+    "infoMiddle": "para terminar la configuración. La contraseña es",
+    "infoAfter": "."
+  },
+  "notFound": {
+    "pageTitle": "404 - Señal perdida",
+    "linkLost": "404 - enlace con la cámara perdido",
+    "noSignal": "Sin señal",
+    "heading": "Esta página se salió de rango",
+    "message": "La cámara nunca la captó, y no se grabó nada. La página que buscas o nunca existió o se borró entre tomas. Vamos a devolverte a la línea de vuelo.",
+    "home": "Volver al inicio",
+    "docs": "Leer la documentación"
+  },
+  "docs": {
+    "sidebar": "Documentación",
+    "menuButton": "Docs",
+    "previous": "Anterior",
+    "next": "Siguiente"
+  },
+  "admonition": {
+    "note": "Nota",
+    "info": "Información",
+    "tip": "Consejo",
+    "warning": "Advertencia",
+    "danger": "Peligro"
+  },
+  "led": {
+    "states": [
+      {
+        "label": "Conectada",
+        "pattern": "Fijo",
+        "meaning": "Cámara conectada e inactiva (sin grabar)"
+      },
+      {
+        "label": "Grabando",
+        "pattern": "Parpadeante",
+        "meaning": "Cámara conectada y grabando"
+      },
+      {
+        "label": "Buscando",
+        "pattern": "Parpadeante",
+        "meaning": "Buscando la cámara - aún sin conectar"
+      },
+      {
+        "label": "Config Wi-Fi",
+        "pattern": "Fijo",
+        "meaning": "Hay un dispositivo conectado al Wi-Fi de ShutterBridge"
+      }
+    ]
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "site": {
+    "titleSuffix": "Betaflight action camera OSD & control (DJI, GoPro)",
+    "description": "ESP32-S3 firmware linking Betaflight to DJI Osmo, DJI Action and GoPro cameras - live camera status on your FPV OSD, RC switches mapped to record, photo and mode.",
+    "docsTitleSuffix": "ShutterBridge docs"
+  },
+  "nav": {
+    "home": "Home",
+    "flasher": "Flasher",
+    "docs": "Documentation",
+    "links": "Links",
+    "toggleMenu": "Toggle menu"
+  },
+  "hero": {
+    "by": "by",
+    "slogan": "Your camera, on the OSD. Your switches, on the shutter.",
+    "subtitle": "ESP32-S3 firmware that links a Betaflight flight controller to a DJI Osmo, DJI Action or GoPro camera - live camera status drawn straight on your FPV goggles, and RC switches mapped to record, photo and mode switching",
+    "flash": "Flash the firmware",
+    "docs": "Read the docs",
+    "source": "Source code"
+  },
+  "gallery": {
+    "title": "See it in action",
+    "subtitle": "Live camera status, right where you're looking",
+    "items": [
+      {
+        "label": "Arm to record",
+        "caption": "Recording starts the moment you arm; no extra button presses."
+      },
+      {
+        "label": "OSD in the goggles",
+        "caption": "Live camera status overlaid right where you're looking."
+      },
+      {
+        "label": "Web UI",
+        "caption": "Configure everything from a clean browser interface."
+      }
+    ]
+  },
+  "compat": {
+    "title": "Compatible cameras",
+    "subtitle": "Three BLE backends, one bridge. At a glance:",
+    "tested": "Tested",
+    "untested": "Untested",
+    "featureHeader": "Feature",
+    "legendSupported": "Supported",
+    "legendPartial": "Partial / conditional",
+    "legendUnsupported": "Unsupported",
+    "columns": ["Osmo (Nano)", "Action / 360", "GoPro"],
+    "cameraNotes": [
+      "Connect, OSD telemetry, mode readout, record and photo. Can't switch photo/video over BLE - the shutter takes a photo only when the camera is already in Photo mode.",
+      "Full control: mode switch, resolution/FPS readout, record and photo. R-SDK protocol with DUML for battery. Pairing via PIN. Tested on the Action 4.",
+      "Preset switching, load-by-ID and clock sync from FC GPS time. Bonds on the camera. Not yet tested on real hardware."
+    ],
+    "featureLabels": [
+      "Connect + auto-reconnect",
+      "OSD telemetry (record, battery, SD, timers)",
+      "Mode readout (video / photo)",
+      "Photo / video mode switch",
+      "Resolution / FPS readout",
+      "Start / stop recording",
+      "Take photo",
+      "Preset switching",
+      "Clock sync from FC GPS time"
+    ]
+  },
+  "requirements": {
+    "title": "What you need",
+    "subtitle": "Three things to get flying",
+    "items": [
+      {
+        "name": "Waveshare ESP32-S3-Zero",
+        "detail": "ESP32-S3FH4R2 - 4 MB flash, 2 MB PSRAM, native USB. The board ShutterBridge is built for."
+      },
+      {
+        "name": "Betaflight 2025.12 or newer",
+        "detail": "Flight controller running Betaflight 25.12+. Talks to the bridge over MSP; OSD elements draw the camera status."
+      },
+      {
+        "name": "A supported action camera",
+        "detail": "A DJI Osmo / Action or a GoPro HERO9 or newer. See the compatibility list above."
+      }
+    ]
+  },
+  "flash": {
+    "pageTitle": "Flasher",
+    "heading": "Web flasher",
+    "subtitle": "Flash the {board} straight from your browser.",
+    "warnTitle": "Before you flash",
+    "warnOnlyStrong": "Only flash the {board}.",
+    "warnOnlyRest": "This firmware is built for that exact board. Flashing a different board won't work and may leave it needing manual recovery.",
+    "warnReplaceStrong": "Flashing replaces the firmware",
+    "warnReplaceRest": "already on the board.",
+    "infoBefore": "First time on this board? After flashing, connect to the",
+    "infoWifiName": "ShutterBridge",
+    "infoMiddle": "Wi-Fi access point to finish setup. The password is",
+    "infoAfter": "."
+  },
+  "notFound": {
+    "pageTitle": "404 - Signal Lost",
+    "linkLost": "404 - camera link lost",
+    "noSignal": "No signal",
+    "heading": "This page flew out of range",
+    "message": "The camera never caught it, and nothing was recorded. The page you're after either never existed or got deleted between takes. Let's get you back on the flight line.",
+    "home": "Return to home",
+    "docs": "Read the docs"
+  },
+  "docs": {
+    "sidebar": "Documentation",
+    "menuButton": "Docs",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "admonition": {
+    "note": "Note",
+    "info": "Info",
+    "tip": "Tip",
+    "warning": "Warning",
+    "danger": "Danger"
+  },
+  "led": {
+    "states": [
+      {
+        "label": "Connected",
+        "pattern": "Solid",
+        "meaning": "Camera connected and idle (not recording)"
+      },
+      {
+        "label": "Recording",
+        "pattern": "Blinking",
+        "meaning": "Camera connected and recording"
+      },
+      {
+        "label": "Searching",
+        "pattern": "Blinking",
+        "meaning": "Looking for the camera - not connected yet"
+      },
+      {
+        "label": "Config Wi-Fi",
+        "pattern": "Solid",
+        "meaning": "A device is connected to the ShutterBridge Wi-Fi"
+      }
+    ]
+  }
+}

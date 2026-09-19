@@ -1,6 +1,10 @@
 ---
 import { Icon } from "astro-icon/components";
-import { SLOGAN } from "../../consts";
+import { getLangFromUrl, useTranslations, getLocalizedUrl } from "../../i18n";
+import { GITHUB_URL } from "../../consts";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
 <section class="px-6 pt-12 pb-4 md:pt-18 md:pb-4">
@@ -15,7 +19,7 @@ import { SLOGAN } from "../../consts";
       >
     </h1>
     <p class="italic text-[rgb(var(--color-text-muted))]">
-      by <a
+      {t("hero.by")} <a
         href="https://yarosfpv.com"
         target="_blank"
         class="text-[rgb(var(--color-primary))] hover:underline">YarosFPV</a
@@ -23,41 +27,39 @@ import { SLOGAN } from "../../consts";
     </p>
 
     <p class="mt-5 text-xl md:text-2xl font-medium">
-      {SLOGAN}
+      {t("hero.slogan")}
     </p>
 
     <p
       class="mt-4 text-base md:text-lg text-[rgb(var(--color-text-muted))] max-w-2xl mx-auto"
     >
-      ESP32-S3 firmware that links a Betaflight flight controller to a DJI Osmo,
-      DJI Action or GoPro camera - live camera status drawn straight on your FPV
-      goggles, and RC switches mapped to record, photo and mode switching
+      {t("hero.subtitle")}
     </p>
 
     <div
       class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3"
     >
       <a
-        href="/flash"
+        href={getLocalizedUrl(lang, "/flash")}
         class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white bg-[rgb(var(--color-primary))] hover:bg-[rgb(var(--color-primary-hover))] transition-colors no-underline"
       >
         <Icon name="mdi:flash" class="w-5 h-5" />
-        Flash the firmware
+        {t("hero.flash")}
       </a>
       <a
-        href="/docs"
+        href={getLocalizedUrl(lang, "/docs")}
         class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-secondary))] transition-colors no-underline text-[rgb(var(--color-text))]"
       >
         <Icon name="mdi:book-open-variant" class="w-5 h-5" />
-        Read the docs
+        {t("hero.docs")}
       </a>
       <a
-        href="https://github.com/YLabs-FPV/ShutterBridge"
+        href={GITHUB_URL}
         target="_blank"
         class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-secondary))] transition-colors no-underline text-[rgb(var(--color-text))]"
       >
         <Icon name="mdi:github" class="w-5 h-5" />
-        Source code
+        {t("hero.source")}
       </a>
     </div>
   </div>

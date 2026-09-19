@@ -1,11 +1,19 @@
 ---
+export const prerender = false;
+
 import MainLayout from "../layouts/MainLayout.astro";
+import { getLangFromUrl, useTranslations, getLocalizedUrl } from "../i18n";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+Astro.response.status = 404;
 ---
 
-<MainLayout title="404 - Signal Lost">
+<MainLayout title={t("notFound.pageTitle")}>
   <section class="nf-wrap px-4 py-10 md:py-16">
     <div class="nf-stack">
-      <div class="nf-feed" role="img" aria-label="404 - camera link lost">
+      <div class="nf-feed" role="img" aria-label={t("notFound.linkLost")}>
         <div class="nf-noise" aria-hidden="true"></div>
         <div class="nf-scan" aria-hidden="true"></div>
         <div class="nf-vignette" aria-hidden="true"></div>
@@ -24,20 +32,23 @@ import MainLayout from "../layouts/MainLayout.astro";
 
         <div class="nf-center">
           <div class="nf-code" data-text="404">404</div>
-          <div class="nf-signal">No signal</div>
+          <div class="nf-signal">{t("notFound.noSignal")}</div>
         </div>
       </div>
 
       <div class="nf-info">
-        <h1 class="nf-title">This page flew out of range</h1>
+        <h1 class="nf-title">{t("notFound.heading")}</h1>
         <p class="nf-message">
-          The camera never caught it, and nothing was recorded. The page you're
-          after either never existed or got deleted between takes. Let's get you
-          back on the flight line.
+          {t("notFound.message")}
         </p>
         <div class="nf-actions">
-          <a href="/" class="nf-btn nf-btn-primary">Return to home</a>
-          <a href="/docs" class="nf-btn nf-btn-secondary">Read the docs</a>
+          <a href={getLocalizedUrl(lang, "/")} class="nf-btn nf-btn-primary"
+            >{t("notFound.home")}</a
+          >
+          <a
+            href={getLocalizedUrl(lang, "/docs")}
+            class="nf-btn nf-btn-secondary">{t("notFound.docs")}</a
+          >
         </div>
       </div>
     </div>

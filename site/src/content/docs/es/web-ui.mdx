@@ -1,0 +1,159 @@
+---
+title: Interfaz web
+description: La interfaz de configuración del dispositivo, pestaña por pestaña.
+order: 42
+---
+
+import Admonition from "../../../components/docs/Admonition.astro";
+import ThemedImage from "../../../components/docs/ThemedImage.astro"
+
+Conéctate al punto de acceso Wi-Fi `ShutterBridge` y abre `http://10.0.0.1`.
+
+La interfaz tiene cuatro pestañas - **Camera**, **Channels**, **OSD** y **System** -
+una píldora de versión en la cabecera y un botón **Save** fijado abajo. La UI
+se adapta a la cámara que has vinculado: los controles que una cámara concreta no puede hacer se ocultan.
+
+<Admonition type="note" title="Guardado y reinicios">
+  Save escribe todo en la placa de una vez. La mayoría de los ajustes se aplican al momento.
+  Cambiar la **cámara**, el **tipo** o el **nombre/contraseña del Wi-Fi** reinicia la
+  placa para aplicarlo - la UI lo hace por ti y se reconecta sola.\
+  Consulta la [configuración inicial](/docs/setup).
+</Admonition>
+
+## Camera
+
+Estado en vivo y el enlace con la cámara.
+
+<ThemedImage
+    alt="Pestaña Camera"
+    lightSrc="/docs/webui/light/camera.webp"
+    darkSrc="/docs/webui/dark/camera.webp"
+    maxWidth="600px" />
+
+### Estado en vivo
+
+Cuando una cámara está online, esta tarjeta refleja lo que está haciendo:
+
+- Indicador **REC** - encendido mientras graba.
+- **Elapsed** - tiempo de grabación actual (mm:ss).
+- **Mode** - Photo o Video.
+- **Format** - resolución y tasa de fotogramas, p. ej. `4K 60fps` (no lo reporta la Osmo Nano).
+- **Battery** - porcentaje, con una barra.
+- **SD free** - espacio restante en la tarjeta.
+- **Time left** - tiempo de grabación estimado restante en la tarjeta (mm:ss).
+
+### Connection
+
+Muestra el modelo y la MAC de la cámara vinculada (o **No camera / not bound**) y una píldora de
+estado:
+
+- **connecting** - contactando con la cámara.
+- **Accept PIN on camera** - aprueba el PIN de emparejamiento en la pantalla de una cámara DJI.
+- **Camera online** - conectada y reportando.
+- **Camera offline** - no conectada.
+
+### Vinculación
+
+**Bind new camera** abre el asistente de emparejamiento: elige el **Camera type** (DJI Osmo
+(Nano) / DJI Action / 360 / GoPro), **Scan**, luego **Select camera** de la lista.
+La placa guarda la elección y se reinicia para conectar. La vinculación es un paso único;
+después se reconecta automáticamente en cada arranque.
+
+### Controles
+
+Controles manuales para la cámara vinculada. Esta tarjeta solo aparece para cámaras que
+soportan cambio de modo, y se desactiva mientras **Record on arm** está activo (en ese
+modo la cámara se controla automáticamente).
+
+- **Mode** - cambia la cámara entre **Video** y **Photo** (Action / 360 y
+  GoPro; la Osmo Nano no puede cambiar por BLE).
+- **Preset group** (solo GoPro) - carga el grupo de presets de **Video**, **Photo** o **Timelapse**.
+- **Preset by ID** (solo GoPro) - carga un preset concreto por su ID hexadecimal.
+
+## Channels
+
+Asigna interruptores de la radio a acciones de la cámara.
+
+<ThemedImage
+    alt="Pestaña Channels"
+    lightSrc="/docs/webui/light/channels.webp"
+    darkSrc="/docs/webui/dark/channels.webp"
+    maxWidth="550px" />
+
+### Grabación
+
+- **Mode**
+  * **Record on arm (por defecto)**: empieza a grabar cuando armas y para cuando desarmas
+  * **Manual**: controla la cámara enteramente desde las funciones de canal
+  de abajo
+  (los controles manuales se desactivan en este modo)
+- **Record start delay** / **Record stop delay** - milisegundos que esperar antes de
+  empezar/parar, para no cortar el principio ni el final de un clip
+
+### Funciones de canal
+
+Cada función tiene un selector de **AUX channel** y un deslizador de **range** (en
+microsegundos). La función está activa mientras ese canal está dentro del rango; un
+marcador verde muestra el valor en vivo del canal.\
+Poner el canal de una función en **Off** la desactiva.
+
+Funciones disponibles (la UI oculta las que tu cámara no puede hacer):
+
+- **Shutter** - el disparador principal. En modo Photo saca una foto; en modo Video
+  graba. Su opción **Video trigger** elige el comportamiento: **Momentary** (cada
+  golpe alterna la grabación) o **2-position** (graba mientras el interruptor está mantenido).
+- **Camera Mode** - cambia la cámara entre foto y vídeo desde un canal
+  (Action / 360 y GoPro). **Momentary** alterna en cada golpe; **2-position** pone
+  Photo dentro del rango y Video fuera.
+- **Preset Video / Preset Photo / Preset Timelapse** (solo GoPro) - carga un grupo de presets
+  desde un canal.
+
+## OSD
+
+Elige qué telemetría muestran los cuatro slots del OSD.
+
+<ThemedImage
+    alt="Pestaña OSD"
+    lightSrc="/docs/webui/light/osd.webp"
+    darkSrc="/docs/webui/dark/osd.webp"
+    maxWidth="500px" />
+
+Cada slot **Custom Msg** (0-3) se asigna a un campo: **Off**, **Rec status**,
+**Battery %**, **Mode**, **SD free**, **Time left**, **Resolution** o **FPS**.
+Resolution y FPS no están disponibles en la Osmo Nano.
+
+Asigna un campo aquí, luego activa y coloca los elementos **Custom Message**
+correspondientes en la pestaña OSD de Betaflight - consulta [Cableado del FC y Betaflight](/docs/wiring).
+
+## System
+
+Ajustes de todo el dispositivo.
+
+<ThemedImage
+    alt="Pestaña System"
+    lightSrc="/docs/webui/light/system.webp"
+    darkSrc="/docs/webui/dark/system.webp"
+    maxWidth="500px" />
+
+### Wi-Fi
+
+- **Name** / **Password** - las credenciales del punto de acceso de configuración (cambiarlas
+  reinicia la placa).
+- **Off when armed** - corta el Wi-Fi de configuración mientras el FC reporta armado, para que la
+  radio se dedique al enlace con la cámara en vuelo.
+
+### Bluetooth
+
+- **TX power** - **Low**, **Medium** o **High**. Más alto llega más lejos pero puede
+  interferir más con un receptor de radio cercano. Bájalo si el alcance de tu enlace de control
+  cae con el puente encendido.
+
+### Reloj (solo GoPro)
+
+- **Sync from GPS** - establece el reloj de la GoPro desde la hora GPS del controlador de vuelo.
+  Necesita fijación GPS en el FC.
+- **UTC offset** - horas para desplazar desde UTC a la hora local (pasos de cuarto de hora).
+
+### Dispositivo
+
+- **Reboot** - reinicia la placa.

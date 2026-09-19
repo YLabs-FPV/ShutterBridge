@@ -2,6 +2,7 @@
 import MainLayout from "./MainLayout.astro";
 import { Icon } from "astro-icon/components";
 import { getSortedDocs, docHref } from "../lib/docs";
+import { getLangFromUrl, useTranslations } from "../i18n";
 
 interface Props {
   title: string;
@@ -10,11 +11,13 @@ interface Props {
 }
 
 const { title, description, currentId } = Astro.props;
-const sorted = await getSortedDocs();
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const sorted = await getSortedDocs(lang);
 const nav = sorted.map((d) => ({
   id: d.id,
   title: d.data.title,
-  href: docHref(d.id, sorted),
+  href: docHref(lang, d.id, sorted),
 }));
 
 const currentIndex = sorted.findIndex((d) => d.id === currentId);
@@ -24,10 +27,10 @@ const nextDoc =
     ? sorted[currentIndex + 1]
     : null;
 const prev = prevDoc
-  ? { title: prevDoc.data.title, href: docHref(prevDoc.id, sorted) }
+  ? { title: prevDoc.data.title, href: docHref(lang, prevDoc.id, sorted) }
   : null;
 const next = nextDoc
-  ? { title: nextDoc.data.title, href: docHref(nextDoc.id, sorted) }
+  ? { title: nextDoc.data.title, href: docHref(lang, nextDoc.id, sorted) }
   : null;
 
 const linkClass = (id: string) => [
@@ -38,7 +41,7 @@ const linkClass = (id: string) => [
 ];
 ---
 
-<MainLayout title={`${title} - ShutterBridge docs`} description={description}>
+<MainLayout title={`${title} - ${t("site.docsTitleSuffix")}`} description={description}>
   <div
     class="px-6 py-10 max-w-6xl mx-auto lg:grid lg:grid-cols-[220px_1fr] lg:gap-12"
   >
@@ -47,7 +50,7 @@ const linkClass = (id: string) => [
         <p
           class="px-3 pb-2 text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-light))]"
         >
-          Documentation
+          {t("docs.sidebar")}
         </p>
         <div class="flex flex-col gap-1">
           {
@@ -67,7 +70,7 @@ const linkClass = (id: string) => [
       class="lg:hidden inline-flex items-center gap-2 mb-6 px-3.5 py-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-card-bg))] text-sm font-medium hover:bg-[rgb(var(--color-secondary))] transition-colors"
     >
       <Icon name="mdi:menu" class="w-5 h-5" />
-      Docs
+      {t("docs.menuButton")}
       <span class="text-[rgb(var(--color-text-muted))] font-normal"
         >/ {title}</span
       >
@@ -89,7 +92,7 @@ const linkClass = (id: string) => [
           <span
             class="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-light))]"
           >
-            Documentation
+            {t("docs.sidebar")}
           </span>
           <button
             id="docnav-close"
@@ -138,7 +141,7 @@ const linkClass = (id: string) => [
               >
                 <span class="inline-flex items-center gap-1 text-xs font-medium text-[rgb(var(--color-text-light))]">
                   <Icon name="mdi:chevron-left" class="w-4 h-4" />
-                  Previous
+                  {t("docs.previous")}
                 </span>
                 <span class="font-semibold text-[rgb(var(--color-primary))]">
                   {prev.title}
@@ -153,7 +156,7 @@ const linkClass = (id: string) => [
                 class="group flex flex-col gap-1 p-4 rounded-xl border border-[rgb(var(--color-border))] no-underline text-right hover:bg-[rgb(var(--color-secondary))] transition-colors sm:col-start-2"
               >
                 <span class="inline-flex items-center justify-end gap-1 text-xs font-medium text-[rgb(var(--color-text-light))]">
-                  Next
+                  {t("docs.next")}
                   <Icon name="mdi:chevron-right" class="w-4 h-4" />
                 </span>
                 <span class="font-semibold text-[rgb(var(--color-primary))]">

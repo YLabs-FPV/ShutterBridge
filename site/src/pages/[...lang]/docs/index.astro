@@ -1,0 +1,31 @@
+---
+import { getCollection, render } from "astro:content";
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import { docLang } from "../../../lib/docs";
+
+// Only build a docs home for locales that actually have translated docs.
+export async function getStaticPaths() {
+  const all = await getCollection("docs");
+  const byLang = new Map();
+  for (const d of all) {
+    const lang = docLang(d.id);
+    if (!byLang.has(lang)) byLang.set(lang, []);
+    byLang.get(lang).push(d);
+  }
+  return [...byLang.entries()].map(([lang, docs]) => {
+    const entry = docs.sort((a, b) => a.data.order - b.data.order)[0];
+    return { params: { lang }, props: { entry } };
+  });
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<DocsLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  currentId={entry.id}
+>
+  <Content />
+</DocsLayout>

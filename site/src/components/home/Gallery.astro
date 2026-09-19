@@ -1,32 +1,29 @@
 ---
-const slots = [
-  {
-    type: "video",
-    src: "/gallery/arming.mp4",
-    label: "Arm to record",
-    caption: "Recording starts the moment you arm; no extra button presses.",
-  },
-  {
-    type: "video",
-    src: "/gallery/osd.mp4",
-    label: "OSD in the goggles",
-    caption: "Live camera status overlaid right where you're looking.",
-  },
+import { getLangFromUrl, useTranslations, useData } from "../../i18n";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const d = useData(lang);
+
+const media = [
+  { type: "video", src: "/gallery/arming.mp4" },
+  { type: "video", src: "/gallery/osd.mp4" },
   {
     type: "themed-image",
     lightSrc: "/gallery/ui-light.webp",
     darkSrc: "/gallery/ui-dark.webp",
-    label: "Web UI",
-    caption: "Configure everything from a clean browser interface.",
   },
 ] as const;
+
+const items = d<{ label: string; caption: string }[]>("gallery.items");
+const slots = media.map((m, i) => ({ ...m, ...items[i] }));
 ---
 
 <section class="px-6 pt-8 pb-4" id="gallery">
   <div class="max-w-7xl mx-auto">
-    <h2 class="text-3xl font-bold text-center">See it in action</h2>
+    <h2 class="text-3xl font-bold text-center">{t("gallery.title")}</h2>
     <p class="mt-2 text-center text-[rgb(var(--color-text-muted))]">
-      Live camera status, right where you're looking
+      {t("gallery.subtitle")}
     </p>
 
     <div class="mt-8 grid gap-6 md:grid-cols-3">

@@ -2,7 +2,7 @@
 import BaseHead from "../components/BaseHead.astro";
 import Navbar from "../components/Navbar.astro";
 import Footer from "../components/Footer.astro";
-import { SITE_DESCRIPTION } from "../consts";
+import { getLangFromUrl, useTranslations } from "../i18n";
 
 interface Props {
   title: string;
@@ -10,13 +10,16 @@ interface Props {
   class?: string;
 }
 
-const { title, description = SITE_DESCRIPTION, class: className } = Astro.props;
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const { title, description = t("site.description"), class: className } =
+  Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={lang}>
   <head>
-    <BaseHead title={title} description={description} />
+    <BaseHead title={title} description={description} lang={lang} />
   </head>
   <body>
     <Navbar />
