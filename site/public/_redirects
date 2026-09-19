@@ -1,0 +1,16 @@
+# Locale redirects for un-prefixed entry paths. Handled by Cloudflare at the CDN
+# edge (before the Worker), so they work regardless of the Astro/adapter version
+# and the middleware-in-prod bug (withastro/astro#15463). Bare paths go to the
+# default locale (en); "/" still detects the visitor's locale via src/pages/index.astro.
+# Exact paths only (no wildcard) so image assets under /docs/... are never touched.
+/flash                  /en/flash/                  302
+/docs                   /en/docs/                   302
+/docs/overview          /en/docs/overview/          302
+/docs/compatibility     /en/docs/compatibility/     302
+/docs/hardware          /en/docs/hardware/          302
+/docs/wiring            /en/docs/wiring/            302
+/docs/flashing          /en/docs/flashing/          302
+/docs/setup             /en/docs/setup/             302
+/docs/web-ui            /en/docs/web-ui/            302
+/docs/status-led        /en/docs/status-led/        302
+/docs/troubleshooting   /en/docs/troubleshooting/   302
