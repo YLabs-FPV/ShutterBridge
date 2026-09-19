@@ -1,9 +1,13 @@
 ---
+export const prerender = false;
+
 import MainLayout from "../layouts/MainLayout.astro";
 import { getLangFromUrl, useTranslations, getLocalizedUrl } from "../i18n";
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
+
+Astro.response.status = 404;
 ---
 
 <MainLayout title={t("notFound.pageTitle")}>

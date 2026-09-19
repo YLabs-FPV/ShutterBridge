@@ -1,6 +1,5 @@
 ---
-// Dynamic locale redirect for ANY un-prefixed path (/docs, /docs/<any-slug>,
-// /flash, future pages...). No per-page config - add a doc and it just works.
+// Dynamic locale redirect for ANY un-prefixed path
 export const prerender = false;
 
 import { languages, defaultLang, type Language } from "../i18n";
@@ -14,7 +13,7 @@ if (/\.[a-z0-9]+$/i.test(path)) {
 const [first] = path.split("/").filter(Boolean);
 
 if (first && first in languages) {
-  return new Response("Not found", { status: 404 });
+  return Astro.rewrite("/404");
 }
 
 const stored = Astro.cookies.get("preferred-language")?.value;
