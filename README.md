@@ -115,6 +115,21 @@ pio run -t uploadfs
 `pack-localhost-dev-firmware.sh` bundles the build output into the site's local
 web flasher for development.
 
+### ESP32-C3 Super Mini
+
+The firmware also builds for the ESP32-C3 Super Mini (Nologo / Tenstar Robot
+clones). The web flasher only ships ESP32-S3 images, so flash it from source:
+
+```bash
+pio run -e esp32c3-supermini -t upload
+pio run -e esp32c3-supermini -t uploadfs
+```
+
+Wire the flight controller UART to pins **20 (RX)** and **21 (TX)**. The board
+has a plain blue LED (GPIO8) instead of an RGB one, so status is shown by blink
+pattern: slow blink = searching for the camera, double flash = someone is on the
+config Wi-Fi, solid = camera connected, fast blink = recording.
+
 Planning to contribute? See [CONTRIBUTING.md](CONTRIBUTING.md) for the dev setup,
 and how to submit changes.
 

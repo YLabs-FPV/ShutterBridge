@@ -273,7 +273,9 @@ bool GoProCamera::connect() {
     client_->setConnectTimeout(3000);
 
     if (!client_->connect(addr_)) {
-        Serial.println("[gopro] connect failed");
+        const int rc = client_->getLastError();
+        Serial.printf("[gopro] connect failed (rc=%d %s)\n", rc,
+                      NimBLEUtils::returnCodeToString(rc));
         return false;
     }
 
@@ -331,8 +333,12 @@ void GoProCamera::poll() {
             lastKeepMs_ = now;
             keepAlive();
         }
-        const bool stale       = status_.lastUpdateMs != 0 && (now - status_.lastUpdateMs) > 2500;
-        const bool noTelemetry = status_.lastUpdateMs == 0 && (now - connectedAtMs_) > 4000;
+        // Re-read the clock after the blocking writes above: a reply that lands during them
+        // stamps lastUpdateMs later than `now`, and the unsigned difference wraps to "stale"
+        const uint32_t last        = status_.lastUpdateMs;
+        const uint32_t t           = millis();
+        const bool     stale       = last != 0 && (t - last) > 2500;
+        const bool     noTelemetry = last == 0 && (t - connectedAtMs_) > 4000;
         if (stale || noTelemetry) {
             Serial.printf("[gopro] link dead (%s) - dropping\n", stale ? "stale" : "no telemetry");
             if (client_)
