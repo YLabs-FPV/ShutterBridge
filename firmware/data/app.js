@@ -1,6 +1,6 @@
 const OSD_FIELDS = ["Off", "Rec status", "Battery %", "Mode", "SD free", "Time left", "Resolution", "FPS"];
-const CAM_TYPE_NAMES = ["DJI Osmo (Nano)", "DJI Action / 360", "GoPro"];
-const OSMO_TYPE = 0, ACTION_TYPE = 1, GOPRO_TYPE = 2;
+const CAM_TYPE_NAMES = ["DJI Osmo (Nano)", "DJI Action / 360", "GoPro", "DJI Action 2"];
+const OSMO_TYPE = 0, ACTION_TYPE = 1, GOPRO_TYPE = 2, ACTION2_TYPE = 3;
 const CH_MIN = 900, CH_MAX = 2100, STEP = 25, GAP = 25;
 const PIPS = [900, 1000, 1200, 1500, 1800, 2000, 2100];
 
@@ -34,8 +34,11 @@ let chVals = [];
 let boundMac = "";
 let boundType = 0;
 
-// Resolution and FPS aren't reported by the Osmo Nano
-const osdFieldAvail = (k) => !(boundType === OSMO_TYPE && (k === 6 || k === 7));
+// Resolution and FPS aren't reported by the Osmo Nano; the Action 2 reports only
+// record status (from our own commands), battery and a fixed video mode
+const osdFieldAvail = (k) =>
+  !(boundType === OSMO_TYPE && (k === 6 || k === 7)) &&
+  !(boundType === ACTION2_TYPE && k >= 4);
 
 // ---- Tabs ----
 document.querySelectorAll(".tab").forEach((t) =>
@@ -136,7 +139,8 @@ function renderBound() {
   // Channels: hide functions the bound camera can't do.
   if (cfg) cfg.modes.forEach((m, i) => {
     if (m.name.startsWith("Preset")) $("mode" + i).hidden = boundType !== GOPRO_TYPE;
-    if (m.name === "Camera Mode") $("mode" + i).hidden = boundType === OSMO_TYPE;
+    if (m.name === "Camera Mode")
+      $("mode" + i).hidden = boundType === OSMO_TYPE || boundType === ACTION2_TYPE;
   });
 }
 
@@ -166,7 +170,10 @@ async function wizScan() {
       else await sleep(500);
     } catch (e) { await sleep(500); }
   }
-  list = (list || []).filter((d) => d.type === wizType);
+  // All DJI backends see the same advert (the scan can't tell an Action 2 apart), so list
+  // every DJI camera for any DJI type
+  const isDji = (t) => t === OSMO_TYPE || t === ACTION_TYPE || t === ACTION2_TYPE;
+  list = (list || []).filter((d) => d.type === wizType || (isDji(d.type) && isDji(wizType)));
   if (!list.length) {
     $("wizList").innerHTML =
       `<p class="hint">No matching camera found. Power it on, disconnect any phone app, then <a href="#" id="wizRetry">scan again</a>.</p>`;

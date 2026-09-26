@@ -35,7 +35,7 @@ struct Settings {
     uint8_t bleTxPower = 0;
 
     // --- Camera selection ---
-    uint8_t camType           = 0;   // 0 = DJI Osmo Series, 1 = DJI Action Series, 2 = GoPro
+    uint8_t camType           = 0;   // 0 = DJI Osmo Series, 1 = DJI Action Series, 2 = GoPro, 3 = DJI Action 2
     char    camMac[18]        = "";  // bound via Web UI scan; "" falls back to name scan
     char    camNamePrefix[16] = "OsmoNano";
 

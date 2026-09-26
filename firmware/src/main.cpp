@@ -2,6 +2,7 @@
 
 #include "StatusLed.h"
 #include "camera/BleTxPower.h"
+#include "camera/dji/DjiAction2Camera.h"
 #include "camera/dji/DjiActionCamera.h"
 #include "camera/dji/DjiOsmoCamera.h"
 #include "camera/gopro/GoProCamera.h"
@@ -16,10 +17,10 @@ static BetaflightMsp  fc(FC_UART, FC_BAUD, FC_RX_PIN, FC_TX_PIN, FC_RC_POLL_MS);
 static ChannelActions actions;
 static OsdRenderer    osd(fc, g_settings, OSD_UPDATE_MS, OSD_REFRESH_MS);
 static WebConfig      web(g_settings);
-static StatusLed      led(STATUS_LED_PIN);
+static StatusLed      led(STATUS_LED_PIN, STATUS_LED_RGB, STATUS_LED_ACTIVE_LOW);
 static Camera*        cam = nullptr;
 
-enum CamType : uint8_t { CAM_DJI_OSMO = 0, CAM_DJI_ACTION = 1, CAM_GOPRO = 2 };
+enum CamType : uint8_t { CAM_DJI_OSMO = 0, CAM_DJI_ACTION = 1, CAM_GOPRO = 2, CAM_DJI_ACTION2 = 3 };
 
 static Camera* makeCamera(const Settings& s) {
     switch (s.camType) {
@@ -27,6 +28,8 @@ static Camera* makeCamera(const Settings& s) {
             return new DjiActionCamera(s.camMac);
         case CAM_GOPRO:
             return new GoProCamera(s.camMac, "GoPro");
+        case CAM_DJI_ACTION2:
+            return new DjiAction2Camera(s.camMac);
         case CAM_DJI_OSMO:
         default:
             return new DjiOsmoCamera(s.camMac, s.camNamePrefix);
@@ -110,4 +113,10 @@ void loop() {
                       (unsigned long)(s.recElapsedS / 60), (unsigned long)(s.recElapsedS % 60),
                       s.batteryPct, rc.aux(1), armed, rc.valid ? "ok" : "--");
     }
+
+#if CONFIG_FREERTOS_UNICORE
+    // Single-core chips (ESP32-C3): loop() shares the only core with the camera task and
+    // the idle task - block for a tick so neither is starved
+    vTaskDelay(1);
+#endif
 }
