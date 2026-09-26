@@ -109,6 +109,10 @@ void WebConfig::poll(bool armed) {
     // Reconnect throttling in the camera backends keys off this: only slow BLE reconnects
     // when someone is actually on the Web UI
     g_apHasClient = apUp_ && WiFi.softAPgetStationNum() > 0;
+
+    // Deferred self-reboot after a config save (signed compare tolerates wrap)
+    if (rebootAtMs_ && (int32_t)(now - rebootAtMs_) >= 0)
+        ESP.restart();
 }
 
 void WebConfig::handleConfig() {
@@ -180,6 +184,15 @@ void WebConfig::handleStatus() {
 }
 
 void WebConfig::handleSave() {
+    // Boot-only fields: snapshot to detect a change that warrants a reboot
+    const uint8_t oldCamType = s_.camType;
+    char          oldMac[sizeof(s_.camMac)];
+    char          oldSsid[sizeof(s_.apSsid)];
+    char          oldPass[sizeof(s_.apPass)];
+    strncpy(oldMac, s_.camMac, sizeof(oldMac));
+    strncpy(oldSsid, s_.apSsid, sizeof(oldSsid));
+    strncpy(oldPass, s_.apPass, sizeof(oldPass));
+
     for (int i = 0; i < 4; i++) {
         int v = server_.arg("s" + String(i)).toInt();
         if (v >= 0 && v < (int)OsdField::_Count)
@@ -216,7 +229,20 @@ void WebConfig::handleSave() {
 
     s_.save();
     dirty_ = true;
-    server_.send(200, "text/plain", "ok");
+
+    // Reboot after the response flushes if a boot-only field changed (write already committed)
+    const bool needReboot = s_.camType != oldCamType ||
+                            strncmp(s_.camMac, oldMac, sizeof(oldMac)) != 0 ||
+                            strncmp(s_.apSsid, oldSsid, sizeof(oldSsid)) != 0 ||
+                            strncmp(s_.apPass, oldPass, sizeof(oldPass)) != 0;
+    if (needReboot) {
+        rebootAtMs_ = millis() + 600;
+        if (!rebootAtMs_)
+            rebootAtMs_ = 1;
+        server_.send(200, "text/plain", "reboot");
+    } else {
+        server_.send(200, "text/plain", "ok");
+    }
 }
 
 void WebConfig::handleScan() {
