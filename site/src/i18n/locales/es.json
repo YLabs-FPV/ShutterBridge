@@ -46,11 +46,34 @@
     "legendSupported": "Compatible",
     "legendPartial": "Parcial / condicional",
     "legendUnsupported": "No compatible",
-    "columns": ["Osmo (Nano)", "Action / 360", "GoPro"],
+    "legendUntested": "Compatible, sin probar",
+    "hardware": {
+      "columns": [
+        "Cámara",
+        "Backend",
+        "Resultado",
+        "Probada por"
+      ],
+      "results": {
+        "worksLimited": "Funciona (limitaciones*)",
+        "worksFull": "Funciona por completo",
+        "worksPartial": "Funciona (no probada del todo)"
+      },
+      "by": {
+        "maintainer": "Mantenedor",
+        "community": "Comunidad"
+      },
+      "note": "* Consulta la limitación de grabación indicada arriba."
+    },
+    "columns": [
+      "Osmo (Nano)",
+      "Action / 360",
+      "GoPro"
+    ],
     "cameraNotes": [
       "Conexión, telemetría en el OSD, lectura del modo, grabación y foto. No puede cambiar entre foto y vídeo por BLE - el disparador solo saca una foto cuando la cámara ya está en modo Foto.",
       "Control total: cambio de modo, lectura de resolución/FPS, grabación y foto. Protocolo R-SDK con DUML para la batería. Emparejamiento por PIN. Probada en la Action 4.",
-      "Cambio de presets, carga por ID y sincronización del reloj desde la hora GPS del controlador de vuelo. Se empareja en la cámara. Todavía sin probar en hardware real."
+      "Cambio de presets, carga por ID y sincronización del reloj desde la hora GPS del controlador de vuelo. Se empareja en la cámara. Grabación y telemetría en el OSD verificadas en una HERO 12; algunas funciones aún sin confirmar."
     ],
     "featureLabels": [
       "Conexión + reconexión automática",

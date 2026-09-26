@@ -21,7 +21,12 @@ const cell = (s: Support) =>
     ? { icon: "mdi:check-circle", cls: "text-emerald-500" }
     : s === "partial"
       ? { icon: "mdi:circle-slice-5", cls: "text-[rgb(var(--color-accent))]" }
-      : { icon: "mdi:close-circle", cls: "text-[rgb(var(--color-danger))]" };
+      : s === "untested"
+        ? {
+            icon: "mdi:help-circle-outline",
+            cls: "text-[rgb(var(--color-text-muted))]",
+          }
+        : { icon: "mdi:close-circle", cls: "text-[rgb(var(--color-danger))]" };
 
 const columns: { label: string; key: keyof FeatureSupport }[] = [
   { label: columnLabels[0], key: "osmoNano" },
@@ -45,16 +50,20 @@ const features = FEATURE_SUPPORT.map((support, i) => ({
           </span>
           {cam.tested ? (
             <span class="inline-flex items-center gap-1 text-xs font-medium text-emerald-500">
-              <Icon name="mdi:check-decagram" class="w-4 h-4" /> {t("compat.tested")}
+              <Icon name="mdi:check-decagram" class="w-4 h-4" />{" "}
+              {t("compat.tested")}
             </span>
           ) : (
             <span class="inline-flex items-center gap-1 text-xs font-medium text-[rgb(var(--color-text-muted))]">
-              <Icon name="mdi:progress-wrench" class="w-4 h-4" /> {t("compat.untested")}
+              <Icon name="mdi:progress-wrench" class="w-4 h-4" />{" "}
+              {t("compat.untested")}
             </span>
           )}
         </div>
         <h3 class="mt-4 text-xl font-bold">{cam.name}</h3>
-        <p class="mt-2 text-sm text-[rgb(var(--color-text-muted))]">{cameraNotes[i]}</p>
+        <p class="mt-2 text-sm text-[rgb(var(--color-text-muted))]">
+          {cameraNotes[i]}
+        </p>
       </div>
     ))
   }
@@ -66,7 +75,9 @@ const features = FEATURE_SUPPORT.map((support, i) => ({
   <table class="w-full text-sm border-collapse">
     <thead>
       <tr class="bg-[rgb(var(--color-secondary))]">
-        <th class="text-left font-semibold px-4 py-3">{t("compat.featureHeader")}</th>
+        <th class="text-left font-semibold px-4 py-3"
+          >{t("compat.featureHeader")}</th
+        >
         {
           columns.map((c) => (
             <th class="font-semibold px-4 py-3 whitespace-nowrap">{c.label}</th>
@@ -121,18 +132,28 @@ const features = FEATURE_SUPPORT.map((support, i) => ({
   class="mt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-[rgb(var(--color-text-muted))]"
 >
   <span class="inline-flex items-center gap-1.5"
-    ><Icon name="mdi:check-circle" class="w-4 h-4 text-emerald-500" /> {t("compat.legendSupported")}</span
+    ><Icon name="mdi:check-circle" class="w-4 h-4 text-emerald-500" />
+    {t("compat.legendSupported")}</span
   >
   <span class="inline-flex items-center gap-1.5"
     ><Icon
       name="mdi:circle-slice-5"
       class="w-4 h-4 text-[rgb(var(--color-accent))]"
-    /> {t("compat.legendPartial")}</span
+    />
+    {t("compat.legendPartial")}</span
   >
   <span class="inline-flex items-center gap-1.5"
     ><Icon
       name="mdi:close-circle"
       class="w-4 h-4 text-[rgb(var(--color-danger))]"
-    /> {t("compat.legendUnsupported")}</span
+    />
+    {t("compat.legendUnsupported")}</span
+  >
+  <span class="inline-flex items-center gap-1.5"
+    ><Icon
+      name="mdi:help-circle-outline"
+      class="w-4 h-4 text-[rgb(var(--color-text-muted))]"
+    />
+    {t("compat.legendUntested")}</span
   >
 </div>
