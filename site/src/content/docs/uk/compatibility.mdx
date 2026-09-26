@@ -5,6 +5,7 @@ order: 5
 ---
 
 import CameraMatrix from "../../../components/CameraMatrix.astro";
+import HardwareTable from "../../../components/HardwareTable.astro";
 import Admonition from "../../../components/docs/Admonition.astro";
 import { GITHUB_URL } from "../../../consts";
 
@@ -29,13 +30,7 @@ ShutterBridge сумісний з трьома родинами екшн-кам�
 Матриця вище показує, що підтримує кожен _бекенд_. Нижче - які конкретні
 моделі камер справді запускалися на залізі - мейнтейнером і спільнотою.
 
-| Камера             | Бекенд           | Результат             | Перевірив    |
-| ------------------ | ---------------- | --------------------- | ------------ |
-| DJI Osmo Nano      | Osmo (Nano)      | Працює (обмеження\*)  | Мейнтейнер   |
-| DJI Osmo Action 4  | Action / 360     | Працює повністю       | Мейнтейнер   |
-| GoPro (HERO9+)     | GoPro            | Ще не перевірено      | -            |
-
-_\* Дивись обмеження запису, зазначене вище._
+<HardwareTable />
 
 <Admonition type="tip" title="Спробував зі своєю камерою? Розкажи нам">
   Звіти будують цю таблицю - навіть "просто працює" корисно. Поділись результатом

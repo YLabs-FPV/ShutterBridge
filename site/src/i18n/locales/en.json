@@ -46,11 +46,34 @@
     "legendSupported": "Supported",
     "legendPartial": "Partial / conditional",
     "legendUnsupported": "Unsupported",
-    "columns": ["Osmo (Nano)", "Action / 360", "GoPro"],
+    "legendUntested": "Supported, untested",
+    "hardware": {
+      "columns": [
+        "Camera",
+        "Backend",
+        "Result",
+        "Tested by"
+      ],
+      "results": {
+        "worksLimited": "Works (limitations*)",
+        "worksFull": "Works fully",
+        "worksPartial": "Works (not fully-tested)"
+      },
+      "by": {
+        "maintainer": "Maintainer",
+        "community": "Community"
+      },
+      "note": "* See the recording limitation noted above."
+    },
+    "columns": [
+      "Osmo (Nano)",
+      "Action / 360",
+      "GoPro"
+    ],
     "cameraNotes": [
       "Connect, OSD telemetry, mode readout, record and photo. Can't switch photo/video over BLE - the shutter takes a photo only when the camera is already in Photo mode.",
       "Full control: mode switch, resolution/FPS readout, record and photo. R-SDK protocol with DUML for battery. Pairing via PIN. Tested on the Action 4.",
-      "Preset switching, load-by-ID and clock sync from FC GPS time. Bonds on the camera. Not yet tested on real hardware."
+      "Preset switching, load-by-ID and clock sync from FC GPS time. Bonds on the camera. Recording and OSD telemetry verified on a HERO 12; some features not yet confirmed."
     ],
     "featureLabels": [
       "Connect + auto-reconnect",
