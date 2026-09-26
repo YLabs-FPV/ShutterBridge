@@ -331,8 +331,11 @@ void GoProCamera::poll() {
             lastKeepMs_ = now;
             keepAlive();
         }
-        const bool stale       = status_.lastUpdateMs != 0 && (now - status_.lastUpdateMs) > 2500;
-        const bool noTelemetry = status_.lastUpdateMs == 0 && (now - connectedAtMs_) > 4000;
+        // Replies during the blocking writes above can stamp `lastUpdateMs` after `now`; re-read
+        // the clock and use a signed diff so that "future" gap can't wrap into a false "stale"
+        const uint32_t t = millis();
+        const bool stale = status_.lastUpdateMs != 0 && (int32_t)(t - status_.lastUpdateMs) > 2500;
+        const bool noTelemetry = status_.lastUpdateMs == 0 && (t - connectedAtMs_) > 4000;
         if (stale || noTelemetry) {
             Serial.printf("[gopro] link dead (%s) - dropping\n", stale ? "stale" : "no telemetry");
             if (client_)
