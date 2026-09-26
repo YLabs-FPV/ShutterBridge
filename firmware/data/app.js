@@ -190,9 +190,8 @@ function wizBind(mac) {
   boundType = wizType;
   renderBound();
   wizShow("wizDone");
-  // Start the save now and run the countdown in parallel, but gate the reboot on
-  // it: rebooting before the NVS write finishes drops the camera selection
-  const saved = postSave().then(() => true).catch(() => false);
+  // Gate the reboot on the save finishing; the countdown runs in parallel
+  const saved = postSave().then((body) => body).catch(() => null);
   let n = 3;
   $("wizCount").textContent = n;
   const t = setInterval(async () => {
@@ -200,12 +199,13 @@ function wizBind(mac) {
     $("wizCount").textContent = Math.max(n, 0);
     if (n <= 0) {
       clearInterval(t);
-      if (!(await saved)) {
+      const res = await saved;
+      if (res === null) {
         toast("Save failed - not rebooting", true);
         return;
       }
       closeWizard();
-      rebootFlow();
+      rebootFlow(res !== "reboot");
     }
   }, 1000);
 }
@@ -238,17 +238,15 @@ function collectConfig() {
 async function postSave() {
   const r = await fetch("/save", { method: "POST", body: collectConfig() });
   if (!r.ok) throw new Error("HTTP " + r.status);
+  return (await r.text()).trim();  // "ok" or "reboot"
 }
 
 async function onSave() {
   const btn = $("save");
   btn.disabled = true;
-  const rebootNeeded =
-    boundMac !== (cfg.mac || "") || boundType !== (+cfg.ctype || 0) ||
-    $("ssid").value !== cfg.ssid || $("pass").value !== cfg.pass;
   try {
-    await postSave();
-    if (rebootNeeded) return rebootFlow();
+    const res = await postSave();
+    if (res === "reboot") return rebootFlow(false);  // device reboots itself after the write
     cfg.mac = boundMac; cfg.ctype = boundType;
     cfg.ssid = $("ssid").value; cfg.pass = $("pass").value;
     setDirty(false);
@@ -260,10 +258,11 @@ async function onSave() {
   }
 }
 
-async function rebootFlow() {
+// trigger=false for saves (device reboots itself); the manual button passes true
+async function rebootFlow(trigger = true) {
   $("rebooting").hidden = false;
   $("rebootRefresh").hidden = true;
-  fetch("/reboot").catch(() => { });
+  if (trigger) fetch("/reboot").catch(() => { });
   await sleep(3000);
   for (let tries = 0; ; tries++) {
     await sleep(2000);
