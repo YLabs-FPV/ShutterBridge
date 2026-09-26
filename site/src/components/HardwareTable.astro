@@ -1,0 +1,47 @@
+---
+import { TESTED_ON } from "../consts";
+import { getLangFromUrl, useTranslations, useData } from "../i18n";
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const d = useData(lang);
+
+const columns = d<string[]>("compat.hardware.columns");
+const results = d<Record<string, string>>("compat.hardware.results");
+const by = d<Record<string, string>>("compat.hardware.by");
+---
+
+<div
+  class="overflow-x-auto rounded-2xl border border-[rgb(var(--color-border))]"
+>
+  <table class="w-full text-sm border-collapse">
+    <thead>
+      <tr class="bg-[rgb(var(--color-secondary))]">
+        {
+          columns.map((c, i) => (
+            <th
+              class={`font-semibold px-4 py-3 whitespace-nowrap ${i === 0 ? "text-left" : "text-left"}`}
+            >
+              {c}
+            </th>
+          ))
+        }
+      </tr>
+    </thead>
+    <tbody>
+      {
+        TESTED_ON.map((row, i) => (
+          <tr class={i % 2 ? "bg-[rgba(var(--color-secondary),0.4)]" : ""}>
+            <td class="px-4 py-2.5 text-left font-medium">{row.camera}</td>
+            <td class="px-4 py-2.5 text-left">{row.backend}</td>
+            <td class="px-4 py-2.5 text-left">{results[row.result]}</td>
+            <td class="px-4 py-2.5 text-left">{by[row.by]}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>
+<p class="mt-3 text-xs text-[rgb(var(--color-text-muted))]">
+  {t("compat.hardware.note")}
+</p>

@@ -5,6 +5,7 @@ order: 5
 ---
 
 import CameraMatrix from "../../../components/CameraMatrix.astro";
+import HardwareTable from "../../../components/HardwareTable.astro";
 import Admonition from "../../../components/docs/Admonition.astro";
 import { GITHUB_URL } from "../../../consts";
 
@@ -30,13 +31,7 @@ La matriz de arriba muestra lo que soporta cada _backend_. Debajo tienes qué
 modelos concretos de cámara se han probado realmente en hardware - por el
 mantenedor y por la comunidad.
 
-| Cámara             | Backend          | Resultado             | Probada por  |
-| ------------------ | ---------------- | --------------------- | ------------ |
-| DJI Osmo Nano      | Osmo (Nano)      | Funciona (limitaciones\*) | Mantenedor |
-| DJI Osmo Action 4  | Action / 360     | Funciona por completo | Mantenedor   |
-| GoPro (HERO9+)     | GoPro            | Aún sin probar        | -            |
-
-_\* Consulta la limitación de grabación indicada arriba._
+<HardwareTable />
 
 <Admonition type="tip" title="¿La probaste con tu cámara? Cuéntanoslo">
   Los reportes construyen esta tabla - incluso un "simplemente funciona" es útil. Comparte tu resultado

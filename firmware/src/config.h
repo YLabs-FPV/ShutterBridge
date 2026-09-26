@@ -1,6 +1,6 @@
 #pragma once
 
-#define FW_VERSION "0.1.0"
+#define FW_VERSION "0.1.1"
 
 // --- Board pin maps (BOARD_* is set per env in platformio.ini) ---
 #if defined(BOARD_ESP32C3_SUPERMINI)
