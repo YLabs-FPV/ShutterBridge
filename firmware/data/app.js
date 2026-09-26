@@ -190,16 +190,20 @@ function wizBind(mac) {
   boundType = wizType;
   renderBound();
   wizShow("wizDone");
-  // Fire the save but don't await it: the device persists to NVS, and a slow
-  // or dropped response must not freeze the countdown.
-  postSave().catch(() => { });
+  // Start the save now and run the countdown in parallel, but gate the reboot on
+  // it: rebooting before the NVS write finishes drops the camera selection
+  const saved = postSave().then(() => true).catch(() => false);
   let n = 3;
   $("wizCount").textContent = n;
-  const t = setInterval(() => {
+  const t = setInterval(async () => {
     n--;
     $("wizCount").textContent = Math.max(n, 0);
     if (n <= 0) {
       clearInterval(t);
+      if (!(await saved)) {
+        toast("Save failed - not rebooting", true);
+        return;
+      }
       closeWizard();
       rebootFlow();
     }
