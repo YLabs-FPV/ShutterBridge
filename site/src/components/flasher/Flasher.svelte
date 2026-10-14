@@ -1,6 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { FlashOptions, Transport as TransportT } from "esptool-js";
+  import type {
+    ESPLoader,
+    FlashOptions,
+    Transport as TransportT,
+  } from "esptool-js";
   import { GITHUB_URL } from "../../consts";
   import Usb from "@lucide/svelte/icons/usb";
   import Zap from "@lucide/svelte/icons/zap";
@@ -12,19 +16,50 @@
 
   export let manifestUrl = "/firmware/manifest.dev.json";
 
+  // id must match the PlatformIO env name
+  // chipFamily must match esptool-js's ESPLoader chip
+  type Board = { id: string; label: string; chipFamily: string };
+  const BOARDS: Board[] = [
+    {
+      id: "esp32s3-zero",
+      label: "Waveshare ESP32-S3-Zero",
+      chipFamily: "ESP32-S3",
+    },
+    {
+      id: "esp32c3-supermini",
+      label: "ESP32-C3 Super Mini",
+      chipFamily: "ESP32-C3",
+    },
+  ];
+
+  const PART_NAMES = [
+    "bootloader",
+    "partitions",
+    "boot_app0",
+    "firmware",
+    "littlefs",
+  ] as const;
+  const ASSET_RE = new RegExp(`^(.+)-(${PART_NAMES.join("|")})\\.bin$`);
+
   type Part = { path: string; offset: number };
   type FlashSpec = {
     flashMode?: FlashOptions["flashMode"];
     flashFreq?: FlashOptions["flashFreq"];
     flashSize?: FlashOptions["flashSize"];
   };
-  type FirmwareVersion = FlashSpec & { version: string; parts: Part[] };
+  type FirmwareVersion = FlashSpec & {
+    version: string;
+    board: string;
+    parts: Part[];
+  };
+  // A manifest version entry may omit `board` and inherit the manifest-level default instead
+  type ManifestVersion = Omit<FirmwareVersion, "board"> & { board?: string };
   type Manifest = FlashSpec & {
     name?: string;
-    chipFamily?: string;
+    board?: string;
     version?: string;
     parts?: Part[];
-    versions?: FirmwareVersion[];
+    versions?: ManifestVersion[];
   };
 
   type GhAsset = { name: string; browser_download_url: string };
@@ -39,6 +74,8 @@
     | "checking"
     | "unsupported"
     | "idle"
+    | "connecting"
+    | "ready"
     | "working"
     | "done"
     | "error";
@@ -62,12 +99,16 @@
   let state: State = "checking";
   let manifest: Manifest | null = null;
   let versions: FirmwareVersion[] = [];
+  let detectedBoard: Board | null = null;
+  let matchedVersions: FirmwareVersion[] = [];
   let selected = 0;
   let statusText = "";
   let percent = 0;
   let eraseFirst = false;
   let logLines: string[] = [];
   let logOpen = false;
+  let transport: TransportT | null = null;
+  let esploader: ESPLoader | null = null;
   let logEl: HTMLPreElement | null = null;
 
   function log(line: string) {
@@ -125,6 +166,11 @@
     state = "idle";
   });
 
+  // Releases tagged before multi-board support shipped used flat names (e.g. "bootloader.bin")
+  // and only ever built esp32s3-zero; attribute those to it so old releases keep working.
+  const LEGACY_RE = new RegExp(`^(${PART_NAMES.join("|")})\\.bin$`);
+  const LEGACY_BOARD = "esp32s3-zero";
+
   async function loadFromGitHub(r: string): Promise<FirmwareVersion[]> {
     const res = await fetch(
       `https://api.github.com/repos/${r}/releases?per_page=20`,
@@ -135,19 +181,40 @@
     );
     if (!res.ok) throw new Error(`GitHub API ${res.status}`);
     const releases = (await res.json()) as GhRelease[];
-    return releases
-      .filter((rel) => !rel.draft)
-      .map((rel) => ({
-        version: rel.tag_name || rel.name || "unknown",
-        parts: (rel.assets ?? [])
-          .filter((a) => a.name in OFFSETS)
-          .map((a) => ({
+    const out: FirmwareVersion[] = [];
+    for (const rel of releases) {
+      if (rel.draft) continue;
+      const version = rel.tag_name || rel.name || "unknown";
+      const byBoard = new Map<string, Part[]>();
+      for (const a of rel.assets ?? []) {
+        let board: string, part: string;
+        const m = a.name.match(ASSET_RE);
+        if (m) {
+          [, board, part] = m;
+        } else {
+          const lm = a.name.match(LEGACY_RE);
+          if (!lm) continue;
+          board = LEGACY_BOARD;
+          part = lm[1];
+        }
+        byBoard.set(board, [
+          ...(byBoard.get(board) ?? []),
+          {
             path: `/api/gh-asset?url=${encodeURIComponent(a.browser_download_url)}`,
-            offset: OFFSETS[a.name],
-          }))
-          .sort((a, b) => a.offset - b.offset),
-      }))
-      .filter((v) => v.parts.length > 0);
+            offset: OFFSETS[`${part}.bin`],
+          },
+        ]);
+      }
+      for (const [board, parts] of byBoard) {
+        if (parts.length !== PART_NAMES.length) continue; // incomplete set - skip
+        out.push({
+          version,
+          board,
+          parts: parts.sort((a, b) => a.offset - b.offset),
+        });
+      }
+    }
+    return out;
   }
 
   function normalize(m: Manifest): FirmwareVersion[] {
@@ -156,11 +223,14 @@
       flashFreq: m.flashFreq,
       flashSize: m.flashSize,
     };
+    const board = m.board ?? BOARDS[0].id;
     if (m.versions?.length) {
-      return m.versions.map((v) => ({ ...spec, ...v }));
+      return m.versions.map((v) => ({ ...spec, board, ...v }));
     }
     if (m.parts?.length) {
-      return [{ ...spec, version: m.version ?? "latest", parts: m.parts }];
+      return [
+        { ...spec, board, version: m.version ?? "latest", parts: m.parts },
+      ];
     }
     return [];
   }
@@ -182,41 +252,72 @@
     return files;
   }
 
+  async function connect() {
+    state = "connecting";
+    statusText = "Select your board's serial port...";
+    logLines = [];
+
+    try {
+      const { ESPLoader, Transport } = await import("esptool-js");
+      const port = await navigator.serial.requestPort();
+      transport = new Transport(port, true);
+      esploader = new ESPLoader({ transport, baudrate: 921600, terminal });
+
+      statusText = "Connecting...";
+      const description = await esploader.main();
+      log(`Detected ${description}`);
+
+      const chipFamily = esploader.chip.CHIP_NAME;
+      const board = BOARDS.find((b) => b.chipFamily === chipFamily);
+      if (!board)
+        throw new Error(
+          `Unrecognized chip (${chipFamily}) - no matching board.`,
+        );
+
+      matchedVersions = versions.filter((v) => v.board === board.id);
+      if (!matchedVersions.length) {
+        throw new Error(
+          `No published firmware found for ${board.label} (${chipFamily}).`,
+        );
+      }
+
+      detectedBoard = board;
+      selected = 0;
+      state = "ready";
+    } catch (err) {
+      state = "error";
+      statusText = err instanceof Error ? err.message : String(err);
+      try {
+        await transport?.disconnect();
+      } catch {}
+      transport = null;
+      esploader = null;
+    }
+  }
+
   async function flash() {
-    const fw = versions[selected];
-    if (!fw?.parts?.length) {
+    const fw = matchedVersions[selected];
+    if (!fw?.parts?.length || !transport || !esploader) {
       state = "error";
       statusText = "No firmware image available.";
       return;
     }
 
-    let transport: TransportT | null = null;
     state = "working";
     percent = 0;
-    logLines = [];
 
     try {
       statusText = "Loading firmware...";
-      const { ESPLoader, Transport } = await import("esptool-js");
       const fileArray = await loadParts(fw.parts);
       const totalBytes = fileArray.reduce((n, f) => n + f.data.length, 0);
       const before = fileArray.map((_, i) =>
         fileArray.slice(0, i).reduce((n, f) => n + f.data.length, 0),
       );
 
-      statusText = "Select your board's serial port...";
-      const port = await navigator.serial.requestPort();
-      transport = new Transport(port, true);
-
-      const loader = new ESPLoader({ transport, baudrate: 921600, terminal });
-      statusText = "Connecting...";
-      const chip = await loader.main();
-      log(`Detected ${chip}`);
-
       statusText = eraseFirst
         ? "Erasing, then writing..."
         : "Writing firmware...";
-      await loader.writeFlash({
+      await esploader.writeFlash({
         fileArray,
         flashMode: fw.flashMode ?? "keep",
         flashFreq: fw.flashFreq ?? "keep",
@@ -249,6 +350,8 @@
       try {
         await transport?.disconnect();
       } catch {}
+      transport = null;
+      esploader = null;
     }
   }
 
@@ -256,6 +359,17 @@
     state = "idle";
     percent = 0;
     statusText = "";
+    detectedBoard = null;
+    matchedVersions = [];
+  }
+
+  async function cancelReady() {
+    try {
+      await transport?.disconnect();
+    } catch {}
+    transport = null;
+    esploader = null;
+    reset();
   }
 </script>
 
@@ -286,7 +400,7 @@
       >
         {#if state === "done"}
           <CheckCircle class="w-7 h-7 text-emerald-500" />
-        {:else if state === "working" || state === "checking"}
+        {:else if state === "working" || state === "checking" || state === "connecting"}
           <Loader class="w-7 h-7 animate-spin" />
         {:else}
           <Usb class="w-7 h-7" />
@@ -307,14 +421,13 @@
         {#if state === "idle"}
           {#if versions.length}
             Installs the firmware straight from your browser over USB. No app,
-            no drivers.
-            {#if versions.length === 1}<span class="block my-2 text-sm"
-                >Version {versions[0].version}</span
-              >{/if}
+            no drivers. Connect your board to detect it automatically.
           {:else}
             No firmware has been published yet. Check back once the first
             release is out.
           {/if}
+        {:else if state === "ready" && detectedBoard}
+          Detected {detectedBoard.label}. Choose a version and flash.
         {:else if state === "done"}
           Unplug and re-plug the board, then connect to the <code
             >ShutterBridge</code
@@ -346,7 +459,15 @@
 
       <div class="flex flex-col items-center gap-3">
         {#if state === "idle" && versions.length}
-          {#if versions.length > 1}
+          <button
+            on:click={connect}
+            class="inline-flex items-center gap-2 px-6 py-3 my-2 rounded-lg font-semibold text-white bg-[rgb(var(--color-primary))] hover:bg-[rgb(var(--color-primary-hover))] transition-colors"
+          >
+            <Usb class="w-5 h-5" />
+            Connect
+          </button>
+        {:else if state === "ready" && detectedBoard}
+          {#if matchedVersions.length > 1}
             <label
               class="flex items-center gap-2 my-2 text-sm text-[rgb(var(--color-text-muted))]"
             >
@@ -355,7 +476,7 @@
                 bind:value={selected}
                 class="rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-card-bg))] text-[rgb(var(--color-text))] px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))]"
               >
-                {#each versions as v, i}
+                {#each matchedVersions as v, i}
                   <option value={i}>{v.version}</option>
                 {/each}
               </select>
@@ -381,6 +502,13 @@
             />
             Full wipe (erase saved settings and pairing)
           </label>
+
+          <button
+            on:click={cancelReady}
+            class="text-sm text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text))] underline"
+          >
+            Cancel
+          </button>
         {:else if state === "error" || state === "done"}
           <button
             on:click={reset}

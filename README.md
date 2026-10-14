@@ -96,8 +96,8 @@ _❓ = supported by the backend but not yet verified on hardware._
 The easiest path is the browser-based flasher - no toolchain required:
 
 1. Plug the board into a data-capable USB-C port.
-2. Open the [**web flasher**](https://shutterbridge.yarosfpv.com/flash) in Chrome or Edge and click **Install**.
-3. Pick the board's serial port when prompted and wait for it to finish.
+2. Open the [**web flasher**](https://shutterbridge.yarosfpv.com/flash) in Chrome or Edge, click **Connect** and pick the board's serial port when prompted.
+3. It detects the board automatically; click **Install** and wait for it to finish.
 4. Re-plug the board, connect to the `ShutterBridge` Wi-Fi access point (password `shutterbridge`), and open `http://10.0.0.1` to finish setup.
 
 See the [full documentation](https://shutterbridge.yarosfpv.com/docs) for wiring, Betaflight OSD setup and per-camera notes.
