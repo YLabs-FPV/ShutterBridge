@@ -5,11 +5,24 @@ order: 46
 ---
 
 import LedStatus from "../../../components/docs/LedStatus.astro";
+import { BOARDS } from "../../../consts";
 
-El LED RGB integrado de la placa muestra de un vistazo lo que está haciendo ShutterBridge:
+ShutterBridge muestra lo que está haciendo de un vistazo a través del LED
+integrado - lo que ves depende de tu placa.
 
-<LedStatus />
+## {BOARDS["esp32s3-zero"].name}
+
+Esta placa tiene un LED RGB, así que los estados se distinguen por color:
+
+<LedStatus variant="rgb" />
 
 El LED refleja primero el enlace con la cámara: una vez que hay una cámara conectada muestra verde
 (o rojo parpadeante mientras graba), independientemente del Wi-Fi. El azul solo aparece cuando no hay
 ninguna cámara conectada pero alguien está en el Wi-Fi de configuración.
+
+## {BOARDS["esp32c3-supermini"].name}
+
+Esta placa tiene en cambio un LED de un solo color, así que los mismos estados se
+distinguen por el patrón de parpadeo:
+
+<LedStatus variant="mono" />

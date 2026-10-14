@@ -1,7 +1,7 @@
 {
   "site": {
     "titleSuffix": "OSD y control de cámara de acción para Betaflight (DJI, GoPro)",
-    "description": "Firmware para ESP32-S3 que conecta Betaflight con cámaras DJI Osmo, DJI Action y GoPro - estado de la cámara en tiempo real en tu OSD de FPV, con interruptores de radio asignados a grabar, foto y modo.",
+    "description": "Firmware para ESP32-S3 / ESP32-C3 que conecta Betaflight con cámaras DJI Osmo, DJI Action y GoPro - estado de la cámara en tiempo real en tu OSD de FPV, con interruptores de radio asignados a grabar, foto y modo.",
     "docsTitleSuffix": "Documentación de ShutterBridge"
   },
   "nav": {
@@ -14,7 +14,7 @@
   "hero": {
     "by": "por",
     "slogan": "Tu cámara, en el OSD. Tus interruptores, en el disparador.",
-    "subtitle": "Firmware para ESP32-S3 que conecta un controlador de vuelo Betaflight con una cámara DJI Osmo, DJI Action o GoPro - el estado de la cámara se dibuja directamente en tus gafas de FPV, con interruptores de radio asignados a grabar, foto y cambio de modo",
+    "subtitle": "Firmware para ESP32-S3 / ESP32-C3 que conecta un controlador de vuelo Betaflight con una cámara DJI Osmo, DJI Action o GoPro - el estado de la cámara se dibuja directamente en tus gafas de FPV, con interruptores de radio asignados a grabar, foto y cambio de modo",
     "flash": "Instalar el firmware",
     "docs": "Leer la documentación",
     "source": "Código fuente"
@@ -92,8 +92,8 @@
     "subtitle": "Tres cosas para empezar a volar",
     "items": [
       {
-        "name": "Waveshare ESP32-S3-Zero",
-        "detail": "ESP32-S3FH4R2 - 4 MB de flash, 2 MB de PSRAM, USB nativo. La placa para la que está hecho ShutterBridge."
+        "name": "Una de dos placas",
+        "detail": "Waveshare ESP32-S3-Zero (4 MB de flash, 2 MB de PSRAM, USB nativo) o ESP32-C3 Super Mini (4 MB de flash, USB-Serial/JTAG)."
       },
       {
         "name": "Betaflight 2025.12 o posterior",
@@ -108,10 +108,10 @@
   "flash": {
     "pageTitle": "Instalador",
     "heading": "Instalador web",
-    "subtitle": "Instala el firmware en la {board} directamente desde tu navegador.",
+    "subtitle": "Instala el firmware de ShutterBridge en tu placa directamente desde tu navegador.",
     "warnTitle": "Antes de instalar",
-    "warnOnlyStrong": "Instala solo en la {board}.",
-    "warnOnlyRest": "Este firmware está hecho para esa placa exacta. Instalarlo en otra placa no funcionará y podría dejarla necesitando una recuperación manual.",
+    "warnOnlyStrong": "Instala solo en una placa compatible.",
+    "warnOnlyRest": "El instalador detecta tu placa automáticamente y solo ofrece el firmware hecho para ella. Instalarlo en una placa no compatible no funcionará y podría dejarla necesitando una recuperación manual.",
     "warnReplaceStrong": "La instalación reemplaza el firmware",
     "warnReplaceRest": "que ya tiene la placa.",
     "infoBefore": "¿Primera vez con esta placa? Después de instalar, conéctate al punto de acceso Wi-Fi",
@@ -161,6 +161,28 @@
       {
         "label": "Config Wi-Fi",
         "pattern": "Fijo",
+        "meaning": "Hay un dispositivo conectado al Wi-Fi de ShutterBridge"
+      }
+    ],
+    "statesMono": [
+      {
+        "label": "Conectada",
+        "pattern": "Fijo",
+        "meaning": "Cámara conectada e inactiva (sin grabar)"
+      },
+      {
+        "label": "Grabando",
+        "pattern": "Parpadeo rápido",
+        "meaning": "Cámara conectada y grabando"
+      },
+      {
+        "label": "Buscando",
+        "pattern": "Parpadeo lento",
+        "meaning": "Buscando la cámara - aún sin conectar"
+      },
+      {
+        "label": "Config Wi-Fi",
+        "pattern": "Doble destello",
         "meaning": "Hay un dispositivo conectado al Wi-Fi de ShutterBridge"
       }
     ]

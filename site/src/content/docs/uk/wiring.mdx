@@ -5,6 +5,7 @@ order: 20
 ---
 
 import ThemedImage from "../../../components/docs/ThemedImage.astro"
+import { BOARDS } from "../../../consts"
 
 Підключи плату до вільного UART твого польотного контролера.
 
@@ -17,13 +18,26 @@ import ThemedImage from "../../../components/docs/ThemedImage.astro"
 | GND   | GND                 |
 | 5V    | 5V                  |
 
-TX йде на RX, а RX йде на TX - лінії перехрещуються.
+TX йде на RX, а RX йде на TX - лінії перехрещуються. Який GPIO є яким -
+залежить від твоєї плати:
+
+### {BOARDS["esp32s3-zero"].name}
 
 <ThemedImage
-    alt="Схема підключення"
-    lightSrc="/docs/wiring/light/diagram.svg"
-    darkSrc="/docs/wiring/dark/diagram.svg"
-    maxWidth="650px" />
+    alt="Схема підключення для Waveshare ESP32-S3-Zero"
+    lightSrc="/docs/wiring/light/diagram-s3.svg"
+    darkSrc="/docs/wiring/dark/diagram-s3.svg"
+    maxWidth="500px" />
+
+<hr />
+
+### {BOARDS["esp32c3-supermini"].name}
+
+<ThemedImage
+    alt="Схема підключення для ESP32-C3 Super Mini"
+    lightSrc="/docs/wiring/light/diagram-c3.svg"
+    darkSrc="/docs/wiring/dark/diagram-c3.svg"
+    maxWidth="500px" />
 
 ## Betaflight
 

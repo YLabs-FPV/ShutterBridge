@@ -5,11 +5,24 @@ order: 46
 ---
 
 import LedStatus from "../../../components/docs/LedStatus.astro";
+import { BOARDS } from "../../../consts";
 
-The board's on-board RGB LED shows what ShutterBridge is doing at a glance:
+ShutterBridge shows what it's doing through the on-board LED at a glance - what
+you see depends on your board.
 
-<LedStatus />
+## {BOARDS["esp32s3-zero"].name}
+
+This board has an RGB LED, so states are told apart by colour:
+
+<LedStatus variant="rgb" />
 
 The LED reflects the camera link first: once a camera is connected it shows green
 (or blinking red while recording), regardless of Wi-Fi. Blue only appears when no
 camera is connected but someone is on the config Wi-Fi.
+
+## {BOARDS["esp32c3-supermini"].name}
+
+This board has a single-colour LED instead, so the same states are told apart by
+blink pattern:
+
+<LedStatus variant="mono" />

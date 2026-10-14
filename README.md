@@ -11,7 +11,7 @@ status drawn straight on your goggles, and RC switches mapped to record, photo
 and mode.
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-2563eb.svg?style=flat-square)](LICENSE)
-[![Board](https://img.shields.io/badge/board-ESP32--S3-e7352c?style=flat-square&logo=espressif&logoColor=white)](https://www.waveshare.com/esp32-s3-zero.htm)
+[![Board](https://img.shields.io/badge/board-ESP32--S3%20%2F%20ESP32--C3-e7352c?style=flat-square&logo=espressif&logoColor=white)](https://shutterbridge.yarosfpv.com/docs/hardware)
 [![Betaflight](https://img.shields.io/badge/Betaflight-2025.12%2B-32c766?style=flat-square)](https://betaflight.com)
 [![Built with PlatformIO](https://img.shields.io/badge/built%20with-PlatformIO-f5822a?style=flat-square&logo=platformio&logoColor=white)](https://platformio.org)
 
@@ -25,7 +25,7 @@ and mode.
 
 ## What it does
 
-ShutterBridge runs on a small ESP32-S3 board wired to your flight controller. It
+ShutterBridge runs on a small ESP32-S3 or ESP32-C3 board wired to your flight controller. It
 talks to your action camera over Bluetooth LE and to Betaflight over MSP, so you
 get two things in flight:
 
@@ -87,7 +87,7 @@ _❓ = supported by the backend but not yet verified on hardware._
 
 ## What you need
 
-- **Waveshare ESP32-S3-Zero** (ESP32-S3FH4R2 - 4 MB flash, 2 MB PSRAM, native USB) - the board ShutterBridge is built for.
+- **One of two boards** - **Waveshare ESP32-S3-Zero** (ESP32-S3FH4R2: 4 MB flash, 2 MB PSRAM, native USB) or **ESP32-C3 Super Mini** (ESP32-C3FH4: 4 MB flash, no PSRAM, USB-Serial/JTAG).
 - **Betaflight 2025.12 or newer** on your flight controller - talks to the bridge over MSP and draws the OSD elements.
 - **A supported action camera** - a DJI Osmo / Action or a GoPro HERO9 or newer.
 
@@ -104,18 +104,23 @@ See the [full documentation](https://shutterbridge.yarosfpv.com/docs) for wiring
 
 ## Building from source
 
-The firmware is a [PlatformIO](https://platformio.org) project. From the `firmware/` folder:
+The firmware is a [PlatformIO](https://platformio.org) project targeting two boards:
+the Waveshare ESP32-S3-Zero (env `esp32s3-zero`, the default) and the ESP32-C3 Super
+Mini (env `esp32c3-supermini`). From the `firmware/` folder:
 
 ```bash
-# Build and flash the firmware over USB
+# Build and flash the firmware over USB (defaults to esp32s3-zero)
 pio run -t upload
 
 # Build and upload the Web UI (LittleFS) image
 pio run -t uploadfs
+
+# For the ESP32-C3 Super Mini instead, add -e esp32c3-supermini to either command
+pio run -e esp32c3-supermini -t upload
 ```
 
-`pack-localhost-dev-firmware.sh` bundles the build output into the site's local
-web flasher for development.
+`pack-localhost-dev-firmware.sh [env]` bundles the build output into the site's local
+web flasher for development (defaults to `esp32s3-zero`).
 
 Planning to contribute? See [CONTRIBUTING.md](CONTRIBUTING.md) for the dev setup,
 and how to submit changes.
@@ -124,7 +129,7 @@ and how to submit changes.
 
 | Path        | What's inside                                                     |
 | ----------- | ----------------------------------------------------------------- |
-| `firmware/` | ESP32-S3 firmware (PlatformIO) and the on-device Web UI.          |
+| `firmware/` | ESP32-S3 / ESP32-C3 firmware (PlatformIO) and the on-device Web UI. |
 | `site/`     | The website, documentation and browser-based web flasher (Astro). |
 
 ## License

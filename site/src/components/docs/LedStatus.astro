@@ -1,19 +1,35 @@
 ---
 import { getLangFromUrl, useData } from "../../i18n";
 
+interface Props {
+  // "rgb": addressable WS2812, states told apart by colour (Waveshare ESP32-S3-Zero).
+  // "mono": plain single-colour LED, states told apart by blink pattern instead
+  // (ESP32-C3 Super Mini) - see StatusLed::updateMono in firmware/src/StatusLed.cpp.
+  variant?: "rgb" | "mono";
+}
+const { variant = "rgb" } = Astro.props;
+
 const lang = getLangFromUrl(Astro.url);
 const d = useData(lang);
 
-// Structural (colour + blink) stays here; the labels live in the locale files.
-const style = [
-  { color: "#22c55e", blink: false },
-  { color: "#ef4444", blink: true },
-  { color: "#f59e0b", blink: true },
-  { color: "#3b82f6", blink: false },
+// Structural (colour + animation) stays here; the labels live in the locale files.
+// Order matches led.states / led.statesMono: Connected, Recording, Searching, Config Wi-Fi.
+const RGB_STYLE = [
+  { color: "#22c55e", anim: "solid" },
+  { color: "#ef4444", anim: "blink-slow" },
+  { color: "#f59e0b", anim: "blink-slow" },
+  { color: "#3b82f6", anim: "solid" },
+];
+const MONO_STYLE = [
+  { color: "#3b82f6", anim: "solid" },
+  { color: "#3b82f6", anim: "blink-fast" },
+  { color: "#3b82f6", anim: "blink-slow" },
+  { color: "#3b82f6", anim: "double-flash" },
 ];
 
+const style = variant === "mono" ? MONO_STYLE : RGB_STYLE;
 const text = d<{ label: string; pattern: string; meaning: string }[]>(
-  "led.states",
+  variant === "mono" ? "led.statesMono" : "led.states",
 );
 const states = style.map((s, i) => ({ ...s, ...text[i] }));
 ---
@@ -23,7 +39,7 @@ const states = style.map((s, i) => ({ ...s, ...text[i] }));
     states.map((s) => (
       <div class="led-row">
         <span
-          class:list={["led-dot", { "led-dot-blink": s.blink }]}
+          class:list={["led-dot", `led-dot-${s.anim}`]}
           style={`--led: ${s.color}`}
         />
         <div class="led-text">
@@ -63,8 +79,14 @@ const states = style.map((s, i) => ({ ...s, ...text[i] }));
     background: var(--led);
     box-shadow: 0 0 10px var(--led);
   }
-  .led-dot-blink {
+  .led-dot-blink-slow {
     animation: led-blink 1s steps(1) infinite;
+  }
+  .led-dot-blink-fast {
+    animation: led-blink 0.3s steps(1) infinite;
+  }
+  .led-dot-double-flash {
+    animation: led-double-flash 1.5s steps(1) infinite;
   }
   .led-text {
     display: flex;
@@ -102,8 +124,30 @@ const states = style.map((s, i) => ({ ...s, ...text[i] }));
       opacity: 0.2;
     }
   }
+  /* Two quick flashes (0-100ms, 250-350ms) then off for the rest of a 1.5s cycle -
+     mirrors the double-flash timing in StatusLed::updateMono */
+  @keyframes led-double-flash {
+    0%,
+    6% {
+      opacity: 1;
+    }
+    7%,
+    16% {
+      opacity: 0.2;
+    }
+    17%,
+    23% {
+      opacity: 1;
+    }
+    24%,
+    100% {
+      opacity: 0.2;
+    }
+  }
   @media (prefers-reduced-motion: reduce) {
-    .led-dot-blink {
+    .led-dot-blink-slow,
+    .led-dot-blink-fast,
+    .led-dot-double-flash {
       animation: none;
     }
   }

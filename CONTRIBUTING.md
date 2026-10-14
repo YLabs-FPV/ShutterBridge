@@ -34,16 +34,21 @@ sure the site builds (`pnpm build` in `site/`).
 
 ### Firmware (`firmware/`)
 
-A [PlatformIO](https://platformio.org) project for the Waveshare ESP32-S3-Zero.
+A [PlatformIO](https://platformio.org) project targeting two boards: the Waveshare
+ESP32-S3-Zero (env `esp32s3-zero`, the default) and the ESP32-C3 Super Mini (env
+`esp32c3-supermini`).
 
 ```bash
 cd firmware
-pio run -t upload      # build + flash the firmware over USB
-pio run -t uploadfs    # build + upload the Web UI (LittleFS) image
+pio run -t upload                        # build + flash esp32s3-zero over USB
+pio run -t uploadfs                       # build + upload its Web UI (LittleFS) image
+pio run -e esp32c3-supermini -t upload    # same, for the C3 Super Mini
+pio run -e esp32c3-supermini -t uploadfs
 ```
 
-`pack-localhost-dev-firmware.sh` copies the build output into the site's local web
-flasher so you can test flashing end to end.
+`pack-localhost-dev-firmware.sh [env]` copies the build output into the site's local
+web flasher so you can test flashing end to end (defaults to `esp32s3-zero`; pass
+`esp32c3-supermini` to pack the other board).
 
 ### Site (`site/`)
 
