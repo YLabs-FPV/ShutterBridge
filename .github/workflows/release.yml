@@ -14,8 +14,8 @@ permissions:
   contents: write
 
 env:
-  PIO_ENV: esp32s3-zero
-  # Flash offsets - must match src/components/flasher/Flasher.svelte (OFFSETS)
+  # Flash offsets - identical for every board we target (same partition table,
+  # same bootloader-at-0x0 layout) - must match src/components/flasher/Flasher.svelte (OFFSETS)
   OFFSET_BOOTLOADER: "0x0"
   OFFSET_PARTITIONS: "0x8000"
   OFFSET_BOOT_APP0: "0xe000"
@@ -23,8 +23,19 @@ env:
   OFFSET_LITTLEFS: "0x310000"
 
 jobs:
-  release:
+  build:
+    name: Build (${{ matrix.env }})
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.ver.outputs.tag }}
+      version: ${{ steps.ver.outputs.version }}
+    strategy:
+      matrix:
+        include:
+          - env: esp32s3-zero
+            chip: esp32s3
+          - env: esp32c3-supermini
+            chip: esp32c3
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -68,46 +79,78 @@ jobs:
 
       - name: Build firmware
         working-directory: firmware
-        run: pio run -e "$PIO_ENV"
+        run: pio run -e "${{ matrix.env }}"
 
       - name: Build filesystem (Web UI)
         working-directory: firmware
-        run: pio run -e "$PIO_ENV" -t buildfs
+        run: pio run -e "${{ matrix.env }}" -t buildfs
 
       - name: Collect flashable images
-        id: collect
         run: |
           set -euo pipefail
-          BUILD="firmware/.pio/build/$PIO_ENV"
+          BUILD="firmware/.pio/build/${{ matrix.env }}"
           BOOT_APP0=$(find ~/.platformio/packages/framework-arduinoespressif32/tools/partitions -name boot_app0.bin | head -n1)
-          mkdir -p dist
-          cp "$BUILD/bootloader.bin" dist/bootloader.bin
-          cp "$BUILD/partitions.bin" dist/partitions.bin
-          cp "$BOOT_APP0"            dist/boot_app0.bin
-          cp "$BUILD/firmware.bin"   dist/firmware.bin
-          cp "$BUILD/littlefs.bin"   dist/littlefs.bin
+          DEST="dist/${{ matrix.env }}"
+          mkdir -p "$DEST"
+          cp "$BUILD/bootloader.bin" "$DEST/bootloader.bin"
+          cp "$BUILD/partitions.bin" "$DEST/partitions.bin"
+          cp "$BOOT_APP0"            "$DEST/boot_app0.bin"
+          cp "$BUILD/firmware.bin"   "$DEST/firmware.bin"
+          cp "$BUILD/littlefs.bin"   "$DEST/littlefs.bin"
           echo "Collected:"
-          ls -l dist
+          ls -l "$DEST"
 
       - name: Build single merged image (for manual esptool flashing)
         run: |
           set -euo pipefail
-          MERGED="dist/ShutterBridge-${{ steps.ver.outputs.version }}-merged.bin"
-          esptool --chip esp32s3 merge_bin -o "$MERGED" \
+          DEST="dist/${{ matrix.env }}"
+          MERGED="$DEST/ShutterBridge-${{ steps.ver.outputs.version }}-${{ matrix.env }}-merged.bin"
+          esptool --chip ${{ matrix.chip }} merge_bin -o "$MERGED" \
             --flash_mode dio --flash_freq 80m --flash_size 4MB \
-            "$OFFSET_BOOTLOADER" dist/bootloader.bin \
-            "$OFFSET_PARTITIONS" dist/partitions.bin \
-            "$OFFSET_BOOT_APP0"  dist/boot_app0.bin \
-            "$OFFSET_FIRMWARE"   dist/firmware.bin \
-            "$OFFSET_LITTLEFS"   dist/littlefs.bin
+            "$OFFSET_BOOTLOADER" "$DEST/bootloader.bin" \
+            "$OFFSET_PARTITIONS" "$DEST/partitions.bin" \
+            "$OFFSET_BOOT_APP0"  "$DEST/boot_app0.bin" \
+            "$OFFSET_FIRMWARE"   "$DEST/firmware.bin" \
+            "$OFFSET_LITTLEFS"   "$DEST/littlefs.bin"
           echo "Merged image:"
           ls -l "$MERGED"
+
+      - name: Rename parts with board prefix
+        run: |
+          set -euo pipefail
+          cd "dist/${{ matrix.env }}"
+          for f in bootloader partitions boot_app0 firmware littlefs; do
+            mv "$f.bin" "${{ matrix.env }}-$f.bin"
+          done
+          ls -l
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.env }}
+          path: dist/${{ matrix.env }}/*
+          if-no-files-found: error
+
+  release:
+    name: Draft release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: firmware-*
+          merge-multiple: true
+
+      - name: List collected files
+        run: ls -l dist
 
       - name: Draft release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.ver.outputs.tag }}
-          name: ShutterBridge ${{ steps.ver.outputs.tag }}
+          tag_name: ${{ needs.build.outputs.tag }}
+          name: ShutterBridge ${{ needs.build.outputs.tag }}
           draft: true
           generate_release_notes: true
           files: dist/*
