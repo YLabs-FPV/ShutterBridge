@@ -40,12 +40,13 @@ class WebConfig {
    private:
     void startAp();
     void stopAp();
-    void handleConfig();  // GET /config.json
-    void handleSave();    // POST /save
-    void handleStatus();  // GET /status.json
-    void handleScan();    // GET /scan  (BLE scan for cameras of the selected type)
-    void handlePreset();  // GET /preset (GoPro-only preset switching)
-    void handleMode();    // GET /mode?m=photo|video (photo/video switch)
+    void handleConfig();   // GET /config.json
+    void handleSave();     // POST /save
+    void handleStatus();   // GET /status.json
+    void handleScan();     // GET /scan  (BLE scan for cameras of the selected type)
+    void handlePreset();   // GET /preset (GoPro-only preset switching)
+    void handleMode();     // GET /mode?m=photo|video (photo/video switch)
+    void handleShutter();  // GET /shutter?a=start|stop|photo (all backends)
 
     Settings&           s_;
     WebServer           server_;

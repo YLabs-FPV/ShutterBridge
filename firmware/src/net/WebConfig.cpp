@@ -41,6 +41,7 @@ void WebConfig::begin() {
     server_.on("/scan", [this]() { handleScan(); });
     server_.on("/preset", [this]() { handlePreset(); });
     server_.on("/mode", [this]() { handleMode(); });
+    server_.on("/shutter", [this]() { handleShutter(); });
     server_.on("/save", HTTP_POST, [this]() { handleSave(); });
     server_.on("/reboot", [this]() {
         server_.send(200, "text/plain", "rebooting");
@@ -371,4 +372,24 @@ void WebConfig::handleMode() {
     const CamMode cm = (m == "photo" || m == "0") ? CamMode::Photo : CamMode::Video;
     const bool    ok = camera_->setMode(cm);
     server_.send(ok ? 200 : 400, "text/plain", ok ? "ok" : "setMode failed / unsupported");
+}
+
+void WebConfig::handleShutter() {
+    if (!camera_ || !camera_->isConnected()) {
+        server_.send(409, "text/plain", "camera offline");
+        return;
+    }
+    const String a = server_.arg("a");
+    bool         ok;
+    if (a == "start")
+        ok = camera_->startRecord();
+    else if (a == "stop")
+        ok = camera_->stopRecord();
+    else if (a == "photo")
+        ok = camera_->takePhoto();
+    else {
+        server_.send(400, "text/plain", "need ?a=start|stop|photo");
+        return;
+    }
+    server_.send(ok ? 200 : 400, "text/plain", ok ? "ok" : "command failed");
 }
