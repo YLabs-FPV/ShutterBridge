@@ -4,16 +4,29 @@ description: Плата та компоненти, на яких працює Sh
 order: 10
 ---
 
-import { BOARD_NAME } from "../../../consts";
+import { BOARDS } from "../../../consts";
 
-ShutterBridge розрахований на **{BOARD_NAME}** (ESP32-S3FH4R2: 4 МБ флеш, 2 МБ PSRAM,
-нативний USB). Інші плати ESP32-S3 можуть працювати, але не перевірені.
+ShutterBridge підтримує дві плати - обери ту, що в тебе є:
 
-<img src="/docs/hardware/esp32-s3.webp" style={{ height: "150px" }} alt="Плата Waveshare ESP32 S3 Mini" />
+### {BOARDS["esp32s3-zero"].name}
+
+{BOARDS["esp32s3-zero"].chip}. Інші плати ESP32-S3 можуть працювати, але не перевірені.
+
+<img src={BOARDS["esp32s3-zero"].image} style={{ height: "150px" }} alt={BOARDS["esp32s3-zero"].name} />
+
+<hr />
+
+### {BOARDS["esp32c3-supermini"].name}
+
+{BOARDS["esp32c3-supermini"].chip}. Інші плати ESP32-C3 можуть працювати, але не перевірені.
+
+<img src={BOARDS["esp32c3-supermini"].image} style={{ height: "150px" }} alt={BOARDS["esp32c3-supermini"].name} />
+
+<hr />
 
 ## Тобі знадобиться
 
-- Плата {BOARD_NAME}.
+- Одна з плат вище.
 - Польотний контролер з **Betaflight 2025.12 або новіше** та
   вільним UART.
 - Сумісна екшн-камера - DJI Osmo / Action або GoPro HERO9 чи новіша.

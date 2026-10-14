@@ -1,25 +1,35 @@
 #!/usr/bin/env bash
 # Build the ShutterBridge firmware + LittleFS image and copy the flashable
-# parts into the website's public/firmware/ folder (served by esp-web-tools).
+# parts into the website's public/firmware/<env>/ folder (served by esp-web-tools
+# in dev - see site/public/firmware/manifest.dev.json, which has one entry per board).
 #
-# Usage:  ./pack-web-firmware.sh [--fs-only]
+# Usage:  ./pack-localhost-dev-firmware.sh [env] [--fs-only]
+#   env         PlatformIO env to build: esp32s3-zero (default) or esp32c3-supermini.
 #   --fs-only   Rebuild only the LittleFS image (use when just the web UI in
 #               data/ changed and src/ is untouched -- much faster).
 set -euo pipefail
 
 ENV=esp32s3-zero
+FS_ONLY=0
+for arg in "$@"; do
+  case "$arg" in
+    --fs-only) FS_ONLY=1 ;;
+    *)         ENV="$arg" ;;
+  esac
+done
+
 FW_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD="$FW_DIR/.pio/build/$ENV"
-DEST="$FW_DIR/../site/public/firmware"
+DEST="$FW_DIR/../site/public/firmware/$ENV"
 BOOT_APP0="$HOME/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin"
 
 cd "$FW_DIR"
 
-if [[ "${1:-}" == "--fs-only" ]]; then
-  echo ">> Building LittleFS image only"
+if [[ "$FS_ONLY" == "1" ]]; then
+  echo ">> Building LittleFS image only ($ENV)"
   pio run -e "$ENV" -t buildfs
 else
-  echo ">> Building firmware + LittleFS image"
+  echo ">> Building firmware + LittleFS image ($ENV)"
   pio run -e "$ENV"
   pio run -e "$ENV" -t buildfs
 fi
@@ -33,4 +43,4 @@ cp "$BUILD/littlefs.bin"    "$DEST/littlefs.bin"
 
 echo ">> Copied to $DEST:"
 ls -l "$DEST"/*.bin
-echo ">> Done. manifest.dev.json offsets are unchanged; reload the flash page to serve the new binaries."
+echo ">> Done. manifest.dev.json already points at $ENV/ - reload the flash page to serve the new binaries."

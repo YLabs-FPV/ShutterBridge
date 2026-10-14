@@ -12,6 +12,7 @@ import remarkLocalizeDocLinks from './src/lib/remark-localize-doc-links.mjs';
 export default defineConfig({
   site: 'https://shutterbridge.yarosfpv.com',
   compressHTML: true,
+  session: false,
 
   markdown: {
     remarkPlugins: [remarkLocalizeDocLinks],

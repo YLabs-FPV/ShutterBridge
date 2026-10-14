@@ -4,12 +4,31 @@ export const AUTHOR = "YarosFPV";
 // English fallback description. Per-locale copy lives in src/i18n/locales/*.json
 // (site.description) and is what the pages actually render.
 export const SITE_DESCRIPTION =
-  "ESP32-S3 firmware linking Betaflight to DJI Osmo, DJI Action and GoPro cameras - live camera status on your FPV OSD, RC switches mapped to record, photo and mode.";
+  "ESP32-S3 / ESP32-C3 firmware linking Betaflight to DJI Osmo, DJI Action and GoPro cameras - live camera status on your FPV OSD, RC switches mapped to record, photo and mode.";
 
 export const GITHUB_URL = "https://github.com/YLabs-FPV/ShutterBridge";
 export const YOUTUBE_URL = "https://youtube.com/@yarosfpv";
 
-export const BOARD_NAME = "Waveshare ESP32-S3-Zero";
+export interface BoardMeta {
+  name: string;
+  chip: string;
+  image?: string;
+}
+
+// Boards the firmware targets - id must match the PlatformIO env name (see
+// firmware/platformio.ini and site/src/components/flasher/Flasher.svelte's BOARDS).
+export const BOARDS: Record<string, BoardMeta> = {
+  "esp32s3-zero": {
+    name: "Waveshare ESP32-S3-Zero",
+    chip: "ESP32-S3FH4R2: 4 MB flash, 2 MB PSRAM, native USB",
+    image: "/docs/hardware/esp32-s3.webp",
+  },
+  "esp32c3-supermini": {
+    name: "ESP32-C3 Super Mini",
+    chip: "ESP32-C3FH4: 4 MB flash, no PSRAM, USB-Serial/JTAG",
+    image: "/docs/hardware/esp32-c3.webp",
+  },
+};
 
 export type Support = "yes" | "no" | "partial" | "untested";
 

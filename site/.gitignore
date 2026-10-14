@@ -2,8 +2,8 @@
 dist/
 # generated types
 .astro/
-# local firmware build artifact (served by the flasher in dev)
-public/firmware/*.bin
+# local firmware build artifact (served by the flasher in dev), one subfolder per board
+public/firmware/**/*.bin
 
 # dependencies
 node_modules/

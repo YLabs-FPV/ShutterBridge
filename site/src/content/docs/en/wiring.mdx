@@ -5,6 +5,7 @@ order: 20
 ---
 
 import ThemedImage from "../../../components/docs/ThemedImage.astro"
+import { BOARDS } from "../../../consts"
 
 Connect the board to a spare UART on your flight controller.
 
@@ -17,13 +18,26 @@ Connect the board to a spare UART on your flight controller.
 | GND   | GND               |
 | 5V    | 5V                |
 
-TX goes to RX and RX goes to TX - the lines cross over.
+TX goes to RX and RX goes to TX - the lines cross over. Which GPIO is which
+depends on your board:
+
+### {BOARDS["esp32s3-zero"].name}
 
 <ThemedImage
-    alt="Wiring diagram"
-    lightSrc="/docs/wiring/light/diagram.svg"
-    darkSrc="/docs/wiring/dark/diagram.svg"
-    maxWidth="650px" />
+    alt="Wiring diagram for the Waveshare ESP32-S3-Zero"
+    lightSrc="/docs/wiring/light/diagram-s3.svg"
+    darkSrc="/docs/wiring/dark/diagram-s3.svg"
+    maxWidth="500px" />
+
+<hr />
+
+### {BOARDS["esp32c3-supermini"].name}
+
+<ThemedImage
+    alt="Wiring diagram for the ESP32-C3 Super Mini"
+    lightSrc="/docs/wiring/light/diagram-c3.svg"
+    darkSrc="/docs/wiring/dark/diagram-c3.svg"
+    maxWidth="500px" />
 
 ## Betaflight
 

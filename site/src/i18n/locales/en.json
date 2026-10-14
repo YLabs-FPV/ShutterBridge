@@ -1,7 +1,7 @@
 {
   "site": {
     "titleSuffix": "Betaflight action camera OSD & control (DJI, GoPro)",
-    "description": "ESP32-S3 firmware linking Betaflight to DJI Osmo, DJI Action and GoPro cameras - live camera status on your FPV OSD, RC switches mapped to record, photo and mode.",
+    "description": "ESP32-S3 / ESP32-C3 firmware linking Betaflight to DJI Osmo, DJI Action and GoPro cameras - live camera status on your FPV OSD, RC switches mapped to record, photo and mode.",
     "docsTitleSuffix": "ShutterBridge docs"
   },
   "nav": {
@@ -14,7 +14,7 @@
   "hero": {
     "by": "by",
     "slogan": "Your camera, on the OSD. Your switches, on the shutter.",
-    "subtitle": "ESP32-S3 firmware that links a Betaflight flight controller to a DJI Osmo, DJI Action or GoPro camera - live camera status drawn straight on your FPV goggles, and RC switches mapped to record, photo and mode switching",
+    "subtitle": "ESP32-S3 / ESP32-C3 firmware that links a Betaflight flight controller to a DJI Osmo, DJI Action or GoPro camera - live camera status drawn straight on your FPV goggles, and RC switches mapped to record, photo and mode switching",
     "flash": "Flash the firmware",
     "docs": "Read the docs",
     "source": "Source code"
@@ -92,8 +92,8 @@
     "subtitle": "Three things to get flying",
     "items": [
       {
-        "name": "Waveshare ESP32-S3-Zero",
-        "detail": "ESP32-S3FH4R2 - 4 MB flash, 2 MB PSRAM, native USB. The board ShutterBridge is built for."
+        "name": "One of two boards",
+        "detail": "Waveshare ESP32-S3-Zero (4 MB flash, 2 MB PSRAM, native USB) or ESP32-C3 Super Mini (4 MB flash, USB-Serial/JTAG)."
       },
       {
         "name": "Betaflight 2025.12 or newer",
@@ -108,10 +108,10 @@
   "flash": {
     "pageTitle": "Flasher",
     "heading": "Web flasher",
-    "subtitle": "Flash the {board} straight from your browser.",
+    "subtitle": "Flash your ShutterBridge board straight from your browser.",
     "warnTitle": "Before you flash",
-    "warnOnlyStrong": "Only flash the {board}.",
-    "warnOnlyRest": "This firmware is built for that exact board. Flashing a different board won't work and may leave it needing manual recovery.",
+    "warnOnlyStrong": "Only flash a supported board.",
+    "warnOnlyRest": "The flasher detects your board automatically and only offers firmware built for it. Flashing an unsupported board won't work and may leave it needing manual recovery.",
     "warnReplaceStrong": "Flashing replaces the firmware",
     "warnReplaceRest": "already on the board.",
     "infoBefore": "First time on this board? After flashing, connect to the",
@@ -161,6 +161,28 @@
       {
         "label": "Config Wi-Fi",
         "pattern": "Solid",
+        "meaning": "A device is connected to the ShutterBridge Wi-Fi"
+      }
+    ],
+    "statesMono": [
+      {
+        "label": "Connected",
+        "pattern": "Solid",
+        "meaning": "Camera connected and idle (not recording)"
+      },
+      {
+        "label": "Recording",
+        "pattern": "Fast blink",
+        "meaning": "Camera connected and recording"
+      },
+      {
+        "label": "Searching",
+        "pattern": "Slow blink",
+        "meaning": "Looking for the camera - not connected yet"
+      },
+      {
+        "label": "Config Wi-Fi",
+        "pattern": "Double flash",
         "meaning": "A device is connected to the ShutterBridge Wi-Fi"
       }
     ]
