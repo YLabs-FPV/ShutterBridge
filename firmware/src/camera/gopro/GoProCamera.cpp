@@ -273,7 +273,9 @@ bool GoProCamera::connect() {
     client_->setConnectTimeout(3000);
 
     if (!client_->connect(addr_)) {
-        Serial.println("[gopro] connect failed");
+        const int rc = client_->getLastError();
+        Serial.printf("[gopro] connect failed (rc=%d %s)\n", rc,
+                      NimBLEUtils::returnCodeToString(rc));
         return false;
     }
 
