@@ -117,9 +117,8 @@ async function loadConfig() {
 function applyOpMode() {
   const rec = +$("op").value === 1;
   $("funccard").classList.toggle("disabled", rec);
-  $("controlscard").classList.toggle("disabled", rec);
   $("ophint").textContent = rec
-    ? "Recording starts on arm and stops on disarm, using the delays above. Manual camera controls are off"
+    ? "Recording starts on arm and stops on disarm, using the delays above. AUX switches below are ignored; the Controls card still works for manual testing"
     : "Camera actions are mapped to the AUX switches below";
 }
 
@@ -127,9 +126,11 @@ function renderBound() {
   $("boundModel").textContent = boundMac ? (CAM_TYPE_NAMES[boundType] || "Camera") : "No camera";
   $("bound").textContent = boundMac || "not bound";
 
-  // Controls: mode switch for Action/GoPro, presets for GoPro only
+  // Controls: shutter (start/stop/photo) on every backend, mode switch for Action/GoPro,
+  // presets for GoPro only
   const canMode = boundMac && (boundType === ACTION_TYPE || boundType === GOPRO_TYPE);
-  $("controlscard").hidden = !canMode;
+  $("controlscard").hidden = !boundMac;
+  $("modectl").hidden = !canMode;
   $("presetctl").hidden = boundType !== GOPRO_TYPE;
   $("clockcard").hidden = boundType !== GOPRO_TYPE;  // GPS clock sync is GoPro-only
 
@@ -279,6 +280,12 @@ async function rebootFlow(trigger = true) {
 }
 
 // ---- Live controls ----
+async function sendShutter(a) {
+  try {
+    const r = await fetch("/shutter?a=" + a);
+    toast(r.ok ? "OK" : "Failed (" + r.status + ")", !r.ok);
+  } catch (e) { toast("Failed", true); }
+}
 async function setMode(m) {
   try {
     const r = await fetch("/mode?m=" + m);
@@ -410,6 +417,9 @@ async function tick() {
     $("rec").style.display = s.recording ? "inline-flex" : "none";
     $("elapsed").textContent = s.online ? fmt(s.elapsed) : "--:--";
     $("mode").textContent = s.online ? (s.mode || "-").toUpperCase() : "-";
+    $("recstart").hidden = s.mode === "photo";
+    $("recstop").hidden = s.mode === "photo";
+    $("takephoto").hidden = s.mode === "video";
     const format = [s.res, s.fps ? s.fps + "fps" : ""].filter(Boolean).join(" ");
     $("fmt").textContent = s.online && format ? format : "-";
     $("batt").textContent = s.online ? s.batt + "%" : "--";
@@ -448,6 +458,9 @@ document.querySelectorAll("#wizType .wiz-types button").forEach((b) =>
 document.querySelectorAll(".wiz-cancel").forEach((b) => b.addEventListener("click", closeWizard));
 $("reboot").addEventListener("click", () => { if (confirm("Reboot the bridge?")) rebootFlow(); });
 $("rebootRefresh").addEventListener("click", () => location.reload());
+$("recstart").addEventListener("click", () => sendShutter("start"));
+$("recstop").addEventListener("click", () => sendShutter("stop"));
+$("takephoto").addEventListener("click", () => sendShutter("photo"));
 $("modevideo").addEventListener("click", () => setMode("video"));
 $("modephoto").addEventListener("click", () => setMode("photo"));
 document.querySelectorAll(".preset[data-group]").forEach((b) =>

@@ -70,11 +70,22 @@
 
         <div class="card" id="controlscard" hidden>
           <h2>Controls</h2>
+          <p class="hint">Trigger camera actions directly</p>
           <div class="row">
-            <label>Mode</label>
+            <label>Shutter</label>
             <div class="ctl btns">
-              <button type="button" id="modevideo">Video</button>
-              <button type="button" id="modephoto">Photo</button>
+              <button type="button" id="recstart">Start rec</button>
+              <button type="button" id="recstop">Stop rec</button>
+              <button type="button" id="takephoto">Take photo</button>
+            </div>
+          </div>
+          <div id="modectl" hidden>
+            <div class="row">
+              <label>Mode</label>
+              <div class="ctl btns">
+                <button type="button" id="modevideo">Video</button>
+                <button type="button" id="modephoto">Photo</button>
+              </div>
             </div>
           </div>
           <div id="presetctl" hidden>
@@ -95,8 +106,13 @@
             <div class="row">
               <label>Preset by ID</label>
               <div class="ctl split">
-                <input id="presetid" placeholder="0x00000000" autocomplete="off"
-                  autocapitalize="off" spellcheck="false" />
+                <input
+                  id="presetid"
+                  placeholder="0x00000000"
+                  autocomplete="off"
+                  autocapitalize="off"
+                  spellcheck="false"
+                />
                 <button type="button" id="presetload">Load</button>
               </div>
             </div>
@@ -120,14 +136,28 @@
           <div class="row">
             <label>Record start delay</label>
             <div class="ctl unit">
-              <input id="rdly" type="number" inputmode="numeric" min="0" max="60000" step="100" />
+              <input
+                id="rdly"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="60000"
+                step="100"
+              />
               <span>ms</span>
             </div>
           </div>
           <div class="row">
             <label>Record stop delay</label>
             <div class="ctl unit">
-              <input id="sdly" type="number" inputmode="numeric" min="0" max="60000" step="100" />
+              <input
+                id="sdly"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="60000"
+                step="100"
+              />
               <span>ms</span>
             </div>
           </div>
@@ -162,17 +192,34 @@
           <div class="row">
             <label>Name</label>
             <div class="ctl">
-              <input id="ssid" maxlength="32" autocomplete="off"
-                autocapitalize="off" spellcheck="false" />
+              <input
+                id="ssid"
+                maxlength="32"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+              />
             </div>
           </div>
           <div class="row">
             <label>Password</label>
             <div class="ctl pwd">
-              <input id="pass" type="password" maxlength="63" autocomplete="off"
-                autocapitalize="off" spellcheck="false" />
-              <button type="button" id="passtog" class="pwd-tog"
-                aria-label="Show password">Show</button>
+              <input
+                id="pass"
+                type="password"
+                maxlength="63"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+              />
+              <button
+                type="button"
+                id="passtog"
+                class="pwd-tog"
+                aria-label="Show password"
+              >
+                Show
+              </button>
             </div>
           </div>
           <div class="row">
