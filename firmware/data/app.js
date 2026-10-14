@@ -268,9 +268,11 @@ async function rebootFlow(trigger = true) {
   for (let tries = 0; ; tries++) {
     await sleep(2000);
     try {
-      const r = await fetch("/status.json", { cache: "no-store" });
+      // Right after the reboot the client's Wi-Fi stack may not yet know the AP
+      // dropped, so a request can hang well past the sleep interval
+      const r = await fetch("/status.json", { cache: "no-store", signal: AbortSignal.timeout(2500) });
       if (r.ok) { location.reload(); return; }
-    } catch (e) { /* AP still down, keep waiting */ }
+    } catch (e) { /* AP still down (or attempt timed out), keep waiting */ }
     if (tries === 6) {  // ~15s: auto-detect may have failed, offer a manual refresh
       $("rebootText").textContent =
         "Reconnect to the ShutterBridge Wi-Fi, then tap Refresh.";
