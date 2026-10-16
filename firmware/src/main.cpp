@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <NimBLEDevice.h>
 
 #include "StatusLed.h"
 #include "camera/BleTxPower.h"
@@ -9,6 +10,7 @@
 #include "config/Settings.h"
 #include "control/ChannelActions.h"
 #include "fc/BetaflightMsp.h"
+#include "net/BfBridge.h"
 #include "net/WebConfig.h"
 #include "osd/OsdRenderer.h"
 
@@ -17,7 +19,14 @@ static ChannelActions actions;
 static OsdRenderer    osd(fc, g_settings, OSD_UPDATE_MS, OSD_REFRESH_MS);
 static WebConfig      web(g_settings);
 static StatusLed      led(STATUS_LED_PIN, STATUS_LED_RGB, STATUS_LED_ACTIVE_LOW);
+static BfBridge       bridge(FC_UART);
 static Camera*        cam = nullptr;
+
+// Betaflight bridge mode: runtime-only (never saved), reboot to exit. While set,
+// the camera task self-exits and the loop pumps MSP bytes instead
+static volatile bool g_bridgeMode    = false;
+static volatile bool s_cameraStopped = false;
+static TaskHandle_t  s_cameraTask    = nullptr;
 
 enum CamType : uint8_t { CAM_DJI_OSMO = 0, CAM_DJI_ACTION = 1, CAM_GOPRO = 2 };
 
@@ -46,9 +55,30 @@ static void applyActions() {
 static void cameraTask(void*) {
     cam->begin();
     for (;;) {
+        // Self-exit between polls (never mid-BLE-call) so main can deinit NimBLE
+        if (g_bridgeMode) {
+            s_cameraStopped = true;
+            s_cameraTask    = nullptr;
+            vTaskDelete(nullptr);
+        }
         cam->poll();
         vTaskDelay(pdMS_TO_TICKS(20));
     }
+}
+
+static void enterBridgeMode() {
+    Serial.println("[bridge] entering Betaflight bridge mode (reboot to exit)");
+    g_bridgeMode = true;
+    web.setBridgeActive(true);  // so /status.json reports it across a page reload
+
+    // Wait for the task to self-exit, then release BLE
+    const uint32_t deadline = millis() + 2000;
+    while (!s_cameraStopped && millis() < deadline)
+        delay(10);
+    if (s_cameraStopped && NimBLEDevice::isInitialized())
+        NimBLEDevice::deinit(true);
+
+    bridge.begin();
 }
 
 void setup() {
@@ -61,7 +91,7 @@ void setup() {
                   g_settings.opMode, g_settings.webuiDisarmedOnly, g_settings.apSsid);
     cam = makeCamera(g_settings);
     // Start the BLE camera on its own core-0 task before the rest so NimBLE is up early
-    xTaskCreatePinnedToCore(cameraTask, "camera", 8192, nullptr, 1, nullptr, 0);
+    xTaskCreatePinnedToCore(cameraTask, "camera", 8192, nullptr, 1, &s_cameraTask, 0);
     fc.begin();
     applyActions();
     web.attachStatus(&cam->status(), &fc.rc());
@@ -71,6 +101,18 @@ void setup() {
 }
 
 void loop() {
+    // Bridge mode: just the MSP pump, the AP, and the LED
+    if (g_bridgeMode) {
+        web.poll(/*armed=*/false);  // armed=false keeps the AP up (reboot page)
+        bridge.loop();
+        led.showBridge(bridge.clientConnected());
+        return;
+    }
+    if (web.takeBridgeRequest()) {
+        enterBridgeMode();
+        return;
+    }
+
     fc.poll();
 
     const RcState& rc    = fc.rc();

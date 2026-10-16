@@ -275,6 +275,24 @@
           </p>
         </div>
         <div class="card">
+          <h2>Betaflight bridge</h2>
+          <p class="hint">
+            The bridge mode suspends camera features and opens a TCP port to
+            connect the Betaflight App directly to the flight controller. The
+            bridge is active until the device reboots.
+          </p>
+          <p class="hint">
+            Use the <b>Betaflight desktop or mobile app</b><br />
+            The browser version can't open raw TCP, so it won't connect.
+          </p>
+          <div class="row">
+            <label>Bridge mode</label>
+            <div class="ctl">
+              <button id="bfbridge" type="button">Enable</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
           <h2>Device</h2>
           <div class="row">
             <label>Reboot</label>
@@ -317,6 +335,18 @@
             Rebooting in <span id="wizCount">3</span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div id="bridging" class="overlay" hidden>
+      <div class="overlay-box">
+        <div class="overlay-title">Betaflight bridge active</div>
+        <div class="overlay-text">
+          Camera features are suspended. Connect the Betaflight App via
+          <b>Manual connection</b> to <b>tcp://10.0.0.1:5761</b>.<br />
+          Reboot to return to normal operation.
+        </div>
+        <button id="bridgeReboot" class="wide" type="button">Reboot</button>
       </div>
     </div>
 

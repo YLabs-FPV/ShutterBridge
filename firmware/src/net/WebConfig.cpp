@@ -42,6 +42,7 @@ void WebConfig::begin() {
     server_.on("/preset", [this]() { handlePreset(); });
     server_.on("/mode", [this]() { handleMode(); });
     server_.on("/shutter", [this]() { handleShutter(); });
+    server_.on("/bridge", [this]() { handleBridge(); });
     server_.on("/save", HTTP_POST, [this]() { handleSave(); });
     server_.on("/reboot", [this]() {
         server_.send(200, "text/plain", "rebooting");
@@ -154,6 +155,11 @@ void WebConfig::handleConfig() {
 }
 
 void WebConfig::handleStatus() {
+    if (bridgeActive_) {
+        server_.send(200, "application/json", "{\"bridge\":1}");
+        return;
+    }
+
     JsonDocument doc;
     if (camStatus_) {
         const CameraStatus& s = *camStatus_;
@@ -249,6 +255,11 @@ void WebConfig::handleSave() {
 void WebConfig::handleScan() {
     // Async so the ~4 s scan doesn't block the loop: kick it off, answer {"scanning":1} until
     // done, then return the result array. The front-end polls until it gets the array
+    if (!NimBLEDevice::isInitialized()) {
+        server_.send(200, "application/json", "[]");
+        return;
+    }
+
     constexpr uint32_t SCAN_MS = 4000;
     NimBLEScan*        scan    = NimBLEDevice::getScan();
     const uint32_t     now     = millis();
@@ -392,4 +403,9 @@ void WebConfig::handleShutter() {
         return;
     }
     server_.send(ok ? 200 : 400, "text/plain", ok ? "ok" : "command failed");
+}
+
+void WebConfig::handleBridge() {
+    bridgeReq_ = true;
+    server_.send(200, "text/plain", "bridge");
 }

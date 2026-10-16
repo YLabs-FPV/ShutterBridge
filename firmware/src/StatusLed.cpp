@@ -29,6 +29,38 @@ void StatusLed::writeMono(bool on) {
     digitalWrite(pin_, on != activeLow_ ? HIGH : LOW);
 }
 
+void StatusLed::showBridge(bool clientConnected) {
+    if (pin_ < 0)
+        return;
+    if (rgb_)
+        showBridgeRgb(clientConnected);
+    else
+        showBridgeMono(clientConnected);
+}
+
+void StatusLed::showBridgeRgb(bool clientConnected) {
+    uint8_t r, g, b;
+    if (clientConnected) {
+        // solid violet = a bridge client (TCP/WS) is connected
+        r = 48;
+        g = 0;
+        b = 48;
+    } else {
+        // fast violet blink = bridge up, waiting for a client
+        const bool on = (millis() / 300) % 2;
+        r             = on ? 48 : 0;
+        g             = 0;
+        b             = on ? 48 : 0;
+    }
+    write(r, g, b);
+}
+
+void StatusLed::showBridgeMono(bool clientConnected) {
+    // solid = a bridge client is connected, fast blink = waiting for one
+    const bool on = clientConnected || (millis() / 300) % 2;
+    writeMono(on);
+}
+
 void StatusLed::update(bool camOnline, bool recording, bool wifiClient) {
     if (pin_ < 0)
         return;

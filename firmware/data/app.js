@@ -394,6 +394,7 @@ const fmt = (s) => { s = s || 0; return Math.floor(s / 60) + ":" + String(s % 60
 async function tick() {
   try {
     const s = await (await fetch("/status.json")).json();
+    if (s.bridge) { showBridgeUi(); return; }
     chVals = s.ch || [];
 
     // Auto-detect: assign the first AUX channel (index >= 4) that moved from its baseline.
@@ -459,6 +460,20 @@ document.querySelectorAll("#wizType .wiz-types button").forEach((b) =>
   b.addEventListener("click", () => { wizType = +b.dataset.type; wizScan(); }));
 document.querySelectorAll(".wiz-cancel").forEach((b) => b.addEventListener("click", closeWizard));
 $("reboot").addEventListener("click", () => { if (confirm("Reboot the bridge?")) rebootFlow(); });
+
+function showBridgeUi() {
+  clearInterval(tickTimer);
+  $("bridging").hidden = false;
+}
+
+$("bfbridge").addEventListener("click", async () => {
+  if (!confirm("Enter Betaflight bridge mode? Camera features stop until you reboot.")) return;
+  try {
+    await fetch("/bridge");  // device tears down BLE and starts the MSP bridge
+    showBridgeUi();
+  } catch (e) { toast("Bridge failed", true); }
+});
+$("bridgeReboot").addEventListener("click", rebootFlow);
 $("rebootRefresh").addEventListener("click", () => location.reload());
 $("recstart").addEventListener("click", () => sendShutter("start"));
 $("recstop").addEventListener("click", () => sendShutter("stop"));
@@ -472,5 +487,5 @@ $("presetload").addEventListener("click", () => {
   if (id) sendPreset("id=" + encodeURIComponent(id));
 });
 loadConfig();
-setInterval(tick, 500);
+const tickTimer = setInterval(tick, 500);
 tick();
