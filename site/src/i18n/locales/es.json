@@ -162,6 +162,11 @@
         "label": "Config Wi-Fi",
         "pattern": "Fijo",
         "meaning": "Hay un dispositivo conectado al Wi-Fi de ShutterBridge"
+      },
+      {
+        "label": "Modo puente",
+        "pattern": "Violeta",
+        "meaning": "Puente Betaflight activo - parpadea hasta que el Configurator se conecta, luego fijo"
       }
     ],
     "statesMono": [
@@ -184,6 +189,11 @@
         "label": "Config Wi-Fi",
         "pattern": "Doble destello",
         "meaning": "Hay un dispositivo conectado al Wi-Fi de ShutterBridge"
+      },
+      {
+        "label": "Modo puente",
+        "pattern": "Parpadeo rápido",
+        "meaning": "Puente Betaflight activo - parpadeo rápido hasta que el Configurator se conecta, luego fijo"
       }
     ]
   }

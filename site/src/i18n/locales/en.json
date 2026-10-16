@@ -162,6 +162,11 @@
         "label": "Config Wi-Fi",
         "pattern": "Solid",
         "meaning": "A device is connected to the ShutterBridge Wi-Fi"
+      },
+      {
+        "label": "Bridge mode",
+        "pattern": "Violet",
+        "meaning": "Betaflight bridge active - blinks until the Configurator connects, then solid"
       }
     ],
     "statesMono": [
@@ -184,6 +189,11 @@
         "label": "Config Wi-Fi",
         "pattern": "Double flash",
         "meaning": "A device is connected to the ShutterBridge Wi-Fi"
+      },
+      {
+        "label": "Bridge mode",
+        "pattern": "Fast blink",
+        "meaning": "Betaflight bridge active - fast blink until the Configurator connects, then solid"
       }
     ]
   }

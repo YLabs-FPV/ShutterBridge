@@ -1,0 +1,46 @@
+---
+title: Betaflight Bridge
+description: Turn the board into a wireless MSP link for the Betaflight Configurator.
+order: 44
+---
+
+import Admonition from "../../../components/docs/Admonition.astro";
+
+Bridge mode turns ShutterBridge into a transparent wireless MSP link: it exposes
+the flight controller's serial port over Wi-Fi so the Betaflight Configurator can
+connect to the FC without a USB cable. The board becomes a plain pass-through - no
+camera control, no OSD - until it reboots.
+
+<Admonition type="warning" title="Camera features stop">
+  Entering bridge mode suspends all camera functionality - recording, OSD, the
+  Bluetooth link - for the rest of the session. The board does this to free the
+  radio for Wi-Fi. It is temporary: a reboot returns to normal operation, and the
+  mode is never saved.
+</Admonition>
+
+## Enable it
+
+1. Open the web UI (`http://10.0.0.1`) and go to the **System** tab.
+2. Under **Betaflight bridge**, press **Enable** and confirm.
+
+The page shows a full-screen notice while the bridge is active. The on-board LED
+turns **violet** (see [Status LED](/docs/status-led)).
+
+## Connect the Configurator
+
+Use the Betaflight Configurator **desktop or mobile app**:
+
+1. In the Configurator, choose the **Manual** connection option.
+2. Enter the address **`tcp://10.0.0.1:5761`**.
+3. Connect as usual.
+
+<Admonition type="info" title="Installed app only">
+  The browser version at app.betaflight.com can't reach the bridge. Browsers have
+  no raw-TCP API, so a `tcp://` target is unreachable from a web page however it's
+  routed. Use the installed desktop or mobile app.
+</Admonition>
+
+## Exit
+
+Reboot the board to leave bridge mode and return to normal camera operation - power
+cycle it, or press **Reboot** on the notice shown while the bridge is active.

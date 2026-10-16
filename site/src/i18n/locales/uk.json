@@ -162,6 +162,11 @@
         "label": "Config Wi-Fi",
         "pattern": "Постійний",
         "meaning": "Пристрій підключений до Wi-Fi ShutterBridge"
+      },
+      {
+        "label": "Режим моста",
+        "pattern": "Фіолетовий",
+        "meaning": "Міст Betaflight активний - блимає, поки Configurator не підключиться, потім постійний"
       }
     ],
     "statesMono": [
@@ -184,6 +189,11 @@
         "label": "Config Wi-Fi",
         "pattern": "Подвійний спалах",
         "meaning": "Пристрій підключений до Wi-Fi ShutterBridge"
+      },
+      {
+        "label": "Режим моста",
+        "pattern": "Швидке блимання",
+        "meaning": "Міст Betaflight активний - швидке блимання, поки Configurator не підключиться, потім постійний"
       }
     ]
   }
