@@ -8,10 +8,13 @@ class StatusLed {
     }
     void begin();
     void update(bool camOnline, bool recording, bool wifiClient);
+    void showBridge(bool clientConnected);
 
    private:
     void updateRgb(bool camOnline, bool recording, bool wifiClient, uint32_t now);
     void updateMono(bool camOnline, bool recording, bool wifiClient, uint32_t now);
+    void showBridgeRgb(bool clientConnected);
+    void showBridgeMono(bool clientConnected);
     void write(uint8_t r, uint8_t g, uint8_t b);
     void writeMono(bool on);
 

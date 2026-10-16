@@ -13,18 +13,22 @@ const lang = getLangFromUrl(Astro.url);
 const d = useData(lang);
 
 // Structural (colour + animation) stays here; the labels live in the locale files.
-// Order matches led.states / led.statesMono: Connected, Recording, Searching, Config Wi-Fi.
+// Order matches led.states / led.statesMono: Connected, Recording, Searching,
+// Config Wi-Fi, Bridge. Bridge overrides every other state; it blinks until the
+// Configurator connects then goes solid - shown here blinking.
 const RGB_STYLE = [
   { color: "#22c55e", anim: "solid" },
   { color: "#ef4444", anim: "blink-slow" },
   { color: "#f59e0b", anim: "blink-slow" },
   { color: "#3b82f6", anim: "solid" },
+  { color: "#a855f7", anim: "blink-fast" },
 ];
 const MONO_STYLE = [
   { color: "#3b82f6", anim: "solid" },
   { color: "#3b82f6", anim: "blink-fast" },
   { color: "#3b82f6", anim: "blink-slow" },
   { color: "#3b82f6", anim: "double-flash" },
+  { color: "#3b82f6", anim: "blink-fast" },
 ];
 
 const style = variant === "mono" ? MONO_STYLE : RGB_STYLE;

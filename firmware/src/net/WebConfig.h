@@ -37,6 +37,19 @@ class WebConfig {
         return d;
     }
 
+    // True once after the user hits the Betaflight-bridge button; main enters bridge mode
+    bool takeBridgeRequest() {
+        bool b     = bridgeReq_;
+        bridgeReq_ = false;
+        return b;
+    }
+
+    // Main flags this on entry so /status.json reports it and a page reload (F5)
+    // can restore the bridge overlay instead of looking like normal operation
+    void setBridgeActive(bool v) {
+        bridgeActive_ = v;
+    }
+
    private:
     void startAp();
     void stopAp();
@@ -47,6 +60,7 @@ class WebConfig {
     void handlePreset();   // GET /preset (GoPro-only preset switching)
     void handleMode();     // GET /mode?m=photo|video (photo/video switch)
     void handleShutter();  // GET /shutter?a=start|stop|photo (all backends)
+    void handleBridge();   // GET /bridge (enter Betaflight-bridge mode)
 
     Settings&           s_;
     WebServer           server_;
@@ -56,6 +70,8 @@ class WebConfig {
     bool                apUp_       = false;
     bool                routesSet_  = false;
     bool                dirty_      = false;
+    bool                bridgeReq_    = false;
+    bool                bridgeActive_ = false;
     bool                lastArmed_  = false;
     bool                wantAp_     = true;
     uint32_t            wantSince_  = 0;

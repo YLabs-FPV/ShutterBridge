@@ -1,0 +1,48 @@
+---
+title: Puente Betaflight
+description: Convierte la placa en un enlace MSP inalámbrico para el Betaflight Configurator.
+order: 44
+---
+
+import Admonition from "../../../components/docs/Admonition.astro";
+
+El modo puente convierte ShutterBridge en un enlace MSP inalámbrico transparente:
+expone el puerto serie del controlador de vuelo por Wi-Fi para que el Betaflight
+Configurator pueda conectarse al FC sin cable USB. La placa pasa a ser un simple
+pass-through - sin control de cámara, sin OSD - hasta que se reinicia.
+
+<Admonition type="warning" title="Las funciones de cámara se detienen">
+  Entrar en modo puente suspende toda la funcionalidad de cámara - grabación, OSD,
+  el enlace Bluetooth - durante el resto de la sesión. La placa hace esto para
+  liberar la radio para el Wi-Fi. Es temporal: un reinicio vuelve al funcionamiento
+  normal, y el modo nunca se guarda.
+</Admonition>
+
+## Activarlo
+
+1. Abre la interfaz web (`http://10.0.0.1`) y ve a la pestaña **System**.
+2. En **Betaflight bridge**, pulsa **Enable** y confirma.
+
+La página muestra un aviso a pantalla completa mientras el puente está activo. El
+LED integrado se vuelve **violeta** (ver [LED de estado](/docs/status-led)).
+
+## Conectar el Configurator
+
+Usa la **aplicación de escritorio o móvil** de Betaflight Configurator:
+
+1. En el Configurator, elige la opción de conexión **Manual**.
+2. Introduce la dirección **`tcp://10.0.0.1:5761`**.
+3. Conéctate como de costumbre.
+
+<Admonition type="info" title="Solo la aplicación instalada">
+  La versión de navegador en app.betaflight.com no puede alcanzar el puente. Los
+  navegadores no tienen API de TCP en bruto, así que un destino `tcp://` es
+  inalcanzable desde una página web se enrute como se enrute. Usa la aplicación de
+  escritorio o móvil instalada.
+</Admonition>
+
+## Salir
+
+Reinicia la placa para salir del modo puente y volver al funcionamiento normal de
+la cámara - apágala y enciéndela, o pulsa **Reboot** en el aviso que se muestra
+mientras el puente está activo.
