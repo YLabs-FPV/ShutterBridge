@@ -44,8 +44,23 @@ document.querySelectorAll(".tab").forEach((t) =>
     document.querySelectorAll(".panel").forEach((p) => (p.hidden = p.id !== "tab-" + t.dataset.tab));
   }));
 
+// ---- Loading overlay ----
+let statusLoaded = false;
+function showLoading(text) {
+  $("loadingText").textContent = text;
+  $("loading").hidden = false;
+}
+function hideLoadingIfReady() {
+  if (cfg && statusLoaded) $("loading").hidden = true;
+}
+
 async function loadConfig() {
-  cfg = await (await fetch("/config.json")).json();
+  for (; ;) {
+    try {
+      cfg = await (await fetch("/config.json")).json();
+      break;
+    } catch (e) { await sleep(1000); }
+  }
   boundMac = cfg.mac || "";
   boundType = +cfg.ctype || 0;
   $("ver").textContent = cfg.fw ? "v" + cfg.fw : "";
@@ -112,6 +127,7 @@ async function loadConfig() {
   renderBound();
   applyOpMode();
   setDirty(false);
+  hideLoadingIfReady();
 }
 
 function applyOpMode() {
@@ -396,6 +412,7 @@ async function tick() {
     const s = await (await fetch("/status.json")).json();
     if (s.bridge) { showBridgeUi(); return; }
     chVals = s.ch || [];
+    if (!statusLoaded) { statusLoaded = true; hideLoadingIfReady(); }
 
     // Auto-detect: assign the first AUX channel (index >= 4) that moved from its baseline.
     if (autoDetect) {
@@ -463,15 +480,20 @@ $("reboot").addEventListener("click", () => { if (confirm("Reboot the bridge?"))
 
 function showBridgeUi() {
   clearInterval(tickTimer);
+  $("loading").hidden = true;
   $("bridging").hidden = false;
 }
 
 $("bfbridge").addEventListener("click", async () => {
   if (!confirm("Enter Betaflight bridge mode? Camera features stop until you reboot.")) return;
+  showLoading("Starting bridge");
   try {
     await fetch("/bridge");  // device tears down BLE and starts the MSP bridge
     showBridgeUi();
-  } catch (e) { toast("Bridge failed", true); }
+  } catch (e) {
+    $("loading").hidden = true;
+    toast("Bridge failed", true);
+  }
 });
 $("bridgeReboot").addEventListener("click", rebootFlow);
 $("rebootRefresh").addEventListener("click", () => location.reload());

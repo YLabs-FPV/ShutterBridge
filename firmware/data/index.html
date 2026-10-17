@@ -343,7 +343,7 @@
         <div class="overlay-title">Betaflight bridge active</div>
         <div class="overlay-text">
           Camera features are suspended. Connect the Betaflight App via
-          <b>Manual connection</b> to <b>tcp://10.0.0.1:5761</b>.<br />
+          <b>Manual connection</b> to <b>tcp://10.0.0.1:5761</b><br />
           Reboot to return to normal operation.
         </div>
         <button id="bridgeReboot" class="wide" type="button">Reboot</button>
@@ -361,6 +361,14 @@
         <button id="rebootRefresh" class="wide" type="button" hidden>
           Refresh now
         </button>
+      </div>
+    </div>
+
+    <!-- Shown until config and the first status arrive, and while bridge mode starts -->
+    <div id="loading" class="overlay">
+      <div class="overlay-box">
+        <div class="spinner"></div>
+        <div class="overlay-title" id="loadingText">Loading</div>
       </div>
     </div>
 
