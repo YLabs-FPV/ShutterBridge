@@ -1,7 +1,25 @@
-const OSD_FIELDS = ["Off", "Rec status", "Battery %", "Mode", "SD free", "Time left", "Resolution", "FPS"];
+const OSD_FIELDS = [
+  "Off",
+  "Rec status",
+  "Battery %",
+  "Mode",
+  "SD free",
+  "Time left",
+  "Resolution",
+  "FPS",
+];
+
 const CAM_TYPE_NAMES = ["DJI Osmo (Nano)", "DJI Action / 360", "GoPro"];
-const OSMO_TYPE = 0, ACTION_TYPE = 1, GOPRO_TYPE = 2;
-const CH_MIN = 900, CH_MAX = 2100, STEP = 25, GAP = 25;
+
+const OSMO_TYPE = 0,
+  ACTION_TYPE = 1,
+  GOPRO_TYPE = 2;
+
+const CH_MIN = 900,
+  CH_MAX = 2100,
+  STEP = 25,
+  GAP = 25;
+
 const PIPS = [900, 1000, 1200, 1500, 1800, 2000, 2100];
 
 const $ = (id) => document.getElementById(id);
@@ -40,9 +58,14 @@ const osdFieldAvail = (k) => !(boundType === OSMO_TYPE && (k === 6 || k === 7));
 // ---- Tabs ----
 document.querySelectorAll(".tab").forEach((t) =>
   t.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x === t));
-    document.querySelectorAll(".panel").forEach((p) => (p.hidden = p.id !== "tab-" + t.dataset.tab));
-  }));
+    document
+      .querySelectorAll(".tab")
+      .forEach((x) => x.classList.toggle("active", x === t));
+    document
+      .querySelectorAll(".panel")
+      .forEach((p) => (p.hidden = p.id !== "tab-" + t.dataset.tab));
+  }),
+);
 
 // ---- Loading overlay ----
 let statusLoaded = false;
@@ -55,27 +78,37 @@ function hideLoadingIfReady() {
 }
 
 async function loadConfig() {
-  for (; ;) {
+  for (;;) {
     try {
       cfg = await (await fetch("/config.json")).json();
       break;
-    } catch (e) { await sleep(1000); }
+    } catch (e) {
+      await sleep(1000);
+    }
   }
   boundMac = cfg.mac || "";
   boundType = +cfg.ctype || 0;
   $("ver").textContent = cfg.fw ? "v" + cfg.fw : "";
 
   $("osd").innerHTML = [0, 1, 2, 3]
-    .map((i) => `<div class="row"><label>Custom Msg ${i}</label><div class="ctl">` +
-      `<select id="s${i}">` +
-      OSD_FIELDS.map((o, k) => osdFieldAvail(k) ?
-        `<option value="${k}"${k === cfg.osd[i] ? " selected" : ""}>${o}</option>` : "").join("") +
-      `</select></div></div>`)
+    .map(
+      (i) =>
+        `<div class="row"><label>Custom Msg ${i}</label><div class="ctl">` +
+        `<select id="s${i}">` +
+        OSD_FIELDS.map((o, k) =>
+          osdFieldAvail(k)
+            ? `<option value="${k}"${k === cfg.osd[i] ? " selected" : ""}>${o}</option>`
+            : "",
+        ).join("") +
+        `</select></div></div>`,
+    )
     .join("");
 
   const svm = +cfg.svm || 0;
-  const shutterExtra = (name) => name !== "Shutter" ? "" :
-    `<div class="mode-vals" style="margin-top:8px">Video trigger
+  const shutterExtra = (name) =>
+    name !== "Shutter"
+      ? ""
+      : `<div class="mode-vals" style="margin-top:8px">Video trigger
        <select id="svm">
          <option value="0"${svm === 0 ? " selected" : ""}>Momentary (toggle record)</option>
          <option value="1"${svm === 1 ? " selected" : ""}>2-position (hold to record)</option>
@@ -84,8 +117,10 @@ async function loadConfig() {
        recording, 2-position records while the switch is held.</p>`;
 
   const msm = +cfg.msm || 0;
-  const modeExtra = (name) => name !== "Camera Mode" ? "" :
-    `<div class="mode-vals" style="margin-top:8px">Mode switch
+  const modeExtra = (name) =>
+    name !== "Camera Mode"
+      ? ""
+      : `<div class="mode-vals" style="margin-top:8px">Mode switch
        <select id="msm">
          <option value="0"${msm === 0 ? " selected" : ""}>Momentary (toggle photo/video)</option>
          <option value="1"${msm === 1 ? " selected" : ""}>2-position (in Photo, out Video)</option>
@@ -94,8 +129,9 @@ async function loadConfig() {
        Photo in range, Video out. Action and GoPro only.</p>`;
 
   $("modes").innerHTML = cfg.modes
-    .map((m, i) =>
-      `<div class="mode" id="mode${i}">
+    .map(
+      (m, i) =>
+        `<div class="mode" id="mode${i}">
          <div class="mode-head">
            <span class="mode-name">${m.name}</span>
            <select id="m${i}aux">${auxOptions(m.aux)}</select>
@@ -110,7 +146,8 @@ async function loadConfig() {
          <div class="sl-pips">${PIPS.map((p) => `<span style="left:${pct(p)}%">${p}</span>`).join("")}</div>
          <div class="mode-vals">Range <b id="m${i}min">${m.min}</b> to <b id="m${i}max">${m.max}</b> us</div>
          ${shutterExtra(m.name)}${modeExtra(m.name)}
-       </div>`)
+       </div>`,
+    )
     .join("");
   cfg.modes.forEach((_, i) => wireSlider(i));
 
@@ -139,29 +176,37 @@ function applyOpMode() {
 }
 
 function renderBound() {
-  $("boundModel").textContent = boundMac ? (CAM_TYPE_NAMES[boundType] || "Camera") : "No camera";
+  $("boundModel").textContent = boundMac
+    ? CAM_TYPE_NAMES[boundType] || "Camera"
+    : "No camera";
   $("bound").textContent = boundMac || "not bound";
 
   // Controls: shutter (start/stop/photo) on every backend, mode switch for Action/GoPro,
   // presets for GoPro only
-  const canMode = boundMac && (boundType === ACTION_TYPE || boundType === GOPRO_TYPE);
+  const canMode =
+    boundMac && (boundType === ACTION_TYPE || boundType === GOPRO_TYPE);
   $("controlscard").hidden = !boundMac;
   $("modectl").hidden = !canMode;
   $("presetctl").hidden = boundType !== GOPRO_TYPE;
-  $("clockcard").hidden = boundType !== GOPRO_TYPE;  // GPS clock sync is GoPro-only
+  $("clockcard").hidden = boundType !== GOPRO_TYPE; // GPS clock sync is GoPro-only
 
   // Channels: hide functions the bound camera can't do.
-  if (cfg) cfg.modes.forEach((m, i) => {
-    if (m.name.startsWith("Preset")) $("mode" + i).hidden = boundType !== GOPRO_TYPE;
-    if (m.name === "Camera Mode") $("mode" + i).hidden = boundType === OSMO_TYPE;
-  });
+  if (cfg)
+    cfg.modes.forEach((m, i) => {
+      if (m.name.startsWith("Preset"))
+        $("mode" + i).hidden = boundType !== GOPRO_TYPE;
+      if (m.name === "Camera Mode")
+        $("mode" + i).hidden = boundType === OSMO_TYPE;
+    });
 }
 
 // ---- Binding wizard ----
 let wizType = 0;
 
 function wizShow(step) {
-  ["wizType", "wizScan", "wizDone"].forEach((id) => ($(id).hidden = id !== step));
+  ["wizType", "wizScan", "wizDone"].forEach(
+    (id) => ($(id).hidden = id !== step),
+  );
 }
 function openWizard() {
   $("wizard").hidden = false;
@@ -181,25 +226,37 @@ async function wizScan() {
       const j = await (await fetch("/scan")).json();
       if (Array.isArray(j)) list = j;
       else await sleep(500);
-    } catch (e) { await sleep(500); }
+    } catch (e) {
+      await sleep(500);
+    }
   }
   list = (list || []).filter((d) => d.type === wizType);
   if (!list.length) {
     $("wizList").innerHTML =
       `<p class="hint">No matching camera found. Power it on, disconnect any phone app, then <a href="#" id="wizRetry">scan again</a>.</p>`;
-    $("wizRetry").addEventListener("click", (e) => { e.preventDefault(); wizScan(); });
+    $("wizRetry").addEventListener("click", (e) => {
+      e.preventDefault();
+      wizScan();
+    });
     return;
   }
-  $("wizList").innerHTML = list.map((d) =>
-    `<div class="scan-item" data-mac="${d.mac}">
+  $("wizList").innerHTML = list
+    .map(
+      (d) =>
+        `<div class="scan-item" data-mac="${d.mac}">
        <div class="scan-info">
          <div class="scan-model">${d.model || "Camera"}</div>
          <div class="scan-name">${d.name || "(no name)"}</div>
        </div>
        <span class="mac">${d.mac}</span>
-     </div>`).join("");
-  document.querySelectorAll("#wizList .scan-item").forEach((el) =>
-    el.addEventListener("click", () => wizBind(el.dataset.mac)));
+     </div>`,
+    )
+    .join("");
+  document
+    .querySelectorAll("#wizList .scan-item")
+    .forEach((el) =>
+      el.addEventListener("click", () => wizBind(el.dataset.mac)),
+    );
 }
 
 function wizBind(mac) {
@@ -208,7 +265,9 @@ function wizBind(mac) {
   renderBound();
   wizShow("wizDone");
   // Gate the reboot on the save finishing; the countdown runs in parallel
-  const saved = postSave().then((body) => body).catch(() => null);
+  const saved = postSave()
+    .then((body) => body)
+    .catch(() => null);
   let n = 3;
   $("wizCount").textContent = n;
   const t = setInterval(async () => {
@@ -255,7 +314,7 @@ function collectConfig() {
 async function postSave() {
   const r = await fetch("/save", { method: "POST", body: collectConfig() });
   if (!r.ok) throw new Error("HTTP " + r.status);
-  return (await r.text()).trim();  // "ok" or "reboot"
+  return (await r.text()).trim(); // "ok" or "reboot"
 }
 
 async function onSave() {
@@ -263,9 +322,11 @@ async function onSave() {
   btn.disabled = true;
   try {
     const res = await postSave();
-    if (res === "reboot") return rebootFlow(false);  // device reboots itself after the write
-    cfg.mac = boundMac; cfg.ctype = boundType;
-    cfg.ssid = $("ssid").value; cfg.pass = $("pass").value;
+    if (res === "reboot") return rebootFlow(false); // device reboots itself after the write
+    cfg.mac = boundMac;
+    cfg.ctype = boundType;
+    cfg.ssid = $("ssid").value;
+    cfg.pass = $("pass").value;
     setDirty(false);
     toast("Saved");
   } catch (e) {
@@ -279,17 +340,26 @@ async function onSave() {
 async function rebootFlow(trigger = true) {
   $("rebooting").hidden = false;
   $("rebootRefresh").hidden = true;
-  if (trigger) fetch("/reboot").catch(() => { });
+  if (trigger) fetch("/reboot").catch(() => {});
   await sleep(3000);
   for (let tries = 0; ; tries++) {
     await sleep(2000);
     try {
       // Right after the reboot the client's Wi-Fi stack may not yet know the AP
       // dropped, so a request can hang well past the sleep interval
-      const r = await fetch("/status.json", { cache: "no-store", signal: AbortSignal.timeout(2500) });
-      if (r.ok) { location.reload(); return; }
-    } catch (e) { /* AP still down (or attempt timed out), keep waiting */ }
-    if (tries === 6) {  // ~15s: auto-detect may have failed, offer a manual refresh
+      const r = await fetch("/status.json", {
+        cache: "no-store",
+        signal: AbortSignal.timeout(2500),
+      });
+      if (r.ok) {
+        location.reload();
+        return;
+      }
+    } catch (e) {
+      /* AP still down (or attempt timed out), keep waiting */
+    }
+    if (tries === 6) {
+      // ~15s: auto-detect may have failed, offer a manual refresh
       $("rebootText").textContent =
         "Reconnect to the ShutterBridge Wi-Fi, then tap Refresh.";
       $("rebootRefresh").hidden = false;
@@ -302,19 +372,25 @@ async function sendShutter(a) {
   try {
     const r = await fetch("/shutter?a=" + a);
     toast(r.ok ? "OK" : "Failed (" + r.status + ")", !r.ok);
-  } catch (e) { toast("Failed", true); }
+  } catch (e) {
+    toast("Failed", true);
+  }
 }
 async function setMode(m) {
   try {
     const r = await fetch("/mode?m=" + m);
     toast(r.ok ? "Mode " + m : "Mode failed (" + r.status + ")", !r.ok);
-  } catch (e) { toast("Mode failed", true); }
+  } catch (e) {
+    toast("Mode failed", true);
+  }
 }
 async function sendPreset(params) {
   try {
     const r = await fetch("/preset?" + params);
     toast(r.ok ? "Preset loaded" : "Preset failed (" + r.status + ")", !r.ok);
-  } catch (e) { toast("Preset failed", true); }
+  } catch (e) {
+    toast("Preset failed", true);
+  }
 }
 
 // ---- Range slider ----
@@ -367,14 +443,17 @@ function wireSlider(i) {
   thumbMax.addEventListener("pointerdown", dragThumb("max"));
   rangeEl.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    const startX = e.clientX, s0 = m.min, w = m.max - m.min;
+    const startX = e.clientX,
+      s0 = m.min,
+      w = m.max - m.min;
     const move = (ev) => {
       const r = el.getBoundingClientRect();
       // Round the *delta* to STEP (not snap(), which would clamp it to the 900-2100 range).
       const raw = ((ev.clientX - startX) / r.width) * (CH_MAX - CH_MIN);
       const delta = Math.round(raw / STEP) * STEP;
       let ns = Math.max(CH_MIN, Math.min(CH_MAX - w, s0 + delta));
-      m.min = ns; m.max = ns + w;
+      m.min = ns;
+      m.max = ns + w;
       render();
       setDirty(true);
     };
@@ -406,20 +485,29 @@ function toast(msg, err) {
 }
 
 // ---- Status poll ----
-const fmt = (s) => { s = s || 0; return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+const fmt = (s) => {
+  s = s || 0;
+  return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+};
 async function tick() {
   try {
     const s = await (await fetch("/status.json")).json();
-    if (s.bridge) { showBridgeUi(); return; }
+    if (s.bridge) {
+      showBridgeUi();
+      return;
+    }
     chVals = s.ch || [];
-    if (!statusLoaded) { statusLoaded = true; hideLoadingIfReady(); }
+    if (!statusLoaded) {
+      statusLoaded = true;
+      hideLoadingIfReady();
+    }
 
     // Auto-detect: assign the first AUX channel (index >= 4) that moved from its baseline.
     if (autoDetect) {
       const { i, base } = autoDetect;
       for (let idx = 4; idx < chVals.length; idx++) {
         if (Math.abs((chVals[idx] || 0) - (base[idx] || 0)) > 100) {
-          const auxNum = idx - 3;  // ch[4] = AUX1
+          const auxNum = idx - 3; // ch[4] = AUX1
           autoDetect = null;
           const sel = $("m" + i + "aux");
           sel.value = String(auxNum);
@@ -432,7 +520,11 @@ async function tick() {
 
     const c = $("conn");
     const pairing = s.online && s.paired === 0;
-    c.textContent = pairing ? "Accept PIN on camera" : s.online ? "Camera online" : "Camera offline";
+    c.textContent = pairing
+      ? "Accept PIN on camera"
+      : s.online
+        ? "Camera online"
+        : "Camera offline";
     c.className = "pill " + (pairing ? "warn" : s.online ? "ok" : "bad");
     $("rec").style.display = s.recording ? "inline-flex" : "none";
     $("elapsed").textContent = s.online ? fmt(s.elapsed) : "--:--";
@@ -440,21 +532,26 @@ async function tick() {
     $("recstart").hidden = s.mode === "photo";
     $("recstop").hidden = s.mode === "photo";
     $("takephoto").hidden = s.mode === "video";
-    const format = [s.res, s.fps ? s.fps + "fps" : ""].filter(Boolean).join(" ");
+    const format = [s.res, s.fps ? s.fps + "fps" : ""]
+      .filter(Boolean)
+      .join(" ");
     $("fmt").textContent = s.online && format ? format : "-";
     $("batt").textContent = s.online ? s.batt + "%" : "--";
     $("battbar").style.width = (s.online ? s.batt : 0) + "%";
     $("sd").textContent = s.online ? (s.sd / 1024).toFixed(1) + "G" : "--";
     $("left").textContent = s.online ? fmt(s.left) : "--:--";
 
-    if (cfg) cfg.modes.forEach((_, i) => {
-      const aux = +$("m" + i + "aux").value;
-      const mk = $("sl" + i).querySelector(".sl-marker");
-      const v = aux > 0 ? chVals[4 + aux - 1] : 0;
-      if (aux > 0 && v) { mk.style.display = "block"; mk.style.left = pct(clampCh(v)) + "%"; }
-      else mk.style.display = "none";
-    });
-  } catch (e) { }
+    if (cfg)
+      cfg.modes.forEach((_, i) => {
+        const aux = +$("m" + i + "aux").value;
+        const mk = $("sl" + i).querySelector(".sl-marker");
+        const v = aux > 0 ? chVals[4 + aux - 1] : 0;
+        if (aux > 0 && v) {
+          mk.style.display = "block";
+          mk.style.left = pct(clampCh(v)) + "%";
+        } else mk.style.display = "none";
+      });
+  } catch (e) {}
 }
 
 // ---- Wire up ----
@@ -467,16 +564,25 @@ wrap.addEventListener("input", () => setDirty(true));
 wrap.addEventListener("change", () => setDirty(true));
 
 $("passtog").addEventListener("click", () => {
-  const p = $("pass"), show = p.type === "password";
+  const p = $("pass"),
+    show = p.type === "password";
   p.type = show ? "text" : "password";
   const tog = $("passtog");
   tog.textContent = show ? "Hide" : "Show";
   tog.setAttribute("aria-label", show ? "Hide password" : "Show password");
 });
 document.querySelectorAll("#wizType .wiz-types button").forEach((b) =>
-  b.addEventListener("click", () => { wizType = +b.dataset.type; wizScan(); }));
-document.querySelectorAll(".wiz-cancel").forEach((b) => b.addEventListener("click", closeWizard));
-$("reboot").addEventListener("click", () => { if (confirm("Reboot the bridge?")) rebootFlow(); });
+  b.addEventListener("click", () => {
+    wizType = +b.dataset.type;
+    wizScan();
+  }),
+);
+document
+  .querySelectorAll(".wiz-cancel")
+  .forEach((b) => b.addEventListener("click", closeWizard));
+$("reboot").addEventListener("click", () => {
+  if (confirm("Reboot the bridge?")) rebootFlow();
+});
 
 function showBridgeUi() {
   clearInterval(tickTimer);
@@ -485,10 +591,15 @@ function showBridgeUi() {
 }
 
 $("bfbridge").addEventListener("click", async () => {
-  if (!confirm("Enter Betaflight bridge mode? Camera features stop until you reboot.")) return;
+  if (
+    !confirm(
+      "Enter Betaflight bridge mode? Camera features stop until you reboot.",
+    )
+  )
+    return;
   showLoading("Starting bridge");
   try {
-    await fetch("/bridge");  // device tears down BLE and starts the MSP bridge
+    await fetch("/bridge"); // device tears down BLE and starts the MSP bridge
     showBridgeUi();
   } catch (e) {
     $("loading").hidden = true;
@@ -502,8 +613,11 @@ $("recstop").addEventListener("click", () => sendShutter("stop"));
 $("takephoto").addEventListener("click", () => sendShutter("photo"));
 $("modevideo").addEventListener("click", () => setMode("video"));
 $("modephoto").addEventListener("click", () => setMode("photo"));
-document.querySelectorAll(".preset[data-group]").forEach((b) =>
-  b.addEventListener("click", () => sendPreset("group=" + b.dataset.group)));
+document
+  .querySelectorAll(".preset[data-group]")
+  .forEach((b) =>
+    b.addEventListener("click", () => sendPreset("group=" + b.dataset.group)),
+  );
 $("presetload").addEventListener("click", () => {
   const id = $("presetid").value.trim();
   if (id) sendPreset("id=" + encodeURIComponent(id));
