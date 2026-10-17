@@ -1,6 +1,6 @@
 #pragma once
 
-#define FW_VERSION "0.1.1"
+#define FW_VERSION "0.2.0"
 
 #if defined(BOARD_ESP32C3_SUPERMINI)
 // ESP32-C3 Super Mini: FC UART on 20/21, single-color LED on GPIO8
