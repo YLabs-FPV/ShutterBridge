@@ -6,6 +6,7 @@
 #include <string>
 
 #include "camera/Camera.h"
+#include "camera/BootWake.h"
 #include "djir.h"
 #include "duml.h"
 
@@ -34,6 +35,9 @@ class DjiActionCamera : public Camera {
     void sendConnectionRequest();
     void subscribeStatus();
     bool recordCtrl(uint8_t ctrl);  // 0 = start, 1 = stop
+    bool awake() const;             // connected, reporting, and not in sleep mode
+    void updateBootWake(uint32_t now);
+    void advertiseWake();
     bool writeRaw(const uint8_t* data, size_t len);
     bool sendR(uint8_t cmdSet, uint8_t cmdId, uint8_t cmdType, const uint8_t* pl, size_t n,
                uint16_t seq);
@@ -54,10 +58,13 @@ class DjiActionCamera : public Camera {
     djir::FrameScanner        rscan_;  // 0xAA
     duml::FrameScanner        dscan_;  // 0x55 (battery)
     CameraStatus              status_;
-    ProtoState                proto_         = PROTO_NONE;
-    volatile bool             connected_     = false;
-    uint16_t                  seq_           = 1;
-    uint16_t                  verifyData_    = 0;
+    ProtoState                proto_      = PROTO_NONE;
+    volatile bool             connected_  = false;
+    uint16_t                  seq_        = 1;
+    uint16_t                  verifyData_ = 0;
+    uint8_t                   powerMode_  = 0;  // from the status push: 0 normal, 3 sleep
+    BootWake                  wake_;
+    uint32_t                  lastWakeAdvMs_ = 0;
     uint32_t                  lastAttemptMs_ = 0;
     uint32_t                  connectedAtMs_ = 0;
     static constexpr uint32_t kBackoffMinMs  = 5000;

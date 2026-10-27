@@ -150,6 +150,7 @@ async function loadConfig() {
   $("dis").checked = !!cfg.dis;
   $("ble").value = cfg.ble != null ? cfg.ble : 0;
   $("clk").checked = cfg.clk !== 0;
+  $("wake").checked = !!cfg.wake;
   $("tz").value = (+cfg.tz || 0) / 60;
   $("op").value = +cfg.op || 0;
   $("rdly").value = +cfg.rdly || 0;
@@ -296,6 +297,7 @@ function collectConfig() {
   if ($("dis").checked) b.set("dis", "1");
   b.set("ble", $("ble").value);
   if ($("clk").checked) b.set("clk", "1");
+  if ($("wake").checked) b.set("wake", "1");
   b.set("tz", Math.round((parseFloat($("tz").value) || 0) * 60));
   return b;
 }

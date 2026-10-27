@@ -5,6 +5,7 @@
 #include <string>
 
 #include "camera/Camera.h"
+#include "camera/BootWake.h"
 #include "duml.h"
 
 class DjiOsmoCamera : public Camera {
@@ -33,6 +34,7 @@ class DjiOsmoCamera : public Camera {
     bool writeCmd(uint8_t cmdSet, uint8_t cmdId, const uint8_t* payload, size_t payloadLen,
                   uint8_t receiver = duml::ADDR_CAM);
     bool subscribeParam(const char* name);
+    void updateBootWake(uint32_t now);
     void onNotify(const uint8_t* data, size_t len);
     void handleFrame(const duml::Frame& f);
     void handleParam(const uint8_t* p, size_t n);
@@ -55,10 +57,14 @@ class DjiOsmoCamera : public Camera {
     uint32_t                  subId_         = 0x6A00;
     uint32_t                  lastAttemptMs_ = 0;
     uint32_t                  connectedAtMs_ = 0;
-    uint8_t                   lastWorkMode_  = 0xFF;  // for logging work-mode changes
+    uint8_t                   lastWorkMode_  = 0xFF;   // for logging work-mode changes
     bool                      camOff_        = false;  // last advert said powered off
     bool                      lastCamOff_    = false;
-    static constexpr uint32_t kBackoffMinMs  = 3000;
-    static constexpr uint32_t kBackoffMaxMs  = 30000;
-    uint32_t                  backoffMs_     = kBackoffMinMs;
+    BootWake                  wake_;
+    volatile bool             waking_          = false;  // this link was opened to wake the camera
+    bool                      wakeAccepted_    = false;
+    uint32_t                  lastKeepAliveMs_ = 0;
+    static constexpr uint32_t kBackoffMinMs    = 3000;
+    static constexpr uint32_t kBackoffMaxMs    = 30000;
+    uint32_t                  backoffMs_       = kBackoffMinMs;
 };

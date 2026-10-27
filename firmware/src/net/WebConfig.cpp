@@ -147,6 +147,7 @@ void WebConfig::handleConfig() {
     doc["sdly"]  = s_.recordStopDelayMs;
     doc["tz"]    = s_.tzOffsetMin;
     doc["clk"]   = s_.clockSync;  // sync camera clock from FC GPS time
+    doc["wake"]  = s_.autoWake;   // wake a powered-off camera on boot
     doc["fw"]    = FW_VERSION;
 
     String out;
@@ -227,6 +228,7 @@ void WebConfig::handleSave() {
     s_.recordStopDelayMs  = (uint16_t)constrain(server_.arg("sdly").toInt(), 0, 60000);
     s_.tzOffsetMin        = (int16_t)constrain(server_.arg("tz").toInt(), -720, 840);
     s_.clockSync          = server_.hasArg("clk") ? 1 : 0;
+    s_.autoWake           = server_.hasArg("wake") ? 1 : 0;
     s_.camType            = (uint8_t)constrain(server_.arg("ctype").toInt(), 0, 3);
     setStr(s_.camMac, sizeof(s_.camMac), server_.arg("mac"));
     setStr(s_.apSsid, sizeof(s_.apSsid), server_.arg("ssid"));

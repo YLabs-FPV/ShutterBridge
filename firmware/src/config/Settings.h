@@ -22,7 +22,7 @@ const char* osdFieldName(OsdField f);
 
 struct Settings {
     uint32_t magic   = 0x53425247;  // 'SBRG'
-    uint16_t version = 15;
+    uint16_t version = 16;
 
     uint8_t opMode = (uint8_t)OpMode::RecordOnArm;
 
@@ -59,6 +59,9 @@ struct Settings {
     // Sync the camera clock from FC GPS time (1 = on)
     uint8_t clockSync   = 1;
     int16_t tzOffsetMin = 0;
+
+    // Wake a powered-off camera when the bridge boots (1 = on)
+    uint8_t autoWake = 0;
 
     void setDefaults();
     void load();  // from NVS (falls back to defaults if missing/incompatible)
