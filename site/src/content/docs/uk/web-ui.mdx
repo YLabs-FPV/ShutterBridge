@@ -37,10 +37,10 @@ import ThemedImage from "../../../components/docs/ThemedImage.astro"
 - Індикатор **REC** - світиться під час запису.
 - **Elapsed** - поточний час запису (mm:ss).
 - **Mode** - Photo або Video.
-- **Format** - роздільна здатність і частота кадрів, напр. `4K 60fps` (не повідомляється Osmo Nano).
+- **Format** - роздільна здатність і частота кадрів, напр. `4K 60fps`.
 - **Battery** - відсоток, зі смужкою.
 - **SD free** - вільне місце на картці, що лишилося.
-- **Time left** - орієнтовний залишок часу запису на картці (mm:ss).
+- **Time left** - орієнтовний залишок часу запису на картці (mm:ss, або `1h05` від години).
 
 ### Connection
 
@@ -61,12 +61,11 @@ import ThemedImage from "../../../components/docs/ThemedImage.astro"
 
 ### Controls
 
-Ручне керування прив'язаною камерою. Ця картка з'являється лише для камер, що
-підтримують зміну режиму, і вона вимкнена, поки активний **Record on arm** (у цьому
+Ручне керування прив'язаною камерою. Ця картка з'являється, щойно камеру
+прив'язано, і вона вимкнена, поки активний **Record on arm** (у цьому
 режимі камерою керує автоматика).
 
-- **Mode** - перемикай камеру між **Video** і **Photo** (Action / 360 і
-  GoPro; Osmo Nano не може перемикати через BLE).
+- **Mode** - перемикай камеру між **Video** і **Photo**.
 - **Preset group** (лише GoPro) - завантажте групу пресетів **Video**, **Photo** або **Timelapse**.
 - **Preset by ID** (лише GoPro) - завантажте конкретний пресет за його hex-ID.
 
@@ -102,8 +101,8 @@ import ThemedImage from "../../../components/docs/ThemedImage.astro"
 - **Shutter** - головний спуск. У режимі Photo робить фото; у режимі Video
   записує. Її опція **Video trigger** обирає поведінку: **Momentary** (кожне
   перемикання перемикає запис) або **2-position** (записує, поки перемикач утримується).
-- **Camera Mode** - перемикає камеру між фото і відео з каналу
-  (Action / 360 і GoPro). **Momentary** перемикає кожним рухом; **2-position** ставить
+- **Camera Mode** - перемикає камеру між фото і відео з каналу.
+  **Momentary** перемикає кожним рухом; **2-position** ставить
   Photo в діапазоні та Video поза ним.
 - **Preset Video / Preset Photo / Preset Timelapse** (лише GoPro) - завантажує групу пресетів
   з каналу.
@@ -120,7 +119,7 @@ import ThemedImage from "../../../components/docs/ThemedImage.astro"
 
 Кожен слот **Custom Msg** (0-3) призначається на поле: **Off**, **Rec status**,
 **Battery %**, **Mode**, **SD free**, **Time left**, **Resolution** або **FPS**.
-Resolution і FPS недоступні на Osmo Nano.
+Понад годину **Time left** показує години як `1H05`.
 
 Признач поле тут, потім увімкни і розмісти відповідні елементи **Custom Message**
 на вкладці OSD у Betaflight - дивись [Підключення FC і Betaflight](/docs/wiring).

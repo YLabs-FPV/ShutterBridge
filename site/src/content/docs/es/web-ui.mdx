@@ -37,10 +37,10 @@ Cuando una cámara está online, esta tarjeta refleja lo que está haciendo:
 - Indicador **REC** - encendido mientras graba.
 - **Elapsed** - tiempo de grabación actual (mm:ss).
 - **Mode** - Photo o Video.
-- **Format** - resolución y tasa de fotogramas, p. ej. `4K 60fps` (no lo reporta la Osmo Nano).
+- **Format** - resolución y tasa de fotogramas, p. ej. `4K 60fps`.
 - **Battery** - porcentaje, con una barra.
 - **SD free** - espacio restante en la tarjeta.
-- **Time left** - tiempo de grabación estimado restante en la tarjeta (mm:ss).
+- **Time left** - tiempo de grabación estimado restante en la tarjeta (mm:ss, o `1h05` a partir de una hora).
 
 ### Connection
 
@@ -61,12 +61,11 @@ después se reconecta automáticamente en cada arranque.
 
 ### Controles
 
-Controles manuales para la cámara vinculada. Esta tarjeta solo aparece para cámaras que
-soportan cambio de modo, y se desactiva mientras **Record on arm** está activo (en ese
+Controles manuales para la cámara vinculada. Esta tarjeta aparece una vez vinculada una
+cámara, y se desactiva mientras **Record on arm** está activo (en ese
 modo la cámara se controla automáticamente).
 
-- **Mode** - cambia la cámara entre **Video** y **Photo** (Action / 360 y
-  GoPro; la Osmo Nano no puede cambiar por BLE).
+- **Mode** - cambia la cámara entre **Video** y **Photo**.
 - **Preset group** (solo GoPro) - carga el grupo de presets de **Video**, **Photo** o **Timelapse**.
 - **Preset by ID** (solo GoPro) - carga un preset concreto por su ID hexadecimal.
 
@@ -102,8 +101,8 @@ Funciones disponibles (la UI oculta las que tu cámara no puede hacer):
 - **Shutter** - el disparador principal. En modo Photo saca una foto; en modo Video
   graba. Su opción **Video trigger** elige el comportamiento: **Momentary** (cada
   golpe alterna la grabación) o **2-position** (graba mientras el interruptor está mantenido).
-- **Camera Mode** - cambia la cámara entre foto y vídeo desde un canal
-  (Action / 360 y GoPro). **Momentary** alterna en cada golpe; **2-position** pone
+- **Camera Mode** - cambia la cámara entre foto y vídeo desde un canal.
+  **Momentary** alterna en cada golpe; **2-position** pone
   Photo dentro del rango y Video fuera.
 - **Preset Video / Preset Photo / Preset Timelapse** (solo GoPro) - carga un grupo de presets
   desde un canal.
@@ -120,7 +119,7 @@ Elige qué telemetría muestran los cuatro slots del OSD.
 
 Cada slot **Custom Msg** (0-3) se asigna a un campo: **Off**, **Rec status**,
 **Battery %**, **Mode**, **SD free**, **Time left**, **Resolution** o **FPS**.
-Resolution y FPS no están disponibles en la Osmo Nano.
+Por encima de una hora, **Time left** muestra las horas como `1H05`.
 
 Asigna un campo aquí, luego activa y coloca los elementos **Custom Message**
 correspondientes en la pestaña OSD de Betaflight - consulta [Cableado del FC y Betaflight](/docs/wiring).
