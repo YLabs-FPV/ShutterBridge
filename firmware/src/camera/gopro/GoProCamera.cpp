@@ -4,6 +4,7 @@
 
 #include <cstring>
 
+#include "camera/AdvertProbe.h"
 #include "camera/BleTxPower.h"
 
 namespace {
@@ -231,38 +232,29 @@ bool GoProCamera::begin() {
     return attempt();
 }
 
+// A powered-off GoPro keeps advertising so it can be woken, and any connection wakes it. Only
+// connect when the advertisement says the camera is on
 bool GoProCamera::attempt() {
-    if (!haveAddr_) {
-        if (!resolveAddress())
-            return false;
-        haveAddr_ = true;
-    }
-    return connect();
-}
-
-bool GoProCamera::resolveAddress() {
-    if (mac_.empty() && namePrefix_.empty())
+    AdvertInfo adv;
+    if (!probeAdvert(mac_, namePrefix_, 3000, adv))
         return false;
-
-    Serial.printf("[gopro] scanning to resolve %s ...\n",
-                  mac_.empty() ? namePrefix_.c_str() : mac_.c_str());
-    NimBLEScan* scan = NimBLEDevice::getScan();
-    scan->setActiveScan(true);
-    NimBLEScanResults res = scan->getResults(4000, false);
-    for (int i = 0; i < res.getCount(); i++) {
-        const NimBLEAdvertisedDevice* d   = res.getDevice(i);
-        const bool                    hit = !mac_.empty() ? d->getAddress().toString() == mac_
-                                                          : d->getName().rfind(namePrefix_, 0) == 0;
-        if (hit) {
-            addr_ = d->getAddress();
-            scan->clearResults();
-            Serial.printf("[gopro] found %s @ %s\n", d->getName().c_str(),
-                          addr_.toString().c_str());
-            return true;
-        }
+    if (!haveAddr_) {
+        addr_     = adv.addr;
+        haveAddr_ = true;
+        Serial.printf("[gopro] found %s @ %s\n", adv.name.c_str(), addr_.toString().c_str());
     }
-    scan->clearResults();
-    return false;
+
+    const std::string& m     = adv.mfr;
+    const bool         known = m.size() >= 4 && (uint8_t)m[0] == 0xF2 && (uint8_t)m[1] == 0x02;
+    const bool         off   = known && !((uint8_t)m[3] & 0x01);
+    if (off != lastCamOff_) {
+        Serial.println(off ? "[gopro] camera powered off - not connecting"
+                           : "[gopro] camera powered on");
+        lastCamOff_ = off;
+    }
+    if (off)
+        return false;
+    return connect();
 }
 
 bool GoProCamera::connect() {

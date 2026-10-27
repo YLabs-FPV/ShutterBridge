@@ -38,8 +38,7 @@ class GoProCamera : public Camera {
     }
 
    private:
-    bool attempt();  // resolve address (once) then connect
-    bool resolveAddress();
+    bool attempt();  // probe the advertisement, connect only if the camera is on
     bool connect();
 
     bool writeCmd(const uint8_t* tlv, size_t len);
@@ -59,7 +58,8 @@ class GoProCamera : public Camera {
     std::string   mac_;
     std::string   namePrefix_;
     NimBLEAddress addr_;
-    bool          haveAddr_ = false;
+    bool          haveAddr_     = false;
+    bool          lastCamOff_   = false;
 
     NimBLEClient*               client_    = nullptr;
     NimBLERemoteCharacteristic* chCommand_ = nullptr;  // 0072
