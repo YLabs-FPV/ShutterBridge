@@ -27,7 +27,7 @@ struct CameraStatus {
     RecState recState  = RecState::Idle;
     CamMode  mode      = CamMode::Unknown;
     bool     ready     = true;
-    // Decoded per-backend; "" / 0 = unreported (the Osmo Nano doesn't expose these)
+    // Decoded per-backend; "" / 0 = unreported
     char     resolution[12] = "";
     uint16_t fps            = 0;
     uint32_t recElapsedS    = 0;
@@ -63,8 +63,8 @@ class Camera {
         return false;
     }
 
-    // Switch the camera between photo and video. Backends that can't (e.g. Osmo Nano)
-    // keep this no-op default and return false
+    // Switch the camera between photo and video. Backends that can't keep this no-op
+    // default and return false
     virtual bool setMode(CamMode /*mode*/) {
         return false;
     }

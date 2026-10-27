@@ -4,7 +4,7 @@
 
 enum class Func : uint8_t {
     Shutter,          // mode-aware trigger: PHOTO mode -> snap; VIDEO mode -> record
-    CameraMode,       // switch camera photo<->video (Action/GoPro; Osmo Nano can't over BLE)
+    CameraMode,       // switch camera photo<->video
     PresetVideo,      // load the Video preset group (GoPro only)
     PresetPhoto,      // load the Photo preset group (GoPro only)
     PresetTimelapse,  // load the Timelapse preset group (GoPro only)

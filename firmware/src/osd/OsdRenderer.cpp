@@ -37,7 +37,7 @@ void OsdRenderer::formatField(OsdField f, const CameraStatus& st, bool online, c
             snprintf(out, n, "%u:%02u", (unsigned)(st.recLeftS / 60), (unsigned)(st.recLeftS % 60));
             break;
         case OsdField::Resolution:
-            // Blank (cleared slot) when unreported - e.g. Osmo Nano doesn't expose it.
+            // Blank (cleared slot) when unreported
             snprintf(out, n, "%s", st.resolution);
             break;
         case OsdField::Fps:
