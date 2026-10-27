@@ -478,6 +478,16 @@ const fmt = (s) => {
   s = s || 0;
   return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
 };
+
+const fmtLeft = (s) => {
+  s = s || 0;
+  if (s < 3600) return fmt(s);
+  return (
+    Math.floor(s / 3600) +
+    "h" +
+    String(Math.floor(s / 60) % 60).padStart(2, "0")
+  );
+};
 async function tick() {
   try {
     const s = await (await fetch("/status.json")).json();
