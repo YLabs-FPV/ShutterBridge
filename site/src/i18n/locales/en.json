@@ -71,7 +71,7 @@
       "GoPro"
     ],
     "cameraNotes": [
-      "Connect, OSD telemetry, mode readout, record and photo. Can't switch photo/video over BLE - the shutter takes a photo only when the camera is already in Photo mode.",
+      "Connect, OSD telemetry, mode switch, resolution/FPS readout, record and photo. DUML protocol, no pairing needed.",
       "Full control: mode switch, resolution/FPS readout, record and photo. R-SDK protocol with DUML for battery. Pairing via PIN. Tested on the Action 4.",
       "Preset switching, load-by-ID and clock sync from FC GPS time. Bonds on the camera. Recording and OSD telemetry verified on a HERO 12; some features not yet confirmed."
     ],

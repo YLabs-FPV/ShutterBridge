@@ -57,10 +57,10 @@ export const FEATURE_SUPPORT: FeatureSupport[] = [
   { osmoNano: "yes", action: "yes", gopro: "yes" }, // Connect + auto-reconnect
   { osmoNano: "yes", action: "yes", gopro: "yes" }, // OSD telemetry
   { osmoNano: "yes", action: "yes", gopro: "no" }, // Mode readout
-  { osmoNano: "no", action: "yes", gopro: "untested" }, // Photo / video mode switch
-  { osmoNano: "no", action: "yes", gopro: "untested" }, // Resolution / FPS readout
+  { osmoNano: "yes", action: "yes", gopro: "untested" }, // Photo / video mode switch
+  { osmoNano: "yes", action: "yes", gopro: "untested" }, // Resolution / FPS readout
   { osmoNano: "yes", action: "yes", gopro: "yes" }, // Start / stop recording
-  { osmoNano: "partial", action: "yes", gopro: "untested" }, // Take photo
+  { osmoNano: "yes", action: "yes", gopro: "untested" }, // Take photo
   { osmoNano: "no", action: "no", gopro: "untested" }, // Preset switching
   { osmoNano: "no", action: "no", gopro: "untested" }, // Clock sync from FC GPS time
 ];
