@@ -56,6 +56,8 @@ class DjiOsmoCamera : public Camera {
     uint32_t                  lastAttemptMs_ = 0;
     uint32_t                  connectedAtMs_ = 0;
     uint8_t                   lastWorkMode_  = 0xFF;  // for logging work-mode changes
+    bool                      camOff_        = false;  // last advert said powered off
+    bool                      lastCamOff_    = false;
     static constexpr uint32_t kBackoffMinMs  = 3000;
     static constexpr uint32_t kBackoffMaxMs  = 30000;
     uint32_t                  backoffMs_     = kBackoffMinMs;

@@ -4,6 +4,7 @@
 
 #include <cstring>
 
+#include "camera/AdvertProbe.h"
 #include "camera/BleTxPower.h"
 #include "camera/dji/DjiFormats.h"
 #include "net/RadioCoex.h"
@@ -64,6 +65,22 @@ bool DjiOsmoCamera::attempt() {
             return false;
         haveAddr_ = true;
     }
+    // A powered-off camera keeps advertising and still accepts a connection, then drops it a few
+    // seconds later. Its manufacturer data ends with a state byte: 0x02 on, 0x03 off
+    camOff_ = false;
+    AdvertInfo adv;
+    if (probeAdvert(mac_, "", 1500, adv)) {
+        const std::string& m     = adv.mfr;
+        const bool         known = m.size() >= 12 && (uint8_t)m[0] == 0xAA && (uint8_t)m[1] == 0x08;
+        camOff_                  = known && ((uint8_t)m[11] & 0x01);
+    }
+    if (camOff_ != lastCamOff_) {
+        Serial.println(camOff_ ? "[dji] camera powered off - not connecting"
+                               : "[dji] camera powered on");
+        lastCamOff_ = camOff_;
+    }
+    if (camOff_)
+        return false;
     return connect();
 }
 
@@ -136,7 +153,8 @@ void DjiOsmoCamera::poll() {
     const uint32_t interval = (g_apHasClient && backoffMs_ < kApRetryMs) ? kApRetryMs : backoffMs_;
     if (!connected_ && (now - lastAttemptMs_ > interval)) {
         lastAttemptMs_ = now;
-        if (attempt()) {
+        // A camera seen powered off is cheap to re-check, so keep polling it at the short interval
+        if (attempt() || camOff_) {
             backoffMs_ = kBackoffMinMs;
         } else {
             backoffMs_ = backoffMs_ < kBackoffMaxMs ? backoffMs_ * 2 : kBackoffMaxMs;
@@ -189,7 +207,6 @@ bool DjiOsmoCamera::subscribeParam(const char* name) {
     i += nameLen;
     memset(pl + i, 0, 4);
     i += 4;
-    Serial.printf("[dji] subscribe %s\n", name);
     return writeCmd(0x00, 0x99, pl, i, duml::ADDR_PARAM);
 }
 
@@ -267,14 +284,8 @@ void DjiOsmoCamera::handleFrame(const duml::Frame& f) {
         return;
     }
     if (f.cmdSet == 0x00 && f.cmdId == 0x99 && f.sender == duml::ADDR_PARAM) {
-        if (f.flags & 0x80)
-            Serial.printf("[dji] param subscribe ACK (%u B)\n", (unsigned)n);
-        else
+        if (!(f.flags & 0x80))  // skip the subscription acks
             handleParam(p, n);
-        return;
-    }
-    if (f.cmdSet == 0x02 && f.cmdId == 0xE1 && (f.flags & 0x80) && n >= 1) {
-        Serial.printf("[dji] setMode reply %02x %s\n", p[0], p[0] == 0x00 ? "OK" : "rejected");
         return;
     }
     if (f.cmdSet == 0x07 && f.cmdId == 0x45 && n >= 2) {
@@ -300,8 +311,6 @@ void DjiOsmoCamera::handleParam(const uint8_t* p, size_t n) {
         memcmp(p + 15, PARAM_VIDEO_FORMAT, nameLen) == 0 && vLen >= 2) {
         const char*    res = dji::resolutionName(v[0]);
         const uint16_t fps = dji::fpsValue(v[1]);
-        if (fps != status_.fps || strcmp(res, status_.resolution) != 0)
-            Serial.printf("[dji] format res=%u (%s) fps=%u (%u)\n", v[0], res, v[1], fps);
         strncpy(status_.resolution, res, sizeof(status_.resolution) - 1);
         status_.resolution[sizeof(status_.resolution) - 1] = '\0';
         status_.fps                                        = fps;
