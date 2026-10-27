@@ -6,6 +6,7 @@
 #include <cstring>
 
 #include "camera/BleTxPower.h"
+#include "camera/dji/DjiFormats.h"
 #include "net/RadioCoex.h"
 
 namespace {
@@ -33,56 +34,6 @@ namespace {
     inline uint32_t le32(const uint8_t* p) {
         return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) |
                ((uint32_t)p[3] << 24);
-    }
-
-    // Resolution / fps are enum indices from the DJI SDK, not raw values
-    const char* djiResolution(uint8_t idx) {
-        switch (idx) {
-            case 10:
-                return "1080P";
-            case 16:
-                return "4K";
-            case 45:
-                return "2.7K";
-            case 66:
-                return "1080P 9:16";
-            case 67:
-                return "2.7K 9:16";
-            case 95:
-                return "2.7K 4:3";
-            case 103:
-                return "4K 4:3";
-            case 109:
-                return "4K 9:16";
-            default:
-                return "";
-        }
-    }
-    uint16_t djiFps(uint8_t idx) {
-        switch (idx) {
-            case 1:
-                return 24;
-            case 2:
-                return 25;
-            case 3:
-                return 30;
-            case 4:
-                return 48;
-            case 5:
-                return 50;
-            case 6:
-                return 60;
-            case 7:
-                return 120;
-            case 8:
-                return 240;
-            case 10:
-                return 100;
-            case 19:
-                return 200;
-            default:
-                return 0;
-        }
     }
 }  // namespace
 
@@ -296,9 +247,9 @@ void DjiActionCamera::handleR(const djir::Frame& f) {
         const uint8_t  camStatus = p[1];
         status_.recState         = (camStatus == 0x03) ? RecState::Recording : RecState::Idle;
         status_.mode             = (camMode == 0x05) ? CamMode::Photo : CamMode::Video;
-        strncpy(status_.resolution, djiResolution(p[2]), sizeof(status_.resolution) - 1);
+        strncpy(status_.resolution, dji::resolutionName(p[2]), sizeof(status_.resolution) - 1);
         status_.resolution[sizeof(status_.resolution) - 1] = '\0';
-        status_.fps                                        = djiFps(p[3]);
+        status_.fps                                        = dji::fpsValue(p[3]);
         status_.recElapsedS                                = le16(p + 5);
         status_.sdFreeMB                                   = le32(p + 15);
         status_.recLeftS                                   = le32(p + 23);

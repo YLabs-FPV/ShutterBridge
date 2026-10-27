@@ -370,7 +370,7 @@ void WebConfig::handlePreset() {
 }
 
 void WebConfig::handleMode() {
-    // /mode?m=photo|video - photo/video switch. Action 4/5 (R SDK) + GoPro; Osmo Nano can't
+    // /mode?m=photo|video - photo/video switch on backends that implement setMode
     if (!camera_ || !camera_->isConnected()) {
         server_.send(409, "text/plain", "camera offline");
         return;
