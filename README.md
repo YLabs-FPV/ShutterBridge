@@ -61,8 +61,6 @@ Wi-Fi access point and open it in a browser. No app, no drivers.
 
 ## Compatible cameras
 
-The Osmo Action series and the Osmo 360 share the same DJI R-SDK backend.
-
 | Feature                                           | DJI Osmo (Nano) | DJI Action / 360 | GoPro (HERO9+) |
 | ------------------------------------------------- | :-------------: | :--------------: | :------------: |
 | Connect + auto-reconnect                          |       ✅        |        ✅        |       ✅       |
@@ -79,9 +77,6 @@ The Osmo Action series and the Osmo 360 share the same DJI R-SDK backend.
 | Tested on real hardware                           |       ✅        |  ✅ (Action 4)   |  ✅ (HERO 12)  |
 
 _❓ = supported by the backend but not yet verified on hardware._
-
-> [!WARNING]
-> **Wake the Osmo Nano before recording.** Starting a recording while the camera is asleep (standby / screen off) produces a corrupted, very-low-FPS clip. Wake it and wait until it reads online before you arm - a current limitation with no known fix.
 
 ## What you need
 
@@ -125,10 +120,10 @@ and how to submit changes.
 
 ## Repository layout
 
-| Path        | What's inside                                                     |
-| ----------- | ----------------------------------------------------------------- |
+| Path        | What's inside                                                       |
+| ----------- | ------------------------------------------------------------------- |
 | `firmware/` | ESP32-S3 / ESP32-C3 firmware (PlatformIO) and the on-device Web UI. |
-| `site/`     | The website, documentation and browser-based web flasher (Astro). |
+| `site/`     | The website, documentation and browser-based web flasher (Astro).   |
 
 ## License
 
