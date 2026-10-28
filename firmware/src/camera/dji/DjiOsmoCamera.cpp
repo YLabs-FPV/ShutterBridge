@@ -7,6 +7,7 @@
 #include "camera/AdvertProbe.h"
 #include "camera/BleTxPower.h"
 #include "camera/dji/DjiFormats.h"
+#include "config/Settings.h"
 #include "net/RadioCoex.h"
 
 namespace {
@@ -23,6 +24,12 @@ namespace {
     // Named camera parameter carrying [resolution idx][fps idx]...
     constexpr char PARAM_VIDEO_FORMAT[] = "cam_video_param_v2";
 
+    // Wake: session open/keepalive frames go to 0xF0, the wake itself to 0x1C
+    constexpr uint8_t ADDR_SESSION        = 0xF0;
+    constexpr uint8_t ADDR_WAKE           = 0x1C;
+    const uint8_t     SESSION_OPEN[]      = {0x04, 0x00};
+    const uint8_t     SESSION_KEEPALIVE[] = {0x01, 0x01};
+
     inline uint16_t le16(const uint8_t* p) {
         return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
     }
@@ -38,6 +45,7 @@ class DjiOsmoCamera::ClientCB : public NimBLEClientCallbacks {
     }
     void onDisconnect(NimBLEClient*, int reason) override {
         owner_->connected_ = false;
+        owner_->waking_    = false;
         owner_->chWrite_   = nullptr;
         owner_->chNotify_  = nullptr;
         owner_->status_    = CameraStatus{};
@@ -56,6 +64,8 @@ bool DjiOsmoCamera::begin() {
     NimBLEDevice::init("ShutterBridge");
     applyBleTxPower();
     cb_ = new ClientCB(this);
+    if (g_settings.autoWake)
+        wake_.start();
     return attempt();
 }
 
@@ -75,13 +85,19 @@ bool DjiOsmoCamera::attempt() {
         camOff_                  = known && ((uint8_t)m[11] & 0x01);
     }
     if (camOff_ != lastCamOff_) {
-        Serial.println(camOff_ ? "[dji] camera powered off - not connecting"
-                               : "[dji] camera powered on");
+        Serial.println(camOff_ ? "[dji] camera powered off" : "[dji] camera powered on");
         lastCamOff_ = camOff_;
     }
-    if (camOff_)
-        return false;
-    return connect();
+    if (camOff_) {
+        if (!wake_.active())
+            return false;
+        Serial.println("[dji] waking camera");
+        waking_ = true;
+    }
+    const bool ok = connect();
+    if (!ok)
+        waking_ = false;
+    return ok;
 }
 
 bool DjiOsmoCamera::resolveAddress() {
@@ -126,6 +142,7 @@ bool DjiOsmoCamera::connect() {
     connected_        = true;
     status_.connected = true;
     connectedAtMs_    = millis();
+    wakeAccepted_     = false;
     Serial.println("[dji] connected - sending identify");
     doHandshake();
     return true;
@@ -137,20 +154,32 @@ void DjiOsmoCamera::poll() {
     // Drop the link when telemetry stalls: BLE supervision timeout is slow, and a reconnect
     // can "succeed" onto a dead link
     if (connected_) {
-        const bool stale       = status_.lastUpdateMs != 0 && (now - status_.lastUpdateMs) > 4000;
-        const bool noTelemetry = status_.lastUpdateMs == 0 && (now - connectedAtMs_) > 4000;
+        const uint32_t firstTelemetryMs = waking_ ? 10000 : 4000;  // a waking camera is slower
+        const bool     stale = status_.lastUpdateMs != 0 && (now - status_.lastUpdateMs) > 4000;
+        const bool     noTelemetry =
+            status_.lastUpdateMs == 0 && (now - connectedAtMs_) > firstTelemetryMs;
         if (stale || noTelemetry) {
             Serial.printf("[dji] link dead (%s) - dropping\n", stale ? "stale" : "no telemetry");
             if (client_)
                 client_->disconnect();
             connected_ = false;
+            waking_    = false;
             status_    = CameraStatus{};
         }
     }
 
-    // Reconnect at exponential backoff, but throttle while someone is on the Web UI
+    if (connected_ && waking_ && now - lastKeepAliveMs_ >= 1000) {
+        lastKeepAliveMs_ = now;
+        writeCmd(0x00, 0x2b, SESSION_KEEPALIVE, sizeof(SESSION_KEEPALIVE), ADDR_SESSION);
+    }
+    updateBootWake(now);
+
+    // Reconnect at exponential backoff, but throttle while someone is on the Web UI; retry at
+    // once while waking the camera
     const uint32_t kApRetryMs = 8000;
-    const uint32_t interval = (g_apHasClient && backoffMs_ < kApRetryMs) ? kApRetryMs : backoffMs_;
+    uint32_t       interval = (g_apHasClient && backoffMs_ < kApRetryMs) ? kApRetryMs : backoffMs_;
+    if (wake_.active())
+        interval = 500;
     if (!connected_ && (now - lastAttemptMs_ > interval)) {
         lastAttemptMs_ = now;
         // A camera seen powered off is cheap to re-check, so keep polling it at the short interval
@@ -164,15 +193,38 @@ void DjiOsmoCamera::poll() {
     }
 }
 
+// The boot wake window closes once the camera is up: reporting a shooting mode, and if this link
+// woke it, having accepted the wake (an off camera reports like a live one until it drops)
+void DjiOsmoCamera::updateBootWake(uint32_t now) {
+    if (!wake_.active())
+        return;
+    if (wake_.expired()) {
+        wake_.finish();
+        Serial.println("[dji] boot wake timed out - camera never came up");
+        return;
+    }
+    const bool fresh = status_.lastUpdateMs != 0 && now - status_.lastUpdateMs < 1500;
+    if (connected_ && status_.ready && fresh && (!waking_ || wakeAccepted_)) {
+        wake_.finish();
+        Serial.printf("[dji] camera up %lu ms after boot\n", (unsigned long)wake_.ageMs());
+    }
+}
+
 void DjiOsmoCamera::doHandshake() {
+    if (waking_)
+        writeCmd(0x00, 0x2b, SESSION_OPEN, sizeof(SESSION_OPEN), ADDR_SESSION);
     writeRaw(IDENTIFY, sizeof(IDENTIFY));
     delay(300);
+    if (waking_) {
+        writeCmd(0x00, 0x2b, SESSION_KEEPALIVE, sizeof(SESSION_KEEPALIVE), ADDR_SESSION);
+        lastKeepAliveMs_ = millis();
+    }
     const uint8_t p_init[]  = {0x00, 0x00, 0x00, 0x00};
     const uint8_t p_info[]  = {0x31, 0x31, 0x00, 0x00, 0x00};
     const uint8_t p_cap[]   = {0x00, 0x01, 0x1c, 0x00};
     const uint8_t p_name[]  = {0xa0};
     const uint8_t p_token[] = {0xb3};
-    writeCmd(0x53, 0x10, p_init, sizeof(p_init));
+    writeCmd(0x53, 0x10, p_init, sizeof(p_init), waking_ ? ADDR_WAKE : duml::ADDR_CAM);
     writeCmd(0x00, 0x32, p_info, sizeof(p_info));
     writeCmd(0x02, 0x8e, p_cap, sizeof(p_cap));
     writeCmd(0x07, 0x07, p_name, sizeof(p_name));
@@ -286,6 +338,11 @@ void DjiOsmoCamera::handleFrame(const duml::Frame& f) {
     if (f.cmdSet == 0x00 && f.cmdId == 0x99 && f.sender == duml::ADDR_PARAM) {
         if (!(f.flags & 0x80))  // skip the subscription acks
             handleParam(p, n);
+        return;
+    }
+    if (f.cmdSet == 0x53 && f.cmdId == 0x10 && f.sender == ADDR_WAKE && n >= 1) {
+        wakeAccepted_ = p[0] == 0x01;
+        Serial.printf("[dji] wake %s\n", wakeAccepted_ ? "accepted" : "rejected");
         return;
     }
     if (f.cmdSet == 0x07 && f.cmdId == 0x45 && n >= 2) {

@@ -7,6 +7,7 @@
 
 #include "camera/BleTxPower.h"
 #include "camera/dji/DjiFormats.h"
+#include "config/Settings.h"
 #include "net/RadioCoex.h"
 
 namespace {
@@ -17,6 +18,13 @@ namespace {
     constexpr uint32_t CONN_DEVICE_ID = 0x12345678;
     constexpr uint32_t REC_DEVICE_ID  = 0x33FF0000;
     const uint8_t      CTRL_MAC[6]    = {0x38, 0x34, 0x56, 0x78, 0x9A, 0xBC};
+
+    constexpr uint8_t POWER_MODE_SLEEP = 3;
+    // A sleeping camera wakes on a short broadcast of "WKP" + its MAC. It only answers a
+    // controller it was connected to recently, within ~30 min of going to sleep
+    constexpr uint32_t kWakeAdvMs   = 2000;
+    constexpr uint32_t kWakeRetryMs = 8000;
+    constexpr uint32_t kFreshMs     = 2000;  // status push runs at 2 Hz
 
     inline void put_le16(uint8_t* p, uint16_t v) {
         p[0] = v & 0xFF;
@@ -62,6 +70,8 @@ bool DjiActionCamera::begin() {
     NimBLEDevice::init("ShutterBridge");
     applyBleTxPower();
     cb_ = new ClientCB(this);
+    if (g_settings.autoWake)
+        wake_.start();
     return attempt();
 }
 
@@ -152,9 +162,14 @@ void DjiActionCamera::poll() {
         }
     }
 
-    // Reconnect at exponential backoff, throttled while connected to the Web UI
+    updateBootWake(now);
+
+    // Reconnect at exponential backoff, throttled while connected to the Web UI; retry at once
+    // while waking the camera
     const uint32_t kApRetryMs = 8000;
-    const uint32_t interval = (g_apHasClient && backoffMs_ < kApRetryMs) ? kApRetryMs : backoffMs_;
+    uint32_t       interval = (g_apHasClient && backoffMs_ < kApRetryMs) ? kApRetryMs : backoffMs_;
+    if (wake_.active())
+        interval = 500;
     if (!connected_ && (now - lastAttemptMs_ > interval)) {
         lastAttemptMs_ = now;
         if (attempt()) {
@@ -165,6 +180,54 @@ void DjiActionCamera::poll() {
                 backoffMs_ = kBackoffMaxMs;
         }
     }
+}
+
+bool DjiActionCamera::awake() const {
+    return proto_ == PROTO_CONNECTED && status_.lastUpdateMs != 0 &&
+           millis() - status_.lastUpdateMs < kFreshMs && powerMode_ != POWER_MODE_SLEEP;
+}
+
+// Boot wake window: broadcast the wake until the camera reports in, out of sleep mode. Skipped
+// while a fresh link is still handshaking, so an already-awake camera isn't disturbed
+void DjiActionCamera::updateBootWake(uint32_t now) {
+    if (!wake_.active() || mac_.empty())
+        return;
+    if (wake_.expired()) {
+        wake_.finish();
+        Serial.println("[act] boot wake timed out - camera never came up");
+        return;
+    }
+    if (awake()) {
+        wake_.finish();
+        Serial.printf("[act] camera up %lu ms after boot\n", (unsigned long)wake_.ageMs());
+        return;
+    }
+    const bool asleep = !connected_ || powerMode_ == POWER_MODE_SLEEP ||
+                        (status_.lastUpdateMs == 0 && now - connectedAtMs_ > 5000);
+    if (asleep && (lastWakeAdvMs_ == 0 || now - lastWakeAdvMs_ >= kWakeRetryMs)) {
+        lastWakeAdvMs_ = now;
+        advertiseWake();
+    }
+}
+
+void DjiActionCamera::advertiseWake() {
+    if (!haveAddr_) {
+        addr_     = NimBLEAddress(mac_, BLE_ADDR_PUBLIC);
+        haveAddr_ = true;
+    }
+    // [len][0xFF][W K P][camera MAC, least significant byte first]
+    uint8_t raw[11] = {10, 0xFF, 'W', 'K', 'P'};
+    memcpy(raw + 5, addr_.getVal(), 6);
+    NimBLEAdvertisementData data;
+    data.addData(raw, sizeof(raw));
+
+    NimBLEAdvertising* adv = NimBLEDevice::getAdvertising();
+    adv->stop();
+    adv->setAdvertisementData(data);
+    adv->setMinInterval(0x20);
+    adv->setMaxInterval(0x40);
+    const bool ok = adv->start(kWakeAdvMs);
+    Serial.printf("[act] wake broadcast %s\n", ok ? "sent" : "failed");
 }
 
 bool DjiActionCamera::writeRaw(const uint8_t* data, size_t len) {
@@ -253,6 +316,11 @@ void DjiActionCamera::handleR(const djir::Frame& f) {
         status_.recElapsedS                                = le16(p + 5);
         status_.sdFreeMB                                   = le32(p + 15);
         status_.recLeftS                                   = le32(p + 23);
+        if (f.payloadLen >= 29 && p[28] != powerMode_) {  // 0 normal, 3 sleep
+            powerMode_ = p[28];
+            Serial.printf("[act] power_mode=%u%s\n", powerMode_,
+                          powerMode_ == POWER_MODE_SLEEP ? " (asleep)" : "");
+        }
         if (f.payloadLen >= 38)  // battery rides at the tail of the same push
             status_.batteryPct = p[37];
         status_.lastUpdateMs = millis();

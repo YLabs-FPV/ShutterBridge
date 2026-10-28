@@ -6,6 +6,7 @@
 
 #include "camera/AdvertProbe.h"
 #include "camera/BleTxPower.h"
+#include "config/Settings.h"
 
 namespace {
     const NimBLEUUID UUID_SERVICE((uint16_t)0xFEA6);  // Control & Query
@@ -31,6 +32,7 @@ namespace {
     constexpr uint8_t ST_REMAIN_VIDEO = 35;
     constexpr uint8_t ST_SD_REMAIN    = 54;  // KB
     constexpr uint8_t ST_BATTERY_PCT  = 70;
+    constexpr uint8_t ST_READY        = 82;  // booted and accepting commands
 
     constexpr uint16_t GRP_VIDEO     = 1000;
     constexpr uint16_t GRP_PHOTO     = 1001;
@@ -206,8 +208,9 @@ class GoProCamera::ClientCB : public NimBLEClientCallbacks {
     explicit ClientCB(GoProCamera* owner) : owner_(owner) {
     }
     void onDisconnect(NimBLEClient*, int reason) override {
-        owner_->connected_ = false;
-        owner_->status_    = CameraStatus{};
+        owner_->connected_   = false;
+        owner_->systemReady_ = false;
+        owner_->status_      = CameraStatus{};
         Serial.printf("[gopro] disconnected (reason 0x%02x)\n", reason);
     }
 
@@ -229,11 +232,13 @@ bool GoProCamera::begin() {
     NimBLEDevice::setSecurityIOCap(BLE_HS_IO_NO_INPUT_OUTPUT);
     cb_      = new ClientCB(this);
     rxQuery_ = new Reassembler();
+    if (g_settings.autoWake)
+        wake_.start();
     return attempt();
 }
 
 // A powered-off GoPro keeps advertising so it can be woken, and any connection wakes it. Only
-// connect when the advertisement says the camera is on
+// connect when the advertisement says the camera is on, or to wake it right after boot
 bool GoProCamera::attempt() {
     AdvertInfo adv;
     if (!probeAdvert(mac_, namePrefix_, 3000, adv))
@@ -248,12 +253,14 @@ bool GoProCamera::attempt() {
     const bool         known = m.size() >= 4 && (uint8_t)m[0] == 0xF2 && (uint8_t)m[1] == 0x02;
     const bool         off   = known && !((uint8_t)m[3] & 0x01);
     if (off != lastCamOff_) {
-        Serial.println(off ? "[gopro] camera powered off - not connecting"
-                           : "[gopro] camera powered on");
+        Serial.println(off ? "[gopro] camera powered off" : "[gopro] camera powered on");
         lastCamOff_ = off;
     }
-    if (off)
-        return false;
+    if (off) {
+        if (!wake_.active())
+            return false;
+        Serial.println("[gopro] waking camera");
+    }
     return connect();
 }
 
@@ -287,7 +294,8 @@ bool GoProCamera::connect() {
         return false;
     }
 
-    status_ = CameraStatus{};
+    status_      = CameraStatus{};
+    systemReady_ = false;
 
     respQuery->subscribe(true, [this](NimBLERemoteCharacteristic*, uint8_t* d, size_t n, bool) {
         onNotify(gp("0077"), d, n);
@@ -337,9 +345,26 @@ void GoProCamera::poll() {
         }
     }
 
-    if (!connected_ && now - lastAttemptMs_ > 5000) {
+    updateBootWake();
+
+    if (!connected_ && now - lastAttemptMs_ > (wake_.active() ? 500u : 5000u)) {
         lastAttemptMs_ = now;
         attempt();
+    }
+}
+
+// The boot wake window closes once the camera reports it has fully booted (status 82)
+void GoProCamera::updateBootWake() {
+    if (!wake_.active())
+        return;
+    if (wake_.expired()) {
+        wake_.finish();
+        Serial.println("[gopro] boot wake timed out - camera never came up");
+        return;
+    }
+    if (connected_ && systemReady_) {
+        wake_.finish();
+        Serial.printf("[gopro] camera up %lu ms after boot\n", (unsigned long)wake_.ageMs());
     }
 }
 
@@ -429,9 +454,9 @@ bool GoProCamera::setDateTime(const WallClock& utc, int16_t tzOffsetMinutes) {
 }
 
 void GoProCamera::requestStatuses() {
-    const uint8_t tlv[] = {0x07,         QUERY_GET_STATUS_VAL, ST_BUSY,
+    const uint8_t tlv[] = {0x08,         QUERY_GET_STATUS_VAL, ST_BUSY,
                            ST_ENCODING,  ST_ENC_DURATION,      ST_REMAIN_VIDEO,
-                           ST_SD_REMAIN, ST_BATTERY_PCT};
+                           ST_SD_REMAIN, ST_BATTERY_PCT,       ST_READY};
     writeQuery(tlv, sizeof(tlv));
 }
 
@@ -504,6 +529,10 @@ void GoProCamera::handleQueryResponse(const uint8_t* tlv, size_t len) {
                 case ST_BATTERY_PCT:
                     if (vl >= 1)
                         status_.batteryPct = v[0];
+                    break;
+                case ST_READY:
+                    if (vl >= 1)
+                        systemReady_ = v[0] != 0;
                     break;
                 default:
                     break;

@@ -8,6 +8,7 @@
 #include <string>
 
 #include "camera/Camera.h"
+#include "camera/BootWake.h"
 
 class GoProCamera : public Camera {
    public:
@@ -41,6 +42,8 @@ class GoProCamera : public Camera {
     bool attempt();  // probe the advertisement, connect only if the camera is on
     bool connect();
 
+    void updateBootWake();
+
     bool writeCmd(const uint8_t* tlv, size_t len);
     bool writeQuery(const uint8_t* tlv, size_t len);
     bool writeSetting(const uint8_t* tlv, size_t len);
@@ -58,8 +61,9 @@ class GoProCamera : public Camera {
     std::string   mac_;
     std::string   namePrefix_;
     NimBLEAddress addr_;
-    bool          haveAddr_     = false;
-    bool          lastCamOff_   = false;
+    bool          haveAddr_   = false;
+    bool          lastCamOff_ = false;
+    BootWake      wake_;
 
     NimBLEClient*               client_    = nullptr;
     NimBLERemoteCharacteristic* chCommand_ = nullptr;  // 0072
@@ -70,6 +74,7 @@ class GoProCamera : public Camera {
 
     CameraStatus  status_;
     volatile bool connected_     = false;
+    volatile bool systemReady_   = false;  // status 82: booted and accepting commands
     uint32_t      lastAttemptMs_ = 0;
     uint32_t      connectedAtMs_ = 0;
     uint32_t      lastPollMs_    = 0;
