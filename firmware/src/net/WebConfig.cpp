@@ -44,15 +44,39 @@ void WebConfig::begin() {
     server_.on("/style.css", HTTP_GET, file("/style.css", "text/css"));
     server_.on("/app.js", HTTP_GET, file("/app.js", "application/javascript"));
 
-    server_.on("/config.json", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleConfig); });
-    server_.on("/status.json", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleStatus); });
+    server_.on("/config.json",
+               [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleConfig); });
+    server_.on("/status.json",
+               [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleStatus); });
     server_.on("/scan", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleScan); });
     server_.on("/preset", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handlePreset); });
     server_.on("/mode", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleMode); });
-    server_.on("/shutter", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleShutter); });
+    server_.on("/shutter",
+               [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleShutter); });
     server_.on("/bridge", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleBridge); });
-    server_.on("/save", HTTP_POST, [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleSave); });
+    server_.on("/save", HTTP_POST,
+               [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleSave); });
     server_.on("/reboot", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleReboot); });
+
+    // OS connectivity checks: with every name resolving here, answer them like the real
+    // servers do so the phone keeps routing over this Wi-Fi instead of falling back to mobile data
+    auto noContent = [](AsyncWebServerRequest* r) { r->send(204); };
+    auto apple     = [](AsyncWebServerRequest* r) {
+        r->send(200, "text/html",
+                "<HTML><HEAD><TITLE>Success</TITLE></HEAD><BODY>Success</BODY></HTML>");
+    };
+    server_.on("/generate_204", noContent);  // Android, Chrome
+    server_.on("/gen_204", noContent);
+    server_.on("/hotspot-detect.html", apple);  // Apple
+    server_.on("/library/test/success.html", apple);
+    server_.on("/connecttest.txt", [](AsyncWebServerRequest* r) {  // Windows
+        r->send(200, "text/plain", "Microsoft Connect Test");
+    });
+    server_.on("/ncsi.txt",
+               [](AsyncWebServerRequest* r) { r->send(200, "text/plain", "Microsoft NCSI"); });
+    server_.on("/success.txt", [](AsyncWebServerRequest* r) {  // Firefox
+        r->send(200, "text/plain", "success\n");
+    });
     server_.onNotFound([](AsyncWebServerRequest* r) { r->send(404, "text/plain", "not found"); });
     routesSet_ = true;
 }
@@ -69,6 +93,7 @@ void WebConfig::startAp() {
     // while the AP is up
     begin();
     server_.begin();
+    dns_.start(53, "*", WiFi.softAPIP());
     if (MDNS.begin("shutterbridge")) {  // -> http://shutterbridge.local
         MDNS.addService("http", "tcp", 80);
     }
@@ -83,6 +108,7 @@ void WebConfig::startAp() {
 
 void WebConfig::stopAp() {
     MDNS.end();
+    dns_.stop();
     server_.end();
     WiFi.softAPdisconnect(true);
     WiFi.mode(WIFI_OFF);

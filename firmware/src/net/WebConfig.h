@@ -2,6 +2,7 @@
 // Wi-Fi and BLE share the radio, so the AP can shut down while armed
 #pragma once
 
+#include <DNSServer.h>
 #include <ESPAsyncWebServer.h>
 
 #include <deque>
@@ -60,10 +61,11 @@ class WebConfig {
     void defer(AsyncWebServerRequest* r, Handler h);
     void runDeferred();
 
-    void handleConfig(AsyncWebServerRequest* r);   // GET /config.json
-    void handleSave(AsyncWebServerRequest* r);     // POST /save
-    void handleStatus(AsyncWebServerRequest* r);   // GET /status.json
-    void handleScan(AsyncWebServerRequest* r);     // GET /scan  (BLE scan for cameras of the selected type)
+    void handleConfig(AsyncWebServerRequest* r);  // GET /config.json
+    void handleSave(AsyncWebServerRequest* r);    // POST /save
+    void handleStatus(AsyncWebServerRequest* r);  // GET /status.json
+    void handleScan(
+        AsyncWebServerRequest* r);  // GET /scan  (BLE scan for cameras of the selected type)
     void handlePreset(AsyncWebServerRequest* r);   // GET /preset (GoPro-only preset switching)
     void handleMode(AsyncWebServerRequest* r);     // GET /mode?m=photo|video (photo/video switch)
     void handleShutter(AsyncWebServerRequest* r);  // GET /shutter?a=start|stop|photo (all backends)
@@ -72,18 +74,19 @@ class WebConfig {
 
     Settings&           s_;
     AsyncWebServer      server_;
-    Camera*             camera_     = nullptr;
-    const CameraStatus* camStatus_  = nullptr;
-    const RcState*      rc_         = nullptr;
-    bool                apUp_       = false;
-    bool                routesSet_  = false;
-    bool                dirty_      = false;
+    DNSServer           dns_;  // answers every name with the AP address (captive portal)
+    Camera*             camera_       = nullptr;
+    const CameraStatus* camStatus_    = nullptr;
+    const RcState*      rc_           = nullptr;
+    bool                apUp_         = false;
+    bool                routesSet_    = false;
+    bool                dirty_        = false;
     bool                bridgeReq_    = false;
     bool                bridgeActive_ = false;
-    bool                lastArmed_  = false;
-    bool                wantAp_     = true;
-    uint32_t            wantSince_  = 0;
-    uint32_t            rebootAtMs_ = 0;
+    bool                lastArmed_    = false;
+    bool                wantAp_       = true;
+    uint32_t            wantSince_    = 0;
+    uint32_t            rebootAtMs_   = 0;
 
     // API requests arrive on the AsyncTCP task; they are paused there and answered from poll()
     // so handlers keep running on the loop core alongside the rest of the app
