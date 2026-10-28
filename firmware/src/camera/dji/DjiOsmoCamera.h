@@ -16,6 +16,7 @@ class DjiOsmoCamera : public Camera {
     bool                startRecord() override;
     bool                stopRecord() override;
     bool                takePhoto() override;
+    bool                setMode(CamMode mode) override;
     const CameraStatus& status() const override {
         return status_;
     }
@@ -29,9 +30,12 @@ class DjiOsmoCamera : public Camera {
     bool connect();
     void doHandshake();
     bool writeRaw(const uint8_t* data, size_t len);
-    bool writeCmd(uint8_t cmdSet, uint8_t cmdId, const uint8_t* payload, size_t payloadLen);
+    bool writeCmd(uint8_t cmdSet, uint8_t cmdId, const uint8_t* payload, size_t payloadLen,
+                  uint8_t receiver = duml::ADDR_CAM);
+    bool subscribeParam(const char* name);
     void onNotify(const uint8_t* data, size_t len);
     void handleFrame(const duml::Frame& f);
+    void handleParam(const uint8_t* p, size_t n);
 
     class ClientCB;
 
@@ -48,6 +52,7 @@ class DjiOsmoCamera : public Camera {
     CameraStatus              status_;
     volatile bool             connected_     = false;
     uint16_t                  seq_           = 0x9000;
+    uint32_t                  subId_         = 0x6A00;
     uint32_t                  lastAttemptMs_ = 0;
     uint32_t                  connectedAtMs_ = 0;
     uint8_t                   lastWorkMode_  = 0xFF;  // for logging work-mode changes

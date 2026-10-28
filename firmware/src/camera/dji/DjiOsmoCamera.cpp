@@ -2,7 +2,10 @@
 
 #include <Arduino.h>
 
+#include <cstring>
+
 #include "camera/BleTxPower.h"
+#include "camera/dji/DjiFormats.h"
 #include "net/RadioCoex.h"
 
 namespace {
@@ -15,6 +18,9 @@ namespace {
                                 0x07, 0x45, 0x0f, 0x30, 0x30, 0x31, 0x37, 0x34, 0x38,
                                 0x30, 0x38, 0x39, 0x34, 0x35, 0x33, 0x33, 0x35, 0x32,
                                 0x04, 0x32, 0x30, 0x35, 0x30, 0xc7, 0x88};
+
+    // Named camera parameter carrying [resolution idx][fps idx]...
+    constexpr char PARAM_VIDEO_FORMAT[] = "cam_video_param_v2";
 
     inline uint16_t le16(const uint8_t* p) {
         return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
@@ -154,6 +160,37 @@ void DjiOsmoCamera::doHandshake() {
     writeCmd(0x07, 0x07, p_name, sizeof(p_name));
     writeCmd(0x07, 0x0e, p_token, sizeof(p_token));
     writeCmd(0x07, 0x0c, nullptr, 0);
+    subscribeParam(PARAM_VIDEO_FORMAT);
+}
+
+// Parameter subscription: the camera acks, then pushes the current value and every change as
+// cs00/99 frames from the parameter module
+bool DjiOsmoCamera::subscribeParam(const char* name) {
+    const size_t nameLen = strlen(name);
+    uint8_t      pl[64];
+    if (15 + nameLen + 4 > sizeof(pl))
+        return false;
+    size_t i          = 0;
+    pl[i++]           = 0x02;
+    pl[i++]           = 0x02;  // verb: subscribe
+    pl[i++]           = 0x00;
+    pl[i++]           = 0x00;
+    const uint32_t id = subId_++;
+    for (int b = 0; b < 4; ++b)
+        pl[i++] = (id >> (8 * b)) & 0xFF;
+    pl[i++] = 0x00;
+    pl[i++] = 0x00;
+    pl[i++] = 0x00;
+    pl[i++] = (nameLen + 6) & 0xFF;
+    pl[i++] = (nameLen + 6) >> 8;
+    pl[i++] = nameLen & 0xFF;
+    pl[i++] = nameLen >> 8;
+    memcpy(pl + i, name, nameLen);
+    i += nameLen;
+    memset(pl + i, 0, 4);
+    i += 4;
+    Serial.printf("[dji] subscribe %s\n", name);
+    return writeCmd(0x00, 0x99, pl, i, duml::ADDR_PARAM);
 }
 
 bool DjiOsmoCamera::writeRaw(const uint8_t* data, size_t len) {
@@ -163,9 +200,9 @@ bool DjiOsmoCamera::writeRaw(const uint8_t* data, size_t len) {
 }
 
 bool DjiOsmoCamera::writeCmd(uint8_t cmdSet, uint8_t cmdId, const uint8_t* payload,
-                             size_t payloadLen) {
-    auto frame = duml::buildFrame(duml::ADDR_APP, duml::ADDR_CAM, cmdSet, cmdId, payload,
-                                  payloadLen, duml::FLAG_CMD, seq_++);
+                             size_t payloadLen, uint8_t receiver) {
+    auto frame = duml::buildFrame(duml::ADDR_APP, receiver, cmdSet, cmdId, payload, payloadLen,
+                                  duml::FLAG_CMD, seq_++);
     return writeRaw(frame.data(), frame.size());
 }
 
@@ -186,6 +223,15 @@ bool DjiOsmoCamera::takePhoto() {
         return false;
     const uint8_t p = 0x01;
     return writeCmd(0x02, 0x01, &p, 1);  // captures only while the camera is in photo mode
+}
+bool DjiOsmoCamera::setMode(CamMode mode) {
+    if (!status_.ready) {
+        Serial.println("[dji] setMode ignored - camera not in a shooting mode");
+        return false;
+    }
+    const uint8_t p = (mode == CamMode::Photo) ? 0x05 : 0x01;
+    Serial.printf("[dji] setMode -> %s (0x%02x)\n", mode == CamMode::Photo ? "PHOTO" : "VIDEO", p);
+    return writeCmd(0x02, 0xE1, &p, 1);
 }
 
 void DjiOsmoCamera::onNotify(const uint8_t* data, size_t len) {
@@ -220,9 +266,44 @@ void DjiOsmoCamera::handleFrame(const duml::Frame& f) {
         status_.batteryPct = p[20];
         return;
     }
+    if (f.cmdSet == 0x00 && f.cmdId == 0x99 && f.sender == duml::ADDR_PARAM) {
+        if (f.flags & 0x80)
+            Serial.printf("[dji] param subscribe ACK (%u B)\n", (unsigned)n);
+        else
+            handleParam(p, n);
+        return;
+    }
+    if (f.cmdSet == 0x02 && f.cmdId == 0xE1 && (f.flags & 0x80) && n >= 1) {
+        Serial.printf("[dji] setMode reply %02x %s\n", p[0], p[0] == 0x00 ? "OK" : "rejected");
+        return;
+    }
     if (f.cmdSet == 0x07 && f.cmdId == 0x45 && n >= 2) {
         Serial.printf("[dji] identify ACK %02x%02x %s\n", p[0], p[1],
                       (p[0] == 0x00 && p[1] == 0x01) ? "OK" : "?");
         return;
+    }
+}
+
+void DjiOsmoCamera::handleParam(const uint8_t* p, size_t n) {
+    if (n < 15 || p[1] != 0x06)
+        return;
+    const size_t nameLen = le16(p + 13);
+    const size_t vOff    = 15 + nameLen + 6;
+    if (vOff + 2 > n)
+        return;
+    const size_t vLen = le16(p + vOff);
+    if (vOff + 2 + vLen > n)
+        return;
+    const uint8_t* v = p + vOff + 2;
+
+    if (nameLen == sizeof(PARAM_VIDEO_FORMAT) - 1 &&
+        memcmp(p + 15, PARAM_VIDEO_FORMAT, nameLen) == 0 && vLen >= 2) {
+        const char*    res = dji::resolutionName(v[0]);
+        const uint16_t fps = dji::fpsValue(v[1]);
+        if (fps != status_.fps || strcmp(res, status_.resolution) != 0)
+            Serial.printf("[dji] format res=%u (%s) fps=%u (%u)\n", v[0], res, v[1], fps);
+        strncpy(status_.resolution, res, sizeof(status_.resolution) - 1);
+        status_.resolution[sizeof(status_.resolution) - 1] = '\0';
+        status_.fps                                        = fps;
     }
 }

@@ -73,24 +73,12 @@ over MSP. If MSP isn't connected (bad wiring or MSP not enabled on that UART), t
 board never sees you arm and won't trigger. Fix the [FC link](/docs/wiring) first,
 then check the start/stop delays on the Channels tab.
 
-## Recording is corrupted or very low FPS (Osmo Nano)
+## Shutter takes no photo
 
-If a clip records but plays back stuck at a very low frame rate, the recording was
-almost certainly started while the camera was asleep (standby / screen off). Wake
-the camera and let it fully boot before arming (green light on the front should be on).
-
-<Admonition type="danger" title="Wake it before recording">
-  Starting a recording from standby corrupts the clip on the Osmo Nano. This is a
-  current limitation with no known fix, so make waking the camera part of your
-  pre-flight routine.
-</Admonition>
-
-## Shutter takes no photo (Osmo Nano)
-
-The Osmo Nano can't switch to Photo mode over BLE. Set the camera to **Photo mode
-manually** first; the shutter then captures a photo. On the Action / 360 and GoPro
-the mode can be switched in-flight using an AUX channel.\
-See [compatibility](/docs/compatibility).
+The shutter takes a photo only while the camera is in Photo mode; in Video mode it
+records instead. Switch the camera to Photo with the **Camera Mode** channel
+function or the **Mode** buttons in the Web UI.\
+See [Web UI](/docs/web-ui).
 
 ## Still stuck
 

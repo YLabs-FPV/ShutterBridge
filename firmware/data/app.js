@@ -11,9 +11,7 @@ const OSD_FIELDS = [
 
 const CAM_TYPE_NAMES = ["DJI Osmo (Nano)", "DJI Action / 360", "GoPro"];
 
-const OSMO_TYPE = 0,
-  ACTION_TYPE = 1,
-  GOPRO_TYPE = 2;
+const GOPRO_TYPE = 2;
 
 const CH_MIN = 900,
   CH_MAX = 2100,
@@ -51,9 +49,6 @@ let cfg = null;
 let chVals = [];
 let boundMac = "";
 let boundType = 0;
-
-// Resolution and FPS aren't reported by the Osmo Nano
-const osdFieldAvail = (k) => !(boundType === OSMO_TYPE && (k === 6 || k === 7));
 
 // ---- Tabs ----
 document.querySelectorAll(".tab").forEach((t) =>
@@ -95,10 +90,9 @@ async function loadConfig() {
       (i) =>
         `<div class="row"><label>Custom Msg ${i}</label><div class="ctl">` +
         `<select id="s${i}">` +
-        OSD_FIELDS.map((o, k) =>
-          osdFieldAvail(k)
-            ? `<option value="${k}"${k === cfg.osd[i] ? " selected" : ""}>${o}</option>`
-            : "",
+        OSD_FIELDS.map(
+          (o, k) =>
+            `<option value="${k}"${k === cfg.osd[i] ? " selected" : ""}>${o}</option>`,
         ).join("") +
         `</select></div></div>`,
     )
@@ -181,12 +175,9 @@ function renderBound() {
     : "No camera";
   $("bound").textContent = boundMac || "not bound";
 
-  // Controls: shutter (start/stop/photo) on every backend, mode switch for Action/GoPro,
-  // presets for GoPro only
-  const canMode =
-    boundMac && (boundType === ACTION_TYPE || boundType === GOPRO_TYPE);
+  // Controls: shutter (start/stop/photo) and mode switch on every backend, presets for GoPro only
   $("controlscard").hidden = !boundMac;
-  $("modectl").hidden = !canMode;
+  $("modectl").hidden = !boundMac;
   $("presetctl").hidden = boundType !== GOPRO_TYPE;
   $("clockcard").hidden = boundType !== GOPRO_TYPE; // GPS clock sync is GoPro-only
 
@@ -195,8 +186,6 @@ function renderBound() {
     cfg.modes.forEach((m, i) => {
       if (m.name.startsWith("Preset"))
         $("mode" + i).hidden = boundType !== GOPRO_TYPE;
-      if (m.name === "Camera Mode")
-        $("mode" + i).hidden = boundType === OSMO_TYPE;
     });
 }
 
@@ -489,6 +478,16 @@ const fmt = (s) => {
   s = s || 0;
   return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
 };
+
+const fmtLeft = (s) => {
+  s = s || 0;
+  if (s < 3600) return fmt(s);
+  return (
+    Math.floor(s / 3600) +
+    "h" +
+    String(Math.floor(s / 60) % 60).padStart(2, "0")
+  );
+};
 async function tick() {
   try {
     const s = await (await fetch("/status.json")).json();
@@ -539,7 +538,7 @@ async function tick() {
     $("batt").textContent = s.online ? s.batt + "%" : "--";
     $("battbar").style.width = (s.online ? s.batt : 0) + "%";
     $("sd").textContent = s.online ? (s.sd / 1024).toFixed(1) + "G" : "--";
-    $("left").textContent = s.online ? fmt(s.left) : "--:--";
+    $("left").textContent = s.online ? fmtLeft(s.left) : "--:--";
 
     if (cfg)
       cfg.modes.forEach((_, i) => {

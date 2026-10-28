@@ -61,29 +61,22 @@ Wi-Fi access point and open it in a browser. No app, no drivers.
 
 ## Compatible cameras
 
-The Osmo Action series and the Osmo 360 share the same DJI R-SDK backend.
-
 | Feature                                           | DJI Osmo (Nano) | DJI Action / 360 | GoPro (HERO9+) |
 | ------------------------------------------------- | :-------------: | :--------------: | :------------: |
 | Connect + auto-reconnect                          |       ✅        |        ✅        |       ✅       |
 | Pairing (accept PIN / bond on the camera)         |  not required   |     ✅ (PIN)     |   ✅ (bond)    |
 | OSD telemetry (record state, battery, SD, timers) |       ✅        |        ✅        |       ✅       |
 | Mode readout (video / photo)                      |       ✅        |        ✅        |       ❌       |
-| Photo / video mode switch                         |       ❌        |        ✅        |       ❓       |
-| Resolution / FPS readout                          |       ❌        |        ✅        |       ❓       |
+| Photo / video mode switch                         |       ✅        |        ✅        |       ❓       |
+| Resolution / FPS readout                          |       ✅        |        ✅        |       ❓       |
 | Start / stop recording (with optional delay)      |       ✅        |        ✅        |       ✅       |
-| Take photo                                        |      ✅\*       |        ✅        |       ❓       |
+| Take photo                                        |       ✅        |        ✅        |       ❓       |
 | Preset switching (Video / Photo / Timelapse)      |       ❌        |        ❌        |       ❓       |
 | Load preset by ID                                 |       ❌        |        ❌        |       ❓       |
 | Clock sync from FC GPS time                       |       ❌        |        ❌        |       ❓       |
 | Tested on real hardware                           |       ✅        |  ✅ (Action 4)   |  ✅ (HERO 12)  |
 
-_\* The Osmo Nano can't switch photo/video over BLE, so the shutter captures a photo only when the camera is already set to Photo mode. The Action / 360 / GoPro switch modes automatically or via the Camera Mode switch._
-
 _❓ = supported by the backend but not yet verified on hardware._
-
-> [!WARNING]
-> **Wake the Osmo Nano before recording.** Starting a recording while the camera is asleep (standby / screen off) produces a corrupted, very-low-FPS clip. Wake it and wait until it reads online before you arm - a current limitation with no known fix.
 
 ## What you need
 
@@ -127,10 +120,10 @@ and how to submit changes.
 
 ## Repository layout
 
-| Path        | What's inside                                                     |
-| ----------- | ----------------------------------------------------------------- |
+| Path        | What's inside                                                       |
+| ----------- | ------------------------------------------------------------------- |
 | `firmware/` | ESP32-S3 / ESP32-C3 firmware (PlatformIO) and the on-device Web UI. |
-| `site/`     | The website, documentation and browser-based web flasher (Astro). |
+| `site/`     | The website, documentation and browser-based web flasher (Astro).   |
 
 ## License
 
