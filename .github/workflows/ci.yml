@@ -73,6 +73,9 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.site == 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     defaults:
       run:
         working-directory: site
@@ -97,3 +100,26 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Upload preview version
+        id: preview
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.ndjson
+        run: |
+          pnpm wrangler versions upload \
+            --preview-alias "pr-${{ github.event.pull_request.number }}" \
+            --message "PR #${{ github.event.pull_request.number }} @ ${GITHUB_SHA::7}"
+          URL=$(jq -r 'select(.type == "version-upload") | .preview_alias_url // .preview_url' "$WRANGLER_OUTPUT_FILE_PATH")
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Comment preview URL
+        if: ${{ steps.preview.outputs.url }}
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: site-preview
+          message: |
+            Site preview: ${{ steps.preview.outputs.url }}
+            Commit: ${{ github.event.pull_request.head.sha }}
