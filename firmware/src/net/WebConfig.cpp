@@ -28,21 +28,9 @@ void WebConfig::begin() {
 
     if (!LittleFS.begin(/*formatOnFail=*/true)) {
         Serial.println("[web] LittleFS mount failed");
-    } else if (!LittleFS.exists("/index.html")) {
+    } else if (!LittleFS.exists("/index.html.gz") && !LittleFS.exists("/index.html")) {
         Serial.println("[web] WARNING: web assets missing - run `pio run -t uploadfs`");
     }
-
-    auto file = [](const char* path, const char* type) {
-        return [path, type](AsyncWebServerRequest* r) {
-            if (LittleFS.exists(path))
-                r->send(LittleFS, path, type);
-            else
-                r->send(404, "text/plain", "missing web assets");
-        };
-    };
-    server_.on("/", HTTP_GET, file("/index.html", "text/html"));
-    server_.on("/style.css", HTTP_GET, file("/style.css", "text/css"));
-    server_.on("/app.js", HTTP_GET, file("/app.js", "application/javascript"));
 
     server_.on("/config.json",
                [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleConfig); });
@@ -77,6 +65,9 @@ void WebConfig::begin() {
     server_.on("/success.txt", [](AsyncWebServerRequest* r) {  // Firefox
         r->send(200, "text/plain", "success\n");
     });
+    server_.serveStatic("/", LittleFS, "/")
+        .setDefaultFile("index.html")
+        .setCacheControl("no-cache");
     server_.onNotFound([](AsyncWebServerRequest* r) { r->send(404, "text/plain", "not found"); });
     routesSet_ = true;
 }
