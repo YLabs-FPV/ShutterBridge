@@ -28,27 +28,47 @@ void WebConfig::begin() {
 
     if (!LittleFS.begin(/*formatOnFail=*/true)) {
         Serial.println("[web] LittleFS mount failed");
-    } else if (!LittleFS.exists("/index.html")) {
+    } else if (!LittleFS.exists("/index.html.gz") && !LittleFS.exists("/index.html")) {
         Serial.println("[web] WARNING: web assets missing - run `pio run -t uploadfs`");
     }
 
-    server_.serveStatic("/", LittleFS, "/index.html");
-    server_.serveStatic("/style.css", LittleFS, "/style.css");
-    server_.serveStatic("/app.js", LittleFS, "/app.js");
+    server_.on("/config.json",
+               [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleConfig); });
+    server_.on("/status.json",
+               [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleStatus); });
+    server_.on("/scan", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleScan); });
+    server_.on("/preset", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handlePreset); });
+    server_.on("/mode", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleMode); });
+    server_.on("/shutter",
+               [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleShutter); });
+    server_.on("/bridge", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleBridge); });
+    server_.on("/save", HTTP_POST,
+               [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleSave); });
+    server_.on("/reboot", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleReboot); });
 
-    server_.on("/config.json", [this]() { handleConfig(); });
-    server_.on("/status.json", [this]() { handleStatus(); });
-    server_.on("/scan", [this]() { handleScan(); });
-    server_.on("/preset", [this]() { handlePreset(); });
-    server_.on("/mode", [this]() { handleMode(); });
-    server_.on("/shutter", [this]() { handleShutter(); });
-    server_.on("/bridge", [this]() { handleBridge(); });
-    server_.on("/save", HTTP_POST, [this]() { handleSave(); });
-    server_.on("/reboot", [this]() {
-        server_.send(200, "text/plain", "rebooting");
-        delay(200);
-        ESP.restart();
+    // OS connectivity checks: with every name resolving here, answer them like the real
+    // servers do so the phone keeps routing over this Wi-Fi instead of falling back to mobile data
+    auto noContent = [](AsyncWebServerRequest* r) { r->send(204); };
+    auto apple     = [](AsyncWebServerRequest* r) {
+        r->send(200, "text/html",
+                "<HTML><HEAD><TITLE>Success</TITLE></HEAD><BODY>Success</BODY></HTML>");
+    };
+    server_.on("/generate_204", noContent);  // Android, Chrome
+    server_.on("/gen_204", noContent);
+    server_.on("/hotspot-detect.html", apple);  // Apple
+    server_.on("/library/test/success.html", apple);
+    server_.on("/connecttest.txt", [](AsyncWebServerRequest* r) {  // Windows
+        r->send(200, "text/plain", "Microsoft Connect Test");
     });
+    server_.on("/ncsi.txt",
+               [](AsyncWebServerRequest* r) { r->send(200, "text/plain", "Microsoft NCSI"); });
+    server_.on("/success.txt", [](AsyncWebServerRequest* r) {  // Firefox
+        r->send(200, "text/plain", "success\n");
+    });
+    server_.serveStatic("/", LittleFS, "/")
+        .setDefaultFile("index.html")
+        .setCacheControl("no-cache");
+    server_.onNotFound([](AsyncWebServerRequest* r) { r->send(404, "text/plain", "not found"); });
     routesSet_ = true;
 }
 
@@ -64,6 +84,7 @@ void WebConfig::startAp() {
     // while the AP is up
     begin();
     server_.begin();
+    dns_.start(53, "*", WiFi.softAPIP());
     if (MDNS.begin("shutterbridge")) {  // -> http://shutterbridge.local
         MDNS.addService("http", "tcp", 80);
     }
@@ -78,7 +99,8 @@ void WebConfig::startAp() {
 
 void WebConfig::stopAp() {
     MDNS.end();
-    server_.stop();
+    dns_.stop();
+    server_.end();
     WiFi.softAPdisconnect(true);
     WiFi.mode(WIFI_OFF);
     apUp_      = false;
@@ -107,7 +129,7 @@ void WebConfig::poll(bool armed) {
             stopAp();
     }
     if (apUp_)
-        server_.handleClient();
+        runDeferred();
     // Reconnect throttling in the camera backends keys off this: only slow BLE reconnects
     // when someone is actually on the Web UI
     g_apHasClient = apUp_ && WiFi.softAPgetStationNum() > 0;
@@ -117,7 +139,24 @@ void WebConfig::poll(bool armed) {
         ESP.restart();
 }
 
-void WebConfig::handleConfig() {
+void WebConfig::defer(AsyncWebServerRequest* r, Handler h) {
+    std::lock_guard<std::mutex> lock(pendingMu_);
+    pending_.push_back({r->pause(), h});
+}
+
+// A request whose client went away meanwhile has expired and is dropped
+void WebConfig::runDeferred() {
+    std::deque<Pending> batch;
+    {
+        std::lock_guard<std::mutex> lock(pendingMu_);
+        batch.swap(pending_);
+    }
+    for (Pending& p : batch)
+        if (auto r = p.req.lock())
+            (this->*p.handler)(r.get());
+}
+
+void WebConfig::handleConfig(AsyncWebServerRequest* r) {
     JsonDocument doc;
 
     JsonArray osd = doc["osd"].to<JsonArray>();
@@ -152,12 +191,12 @@ void WebConfig::handleConfig() {
 
     String out;
     serializeJson(doc, out);
-    server_.send(200, "application/json", out);
+    r->send(200, "application/json", out);
 }
 
-void WebConfig::handleStatus() {
+void WebConfig::handleStatus(AsyncWebServerRequest* r) {
     if (bridgeActive_) {
-        server_.send(200, "application/json", "{\"bridge\":1}");
+        r->send(200, "application/json", "{\"bridge\":1}");
         return;
     }
 
@@ -188,10 +227,10 @@ void WebConfig::handleStatus() {
 
     String out;
     serializeJson(doc, out);
-    server_.send(200, "application/json", out);
+    r->send(200, "application/json", out);
 }
 
-void WebConfig::handleSave() {
+void WebConfig::handleSave(AsyncWebServerRequest* r) {
     // Boot-only fields: snapshot to detect a change that warrants a reboot
     const uint8_t oldCamType = s_.camType;
     char          oldMac[sizeof(s_.camMac)];
@@ -202,16 +241,16 @@ void WebConfig::handleSave() {
     strncpy(oldPass, s_.apPass, sizeof(oldPass));
 
     for (int i = 0; i < 4; i++) {
-        int v = server_.arg("s" + String(i)).toInt();
+        int v = r->arg("s" + String(i)).toInt();
         if (v >= 0 && v < (int)OsdField::_Count)
             s_.osdSlot[i] = (OsdField)v;
     }
 
     for (int i = 0; i < FUNC_COUNT; i++) {
         const String p  = "m" + String(i);
-        s_.modes[i].aux = (uint8_t)constrain(server_.arg(p + "aux").toInt(), 0, 14);
-        uint16_t lo     = (uint16_t)constrain(server_.arg(p + "min").toInt(), 900, 2100);
-        uint16_t hi     = (uint16_t)constrain(server_.arg(p + "max").toInt(), 900, 2100);
+        s_.modes[i].aux = (uint8_t)constrain(r->arg(p + "aux").toInt(), 0, 14);
+        uint16_t lo     = (uint16_t)constrain(r->arg(p + "min").toInt(), 900, 2100);
+        uint16_t hi     = (uint16_t)constrain(r->arg(p + "max").toInt(), 900, 2100);
         if (hi < lo) {
             uint16_t t = lo;
             lo         = hi;
@@ -221,20 +260,20 @@ void WebConfig::handleSave() {
         s_.modes[i].rangeMax = hi;
     }
 
-    s_.opMode             = (uint8_t)constrain(server_.arg("op").toInt(), 0, 1);
-    s_.shutterVideoMode   = (uint8_t)constrain(server_.arg("svm").toInt(), 0, 1);
-    s_.modeSwitchStyle    = (uint8_t)constrain(server_.arg("msm").toInt(), 0, 1);
-    s_.recordStartDelayMs = (uint16_t)constrain(server_.arg("rdly").toInt(), 0, 60000);
-    s_.recordStopDelayMs  = (uint16_t)constrain(server_.arg("sdly").toInt(), 0, 60000);
-    s_.tzOffsetMin        = (int16_t)constrain(server_.arg("tz").toInt(), -720, 840);
-    s_.clockSync          = server_.hasArg("clk") ? 1 : 0;
-    s_.autoWake           = server_.hasArg("wake") ? 1 : 0;
-    s_.camType            = (uint8_t)constrain(server_.arg("ctype").toInt(), 0, 3);
-    setStr(s_.camMac, sizeof(s_.camMac), server_.arg("mac"));
-    setStr(s_.apSsid, sizeof(s_.apSsid), server_.arg("ssid"));
-    setStr(s_.apPass, sizeof(s_.apPass), server_.arg("pass"));
-    s_.webuiDisarmedOnly = server_.hasArg("dis") ? 1 : 0;
-    s_.bleTxPower        = (uint8_t)constrain(server_.arg("ble").toInt(), 0, 2);
+    s_.opMode             = (uint8_t)constrain(r->arg("op").toInt(), 0, 1);
+    s_.shutterVideoMode   = (uint8_t)constrain(r->arg("svm").toInt(), 0, 1);
+    s_.modeSwitchStyle    = (uint8_t)constrain(r->arg("msm").toInt(), 0, 1);
+    s_.recordStartDelayMs = (uint16_t)constrain(r->arg("rdly").toInt(), 0, 60000);
+    s_.recordStopDelayMs  = (uint16_t)constrain(r->arg("sdly").toInt(), 0, 60000);
+    s_.tzOffsetMin        = (int16_t)constrain(r->arg("tz").toInt(), -720, 840);
+    s_.clockSync          = r->hasArg("clk") ? 1 : 0;
+    s_.autoWake           = r->hasArg("wake") ? 1 : 0;
+    s_.camType            = (uint8_t)constrain(r->arg("ctype").toInt(), 0, 3);
+    setStr(s_.camMac, sizeof(s_.camMac), r->arg("mac"));
+    setStr(s_.apSsid, sizeof(s_.apSsid), r->arg("ssid"));
+    setStr(s_.apPass, sizeof(s_.apPass), r->arg("pass"));
+    s_.webuiDisarmedOnly = r->hasArg("dis") ? 1 : 0;
+    s_.bleTxPower        = (uint8_t)constrain(r->arg("ble").toInt(), 0, 2);
 
     s_.save();
     dirty_ = true;
@@ -248,17 +287,17 @@ void WebConfig::handleSave() {
         rebootAtMs_ = millis() + 600;
         if (!rebootAtMs_)
             rebootAtMs_ = 1;
-        server_.send(200, "text/plain", "reboot");
+        r->send(200, "text/plain", "reboot");
     } else {
-        server_.send(200, "text/plain", "ok");
+        r->send(200, "text/plain", "ok");
     }
 }
 
-void WebConfig::handleScan() {
+void WebConfig::handleScan(AsyncWebServerRequest* r) {
     // Async so the ~4 s scan doesn't block the loop: kick it off, answer {"scanning":1} until
     // done, then return the result array. The front-end polls until it gets the array
     if (!NimBLEDevice::isInitialized()) {
-        server_.send(200, "application/json", "[]");
+        r->send(200, "application/json", "[]");
         return;
     }
 
@@ -267,18 +306,18 @@ void WebConfig::handleScan() {
     const uint32_t     now     = millis();
 
     if (scanState_ == SCAN_IDLE) {
-        scanType_ = server_.hasArg("type") ? server_.arg("type").toInt() : s_.camType;
+        scanType_ = r->hasArg("type") ? r->arg("type").toInt() : s_.camType;
         scan->setActiveScan(true);
         scan->clearResults();
         scan->start(SCAN_MS, /*isContinue=*/false, /*restart=*/true);  // returns immediately
         scanState_   = SCAN_RUNNING;
         scanStartMs_ = now;
-        server_.send(202, "application/json", "{\"scanning\":1}");
+        r->send(202, "application/json", "{\"scanning\":1}");
         return;
     }
 
     if (scan->isScanning() && (now - scanStartMs_) < SCAN_MS + 1000) {
-        server_.send(202, "application/json", "{\"scanning\":1}");
+        r->send(202, "application/json", "{\"scanning\":1}");
         return;
     }
 
@@ -344,55 +383,55 @@ void WebConfig::handleScan() {
 
     String out;
     serializeJson(doc, out);
-    server_.send(200, "application/json", out);
+    r->send(200, "application/json", out);
 }
 
-void WebConfig::handlePreset() {
+void WebConfig::handlePreset(AsyncWebServerRequest* r) {
     // GoPro-only: /preset?group=0|1|2 (video/photo/timelapse) or /preset?id=<hex|dec>
     if (!camera_ || !camera_->supportsPresets()) {
-        server_.send(409, "text/plain", "no preset-capable camera");
+        r->send(409, "text/plain", "no preset-capable camera");
         return;
     }
     if (!camera_->isConnected()) {
-        server_.send(409, "text/plain", "camera offline");
+        r->send(409, "text/plain", "camera offline");
         return;
     }
     bool ok = false;
-    if (server_.hasArg("group")) {
-        const int g = server_.arg("group").toInt();
+    if (r->hasArg("group")) {
+        const int g = r->arg("group").toInt();
         if (g >= 0 && g <= 2)
             ok = camera_->loadPresetGroup((PresetGroup)g);
-    } else if (server_.hasArg("id")) {
+    } else if (r->hasArg("id")) {
         // Accept 0x-prefixed hex or plain decimal
-        const String   v  = server_.arg("id");
+        const String   v  = r->arg("id");
         const uint32_t id = (uint32_t)strtoul(v.c_str(), nullptr, 0);
         ok                = camera_->loadPreset(id);
     }
-    server_.send(ok ? 200 : 400, "text/plain", ok ? "ok" : "bad preset request");
+    r->send(ok ? 200 : 400, "text/plain", ok ? "ok" : "bad preset request");
 }
 
-void WebConfig::handleMode() {
+void WebConfig::handleMode(AsyncWebServerRequest* r) {
     // /mode?m=photo|video - photo/video switch on backends that implement setMode
     if (!camera_ || !camera_->isConnected()) {
-        server_.send(409, "text/plain", "camera offline");
+        r->send(409, "text/plain", "camera offline");
         return;
     }
-    if (!server_.hasArg("m")) {
-        server_.send(400, "text/plain", "need ?m=photo|video");
+    if (!r->hasArg("m")) {
+        r->send(400, "text/plain", "need ?m=photo|video");
         return;
     }
-    const String  m  = server_.arg("m");
+    const String  m  = r->arg("m");
     const CamMode cm = (m == "photo" || m == "0") ? CamMode::Photo : CamMode::Video;
     const bool    ok = camera_->setMode(cm);
-    server_.send(ok ? 200 : 400, "text/plain", ok ? "ok" : "setMode failed / unsupported");
+    r->send(ok ? 200 : 400, "text/plain", ok ? "ok" : "setMode failed / unsupported");
 }
 
-void WebConfig::handleShutter() {
+void WebConfig::handleShutter(AsyncWebServerRequest* r) {
     if (!camera_ || !camera_->isConnected()) {
-        server_.send(409, "text/plain", "camera offline");
+        r->send(409, "text/plain", "camera offline");
         return;
     }
-    const String a = server_.arg("a");
+    const String a = r->arg("a");
     bool         ok;
     if (a == "start")
         ok = camera_->startRecord();
@@ -401,13 +440,20 @@ void WebConfig::handleShutter() {
     else if (a == "photo")
         ok = camera_->takePhoto();
     else {
-        server_.send(400, "text/plain", "need ?a=start|stop|photo");
+        r->send(400, "text/plain", "need ?a=start|stop|photo");
         return;
     }
-    server_.send(ok ? 200 : 400, "text/plain", ok ? "ok" : "command failed");
+    r->send(ok ? 200 : 400, "text/plain", ok ? "ok" : "command failed");
 }
 
-void WebConfig::handleBridge() {
+void WebConfig::handleBridge(AsyncWebServerRequest* r) {
     bridgeReq_ = true;
-    server_.send(200, "text/plain", "bridge");
+    r->send(200, "text/plain", "bridge");
+}
+
+void WebConfig::handleReboot(AsyncWebServerRequest* r) {
+    r->send(200, "text/plain", "rebooting");
+    rebootAtMs_ = millis() + 300;  // let the response flush first
+    if (!rebootAtMs_)
+        rebootAtMs_ = 1;
 }
