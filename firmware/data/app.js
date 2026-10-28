@@ -492,7 +492,11 @@ const fmtLeft = (s) => {
 };
 async function tick() {
   try {
-    const s = await (await fetch("/status.json")).json();
+    const r = await fetch("/status.json", {
+      cache: "no-store",
+      signal: AbortSignal.timeout(2000),
+    });
+    const s = await r.json();
     if (s.bridge) {
       showBridgeUi();
       return;
@@ -586,7 +590,7 @@ $("reboot").addEventListener("click", () => {
 });
 
 function showBridgeUi() {
-  clearInterval(tickTimer);
+  pollStopped = true;
   $("loading").hidden = true;
   $("bridging").hidden = false;
 }
@@ -624,5 +628,11 @@ $("presetload").addEventListener("click", () => {
   if (id) sendPreset("id=" + encodeURIComponent(id));
 });
 loadConfig();
-const tickTimer = setInterval(tick, 500);
-tick();
+let pollStopped = false;
+async function pollStatus() {
+  const started = Date.now();
+  await tick();
+  if (!pollStopped)
+    setTimeout(pollStatus, Math.max(0, 500 - (Date.now() - started)));
+}
+pollStatus();
