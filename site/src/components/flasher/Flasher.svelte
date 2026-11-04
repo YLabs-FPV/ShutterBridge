@@ -13,8 +13,13 @@
   import Loader from "@lucide/svelte/icons/loader-circle";
   import ChevronDown from "@lucide/svelte/icons/chevron-down";
   import RotateCcw from "@lucide/svelte/icons/rotate-ccw";
+  import { renderSVG } from "uqr";
 
   export let manifestUrl = "/firmware/manifest.dev.json";
+  export let strings: Record<string, string> = {};
+
+  const t = (key: string, vars: Record<string, string | number> = {}) =>
+    (strings[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ""));
 
   // id must match the PlatformIO env name
   // chipFamily must match esptool-js's ESPLoader chip
@@ -87,6 +92,16 @@
     "firmware.bin": 0x10000,
     "littlefs.bin": 0x310000,
   };
+
+  // Factory-default access point
+  const AP_SSID = "ShutterBridge";
+  const AP_PASS = "shutterbridge";
+
+  const wifiEscape = (v: string) => v.replace(/([\\;,:"])/g, "\\$1");
+  const wifiQr = renderSVG(
+    `WIFI:T:WPA;S:${wifiEscape(AP_SSID)};P:${wifiEscape(AP_PASS)};;`,
+    { border: 2, ecc: "M" },
+  );
 
   const repo = (() => {
     try {
@@ -243,7 +258,7 @@
       const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) {
         throw new Error(
-          `Couldn't fetch ${part.path} (${res.status}). No firmware image is published yet.`,
+          t("errFetch", { path: part.path, status: res.status }),
         );
       }
       const data = new Uint8Array(await res.arrayBuffer());
@@ -254,7 +269,7 @@
 
   async function connect() {
     state = "connecting";
-    statusText = "Select your board's serial port...";
+    statusText = t("selectPort");
     logLines = [];
 
     try {
@@ -263,21 +278,19 @@
       transport = new Transport(port, true);
       esploader = new ESPLoader({ transport, baudrate: 921600, terminal });
 
-      statusText = "Connecting...";
+      statusText = t("connecting");
       const description = await esploader.main();
       log(`Detected ${description}`);
 
       const chipFamily = esploader.chip.CHIP_NAME;
       const board = BOARDS.find((b) => b.chipFamily === chipFamily);
       if (!board)
-        throw new Error(
-          `Unrecognized chip (${chipFamily}) - no matching board.`,
-        );
+        throw new Error(t("errUnknownChip", { chip: chipFamily }));
 
       matchedVersions = versions.filter((v) => v.board === board.id);
       if (!matchedVersions.length) {
         throw new Error(
-          `No published firmware found for ${board.label} (${chipFamily}).`,
+          t("errNoFirmware", { board: board.label, chip: chipFamily }),
         );
       }
 
@@ -299,7 +312,7 @@
     const fw = matchedVersions[selected];
     if (!fw?.parts?.length || !transport || !esploader) {
       state = "error";
-      statusText = "No firmware image available.";
+      statusText = t("errNoImage");
       return;
     }
 
@@ -307,16 +320,14 @@
     percent = 0;
 
     try {
-      statusText = "Loading firmware...";
+      statusText = t("loading");
       const fileArray = await loadParts(fw.parts);
       const totalBytes = fileArray.reduce((n, f) => n + f.data.length, 0);
       const before = fileArray.map((_, i) =>
         fileArray.slice(0, i).reduce((n, f) => n + f.data.length, 0),
       );
 
-      statusText = eraseFirst
-        ? "Erasing, then writing..."
-        : "Writing firmware...";
+      statusText = eraseFirst ? t("erasing") : t("writing");
       await esploader.writeFlash({
         fileArray,
         flashMode: fw.flashMode ?? "keep",
@@ -385,11 +396,10 @@
       />
       <div class="text-sm">
         <p class="font-semibold text-[rgb(var(--color-accent))]">
-          Web Serial isn't available here
+          {t("unsupportedTitle")}
         </p>
         <p class="mt-1 text-[rgb(var(--color-text-muted))]">
-          Open this page in desktop Chrome, Edge or another Chromium browser.
-          Firefox, Safari and mobile browsers can't flash.
+          {t("unsupportedBody")}
         </p>
       </div>
     </div>
@@ -409,37 +419,68 @@
 
       <h2 class="mt-4 text-2xl font-bold">
         {#if state === "done"}
-          Flashed successfully
+          {t("titleDone")}
         {:else if state === "error"}
-          Flashing failed
+          {t("titleError")}
         {:else}
-          Flash ShutterBridge
+          {t("titleIdle")}
         {/if}
       </h2>
 
       <p class="mt-2 text-[rgb(var(--color-text-muted))] max-w-md min-h-6">
         {#if state === "idle"}
           {#if versions.length}
-            Installs the firmware straight from your browser over USB. No app,
-            no drivers. Connect your board to detect it automatically.
+            {t("introIdle")}
           {:else}
-            No firmware has been published yet. Check back once the first
-            release is out.
+            {t("introNone")}
           {/if}
         {:else if state === "ready" && detectedBoard}
-          Detected {detectedBoard.label}. Choose a version and flash.
+          {t("ready", { board: detectedBoard.label })}
         {:else if state === "done"}
-          Unplug and re-plug the board, then connect to the <code
-            >ShutterBridge</code
-          > Wi-Fi to finish setup.
+          {t("done")}
         {:else if state === "error"}
           {statusText}
         {:else if state === "checking"}
-          Checking for available firmware...
+          {t("checking")}
         {:else}
           {statusText}
         {/if}
       </p>
+
+      {#if state === "done"}
+        <div
+          class="mt-6 flex flex-col sm:flex-row items-center gap-5 rounded-xl border border-[rgb(var(--color-border))] p-4 text-left"
+        >
+          <div
+            class="w-40 h-40 shrink-0 rounded-lg bg-white p-1 [&>svg]:w-full [&>svg]:h-full"
+            role="img"
+            aria-label={t("qrLabel", { ssid: AP_SSID })}
+          >
+            {@html wifiQr}
+          </div>
+          <div class="text-sm space-y-2">
+            <dl class="space-y-2">
+              <div>
+                <dt class="text-[rgb(var(--color-text-muted))]">{t("network")}</dt>
+                <dd><code>{AP_SSID}</code></dd>
+              </div>
+              <div>
+                <dt class="text-[rgb(var(--color-text-muted))]">{t("password")}</dt>
+                <dd><code>{AP_PASS}</code></dd>
+              </div>
+              <div>
+                <dt class="text-[rgb(var(--color-text-muted))]">{t("setupPage")}</dt>
+                <dd><code>http://10.0.0.1</code></dd>
+              </div>
+            </dl>
+            {#if !eraseFirst}
+              <p class="max-w-56 text-xs text-[rgb(var(--color-text-muted))]">
+                {t("keptCreds")}
+              </p>
+            {/if}
+          </div>
+        </div>
+      {/if}
 
       {#if state === "working"}
         <div class="mt-6 w-full max-w-sm">
@@ -464,14 +505,14 @@
             class="inline-flex items-center gap-2 px-6 py-3 my-2 rounded-lg font-semibold text-white bg-[rgb(var(--color-primary))] hover:bg-[rgb(var(--color-primary-hover))] transition-colors"
           >
             <Usb class="w-5 h-5" />
-            Connect
+            {t("connect")}
           </button>
         {:else if state === "ready" && detectedBoard}
           {#if matchedVersions.length > 1}
             <label
               class="flex items-center gap-2 my-2 text-sm text-[rgb(var(--color-text-muted))]"
             >
-              Version
+              {t("version")}
               <select
                 bind:value={selected}
                 class="rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-card-bg))] text-[rgb(var(--color-text))] px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))]"
@@ -488,26 +529,26 @@
             class="inline-flex items-center gap-2 px-6 py-3 my-2 rounded-lg font-semibold text-white bg-[rgb(var(--color-primary))] hover:bg-[rgb(var(--color-primary-hover))] transition-colors"
           >
             <Zap class="w-5 h-5" />
-            Install
+            {t("install")}
           </button>
 
           <label
             class="flex items-center gap-2 text-sm text-[rgb(var(--color-text-muted))] select-none"
-            title="Erase saved settings and camera pairing. Leave off to keep your config across updates."
+            title={t("wipeHint")}
           >
             <input
               type="checkbox"
               bind:checked={eraseFirst}
               class="h-4 w-4 accent-[rgb(var(--color-primary))]"
             />
-            Full wipe (erase saved settings and pairing)
+            {t("wipe")}
           </label>
 
           <button
             on:click={cancelReady}
             class="text-sm text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text))] underline"
           >
-            Cancel
+            {t("cancel")}
           </button>
         {:else if state === "error" || state === "done"}
           <button
@@ -515,7 +556,7 @@
             class="inline-flex items-center gap-2 px-6 py-4 my-2 rounded-lg font-semibold border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-secondary))] transition-colors text-[rgb(var(--color-text))]"
           >
             <RotateCcw class="w-5 h-5" />
-            {state === "error" ? "Try again" : "Flash another"}
+            {state === "error" ? t("tryAgain") : t("flashAnother")}
           </button>
         {/if}
       </div>
@@ -530,7 +571,7 @@
           <ChevronDown
             class={`w-4 h-4 transition-transform ${logOpen ? "rotate-180" : ""}`}
           />
-          Log
+          {t("log")}
         </button>
         {#if logOpen}
           <pre

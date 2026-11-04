@@ -3,13 +3,14 @@ import MainLayout from "../../layouts/MainLayout.astro";
 import Flasher from "../../components/flasher/Flasher.svelte";
 import Admonition from "../../components/docs/Admonition.astro";
 import { SITE_TITLE } from "../../consts";
-import { getLangFromUrl, useTranslations } from "../../i18n";
+import { getLangFromUrl, useData, useTranslations } from "../../i18n";
 import { getLangPaths } from "../../i18n/getLangPaths";
 
 export const getStaticPaths = getLangPaths;
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
+const d = useData(lang);
 ---
 
 <MainLayout title={`${t("flash.pageTitle")} - ${SITE_TITLE}`} class="px-6 py-12">
@@ -32,7 +33,7 @@ const t = useTranslations(lang);
       </p>
     </Admonition>
 
-    <Flasher client:load />
+    <Flasher client:load strings={d<Record<string, string>>("flash.ui")} />
 
     <Admonition type="info">
       {t("flash.infoBefore")}
