@@ -20,6 +20,18 @@ namespace {
         strncpy(dst, v.c_str(), cap - 1);
         dst[cap - 1] = '\0';
     }
+
+    const IPAddress kApIp(10, 0, 0, 1);
+
+    // True for requests addressed to this device; anything else arrived via the wildcard DNS
+    bool isOwnHost(AsyncWebServerRequest* r) {
+        String    host  = r->host();
+        const int colon = host.indexOf(':');
+        if (colon >= 0)
+            host.remove(colon);
+        return host.isEmpty() || host == kApIp.toString() ||
+               host.equalsIgnoreCase("shutterbridge.local");
+    }
 }  // namespace
 
 void WebConfig::begin() {
@@ -46,35 +58,25 @@ void WebConfig::begin() {
                [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleSave); });
     server_.on("/reboot", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleReboot); });
 
-    // OS connectivity checks: with every name resolving here, answer them like the real
-    // servers do so the phone keeps routing over this Wi-Fi instead of falling back to mobile data
-    auto noContent = [](AsyncWebServerRequest* r) { r->send(204); };
-    auto apple     = [](AsyncWebServerRequest* r) {
-        r->send(200, "text/html",
-                "<HTML><HEAD><TITLE>Success</TITLE></HEAD><BODY>Success</BODY></HTML>");
-    };
-    server_.on("/generate_204", noContent);  // Android, Chrome
-    server_.on("/gen_204", noContent);
-    server_.on("/hotspot-detect.html", apple);  // Apple
-    server_.on("/library/test/success.html", apple);
-    server_.on("/connecttest.txt", [](AsyncWebServerRequest* r) {  // Windows
-        r->send(200, "text/plain", "Microsoft Connect Test");
-    });
-    server_.on("/ncsi.txt",
-               [](AsyncWebServerRequest* r) { r->send(200, "text/plain", "Microsoft NCSI"); });
-    server_.on("/success.txt", [](AsyncWebServerRequest* r) {  // Firefox
-        r->send(200, "text/plain", "success\n");
-    });
     server_.serveStatic("/", LittleFS, "/")
         .setDefaultFile("index.html")
-        .setCacheControl("no-cache");
-    server_.onNotFound([](AsyncWebServerRequest* r) { r->send(404, "text/plain", "not found"); });
+        .setCacheControl("no-cache")
+        .setFilter(isOwnHost);
+    // Captive portal: every name resolves here, so OS connectivity probes (and any other
+    // foreign-host request) get redirected to the UI
+    server_.onNotFound([](AsyncWebServerRequest* r) {
+        if (!isOwnHost(r)) {
+            r->redirect(String("http://") + kApIp.toString() + "/");
+            return;
+        }
+        r->send(404, "text/plain", "not found");
+    });
     routesSet_ = true;
 }
 
 void WebConfig::startAp() {
     WiFi.mode(WIFI_AP);
-    WiFi.softAPConfig(IPAddress(10, 0, 0, 1), IPAddress(10, 0, 0, 1), IPAddress(255, 255, 255, 0));
+    WiFi.softAPConfig(kApIp, kApIp, IPAddress(255, 255, 255, 0));
     const char* pass = (strlen(s_.apPass) >= 8) ? s_.apPass : nullptr;  // else open
     WiFi.softAP(s_.apSsid, pass);
     // IMPORTANT: do NOT disable Wi-Fi modem sleep (WiFi.setSleep(false)/WIFI_PS_NONE) here.
