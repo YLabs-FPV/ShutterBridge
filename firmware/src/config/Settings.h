@@ -21,8 +21,11 @@ enum class OsdField : uint8_t {
 const char* osdFieldName(OsdField f);
 
 struct Settings {
+    // Bump on any layout change; old layouts need a COMPAT entry or they reset to defaults
+    static constexpr uint16_t SCHEMA = 16;
+
     uint32_t magic   = 0x53425247;  // 'SBRG'
-    uint16_t version = 16;
+    uint16_t version = SCHEMA;
 
     uint8_t opMode = (uint8_t)OpMode::RecordOnArm;
 

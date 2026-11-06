@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 
+#include "SerialConsole.h"
 #include "StatusLed.h"
 #include "camera/BleTxPower.h"
 #include "camera/dji/DjiActionCamera.h"
@@ -20,6 +21,7 @@ static OsdRenderer    osd(fc, g_settings, OSD_UPDATE_MS, OSD_REFRESH_MS);
 static WebConfig      web(g_settings);
 static StatusLed      led(STATUS_LED_PIN, STATUS_LED_RGB, STATUS_LED_ACTIVE_LOW);
 static BfBridge       bridge(FC_UART);
+static SerialConsole  console;
 static Camera*        cam = nullptr;
 
 // Betaflight bridge mode: runtime-only (never saved), reboot to exit. While set,
@@ -101,6 +103,8 @@ void setup() {
 }
 
 void loop() {
+    console.poll();
+
     // Bridge mode: just the MSP pump, the AP, and the LED
     if (g_bridgeMode) {
         web.poll(/*armed=*/false);  // armed=false keeps the AP up (reboot page)
