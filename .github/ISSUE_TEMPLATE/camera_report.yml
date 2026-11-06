@@ -31,7 +31,7 @@ body:
     id: fw-version
     attributes:
       label: Firmware version tested
-      placeholder: "0.2.0"
+      description: Shown on the version pill in the Web UI header.
     validations:
       required: true
   - type: dropdown
