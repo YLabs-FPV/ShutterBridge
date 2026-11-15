@@ -10,6 +10,9 @@
 #define STATUS_LED_PIN        8
 #define STATUS_LED_RGB        false
 #define STATUS_LED_ACTIVE_LOW true
+// Many C3 Super Mini clones have a poorly matched antenna and the AP never comes up at full
+// TX power; 8.5 dBm is plenty for a phone next to the quad
+#define WIFI_AP_TX_POWER      WIFI_POWER_8_5dBm
 #else
 // Waveshare ESP32-S3-Zero: FC UART on GPIO43/44, WS2812 RGB LED on GPIO21
 #define BOARD_ID              "esp32s3-zero"
