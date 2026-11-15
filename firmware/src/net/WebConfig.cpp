@@ -76,9 +76,13 @@ void WebConfig::begin() {
 
 void WebConfig::startAp() {
     WiFi.mode(WIFI_AP);
+#ifdef WIFI_AP_TX_POWER
+    WiFi.setTxPower(WIFI_AP_TX_POWER);
+#endif
     WiFi.softAPConfig(kApIp, kApIp, IPAddress(255, 255, 255, 0));
     const char* pass = (strlen(s_.apPass) >= 8) ? s_.apPass : nullptr;  // else open
-    WiFi.softAP(s_.apSsid, pass);
+    if (!WiFi.softAP(s_.apSsid, pass))
+        Serial.println("[web] softAP start failed");
     // IMPORTANT: do NOT disable Wi-Fi modem sleep (WiFi.setSleep(false)/WIFI_PS_NONE) here.
     // Wi-Fi/BLE coexistence requires modem sleep to stay on - it's the mechanism that hands
     // the shared antenna between the two stacks. Forcing it off starves Wi-Fi (page times out)
