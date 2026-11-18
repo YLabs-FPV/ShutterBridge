@@ -306,6 +306,19 @@
         </div>
         <div class="card">
           <h2>Device</h2>
+          <div id="boardctl" hidden>
+            <div class="row">
+              <label>Board</label>
+              <div class="ctl">
+                <select id="bvar">
+                  <option value="0">Auto-detect</option>
+                  <option value="1">ESP32-S3-Zero</option>
+                  <option value="2">M5Stack Stamp-S3A</option>
+                </select>
+              </div>
+            </div>
+            <p class="hint" id="boardhint"></p>
+          </div>
           <div class="row">
             <label>Reboot</label>
             <div class="ctl">

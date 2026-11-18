@@ -2,9 +2,10 @@
 
 #include <Arduino.h>
 
-void StatusLed::begin() {
+void StatusLed::begin(bool grb) {
     if (pin_ < 0)
         return;
+    grb_ = grb;
     if (rgb_) {
         write(0, 0, 0);
     } else {
@@ -19,7 +20,7 @@ void StatusLed::write(uint8_t r, uint8_t g, uint8_t b) {
     lr_ = r;
     lg_ = g;
     lb_ = b;
-    neopixelWrite(pin_, g, r, b);
+    rgbLedWriteOrdered(pin_, grb_ ? LED_COLOR_ORDER_GRB : LED_COLOR_ORDER_RGB, r, g, b);
 }
 
 void StatusLed::writeMono(bool on) {

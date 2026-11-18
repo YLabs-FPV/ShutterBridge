@@ -10,6 +10,10 @@ const OSD_FIELDS = [
 ];
 
 const CAM_TYPE_NAMES = ["DJI Osmo (Nano)", "DJI Action / 360", "GoPro"];
+const BOARD_NAMES = {
+  "esp32s3-zero": "ESP32-S3-Zero",
+  "m5stamp-s3a": "M5Stack Stamp-S3A",
+};
 
 const GOPRO_TYPE = 2;
 
@@ -151,6 +155,12 @@ async function loadConfig() {
   $("ble").value = cfg.ble != null ? cfg.ble : 0;
   $("clk").checked = cfg.clk !== 0;
   $("wake").checked = !!cfg.wake;
+  $("boardctl").hidden = cfg.bvar == null;
+  if (cfg.bvar != null) {
+    $("bvar").value = cfg.bvar;
+    $("boardhint").textContent =
+      "Running as " + (BOARD_NAMES[cfg.board] || cfg.board) + ". Changing it reboots the bridge";
+  }
   $("tz").value = (+cfg.tz || 0) / 60;
   $("op").value = +cfg.op || 0;
   $("rdly").value = +cfg.rdly || 0;
@@ -298,6 +308,7 @@ function collectConfig() {
   b.set("ble", $("ble").value);
   if ($("clk").checked) b.set("clk", "1");
   if ($("wake").checked) b.set("wake", "1");
+  if (cfg.bvar != null) b.set("bvar", $("bvar").value);
   b.set("tz", Math.round((parseFloat($("tz").value) || 0) * 60));
   return b;
 }

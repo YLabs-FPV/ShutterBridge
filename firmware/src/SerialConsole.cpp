@@ -4,12 +4,13 @@
 
 #include <cstring>
 
+#include "Board.h"
 #include "config.h"
 #include "config/Settings.h"
 
 void SerialConsole::printInfo() {
-    Serial.printf("sb:info {\"fw\":\"%s\",\"schema\":%u,\"board\":\"%s\"}\n", FW_VERSION,
-                  (unsigned)Settings::SCHEMA, BOARD_ID);
+    Serial.printf("sb:info {\"fw\":\"%s\",\"schema\":%u,\"board\":\"%s\",\"variant\":\"%s\"}\n",
+                  FW_VERSION, (unsigned)Settings::SCHEMA, BOARD_ID, boardId());
 }
 
 void SerialConsole::poll() {
