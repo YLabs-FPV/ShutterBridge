@@ -6,7 +6,7 @@ class StatusLed {
    public:
     StatusLed(int pin, bool rgb, bool activeLow) : pin_(pin), rgb_(rgb), activeLow_(activeLow) {
     }
-    void begin();
+    void begin(bool grb = false);  // grb: standard WS2812 byte order (else R, G, B)
     void update(bool camOnline, bool recording, bool wifiClient);
     void showBridge(bool clientConnected);
 
@@ -21,6 +21,7 @@ class StatusLed {
     int     pin_;
     bool    rgb_;
     bool    activeLow_;
+    bool    grb_ = false;
     uint8_t lr_ = 1, lg_ = 1, lb_ = 1;
     int8_t  lon_ = -1;
 };

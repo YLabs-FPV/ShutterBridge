@@ -56,6 +56,7 @@ body:
       options:
         - Waveshare ESP32-S3-Zero
         - ESP32-C3 Super Mini
+        - M5Stack Stamp-S3A
         - Other (describe below)
     validations:
       required: true

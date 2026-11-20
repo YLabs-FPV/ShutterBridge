@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <NimBLEDevice.h>
 
+#include "Board.h"
 #include "SerialConsole.h"
 #include "StatusLed.h"
 #include "camera/BleTxPower.h"
@@ -91,6 +92,7 @@ void setup() {
     g_settings.load();
     Serial.printf("[cfg] v=%u opMode=%u disarmedOnly=%u ssid=\"%s\"\n", g_settings.version,
                   g_settings.opMode, g_settings.webuiDisarmedOnly, g_settings.apSsid);
+    boardInit(g_settings.boardVariant);
     cam = makeCamera(g_settings);
     // Start the BLE camera on its own core-0 task before the rest so NimBLE is up early
     xTaskCreatePinnedToCore(cameraTask, "camera", 8192, nullptr, 1, &s_cameraTask, 0);
@@ -99,7 +101,7 @@ void setup() {
     web.attachStatus(&cam->status(), &fc.rc());
     web.attachCamera(cam);
     web.begin();
-    led.begin();
+    led.begin(boardLedGrb());
 }
 
 void loop() {

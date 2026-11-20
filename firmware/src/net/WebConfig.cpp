@@ -8,6 +8,7 @@
 #include <WiFi.h>
 #include <esp_coexist.h>
 
+#include "Board.h"
 #include "config.h"
 #include "net/RadioCoex.h"
 
@@ -194,6 +195,9 @@ void WebConfig::handleConfig(AsyncWebServerRequest* r) {
     doc["clk"]   = s_.clockSync;  // sync camera clock from FC GPS time
     doc["wake"]  = s_.autoWake;   // wake a powered-off camera on boot
     doc["fw"]    = FW_VERSION;
+    doc["board"] = boardId();  // variant running now (resolved at boot)
+    if (boardHasVariants())
+        doc["bvar"] = s_.boardVariant;  // saved choice, 0 = auto
 
     String out;
     serializeJson(doc, out);
@@ -239,6 +243,7 @@ void WebConfig::handleStatus(AsyncWebServerRequest* r) {
 void WebConfig::handleSave(AsyncWebServerRequest* r) {
     // Boot-only fields: snapshot to detect a change that warrants a reboot
     const uint8_t oldCamType = s_.camType;
+    const uint8_t oldBoard   = s_.boardVariant;
     char          oldMac[sizeof(s_.camMac)];
     char          oldSsid[sizeof(s_.apSsid)];
     char          oldPass[sizeof(s_.apPass)];
@@ -280,12 +285,15 @@ void WebConfig::handleSave(AsyncWebServerRequest* r) {
     setStr(s_.apPass, sizeof(s_.apPass), r->arg("pass"));
     s_.webuiDisarmedOnly = r->hasArg("dis") ? 1 : 0;
     s_.bleTxPower        = (uint8_t)constrain(r->arg("ble").toInt(), 0, 2);
+    if (boardHasVariants() && r->hasArg("bvar"))
+        s_.boardVariant =
+            (uint8_t)constrain(r->arg("bvar").toInt(), 0, (int)BoardVariant::_Count - 1);
 
     s_.save();
     dirty_ = true;
 
     // Reboot after the response flushes if a boot-only field changed (write already committed)
-    const bool needReboot = s_.camType != oldCamType ||
+    const bool needReboot = s_.camType != oldCamType || s_.boardVariant != oldBoard ||
                             strncmp(s_.camMac, oldMac, sizeof(oldMac)) != 0 ||
                             strncmp(s_.apSsid, oldSsid, sizeof(oldSsid)) != 0 ||
                             strncmp(s_.apPass, oldPass, sizeof(oldPass)) != 0;

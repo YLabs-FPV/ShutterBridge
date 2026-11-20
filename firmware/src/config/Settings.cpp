@@ -17,6 +17,7 @@ struct CompatVersion {
 };
 static const CompatVersion COMPAT[] = {
     {15, offsetof(Settings, autoWake)},
+    {16, offsetof(Settings, boardVariant)},
 };
 
 const char* osdFieldName(OsdField f) {

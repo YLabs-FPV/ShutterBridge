@@ -22,7 +22,7 @@ const char* osdFieldName(OsdField f);
 
 struct Settings {
     // Bump on any layout change; old layouts need a COMPAT entry or they reset to defaults
-    static constexpr uint16_t SCHEMA = 16;
+    static constexpr uint16_t SCHEMA = 17;
 
     uint32_t magic   = 0x53425247;  // 'SBRG'
     uint16_t version = SCHEMA;
@@ -65,6 +65,9 @@ struct Settings {
 
     // Wake a powered-off camera when the bridge boots (1 = on)
     uint8_t autoWake = 0;
+
+    // Board variant (BoardVariant in Board.h): 0 = auto-detect from the chip
+    uint8_t boardVariant = 0;
 
     void setDefaults();
     void load();  // from NVS (falls back to defaults if missing/incompatible)
