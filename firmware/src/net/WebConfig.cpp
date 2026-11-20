@@ -199,6 +199,17 @@ void WebConfig::handleConfig(AsyncWebServerRequest* r) {
     if (boardHasVariants())
         doc["bvar"] = s_.boardVariant;  // saved choice, 0 = auto
 
+    // FC UART: saved pins (-1 = default), the board defaults and the GPIOs on offer
+    doc["rx"]  = s_.fcRxPin;
+    doc["tx"]  = s_.fcTxPin;
+    doc["rxd"] = FC_RX_PIN;
+    doc["txd"] = FC_TX_PIN;
+    uint8_t      pins[48];
+    const size_t n    = boardUartPins(pins, sizeof(pins));
+    JsonArray    list = doc["pins"].to<JsonArray>();
+    for (size_t i = 0; i < n; i++)
+        list.add(pins[i]);
+
     String out;
     serializeJson(doc, out);
     r->send(200, "application/json", out);
@@ -244,6 +255,8 @@ void WebConfig::handleSave(AsyncWebServerRequest* r) {
     // Boot-only fields: snapshot to detect a change that warrants a reboot
     const uint8_t oldCamType = s_.camType;
     const uint8_t oldBoard   = s_.boardVariant;
+    const int8_t  oldRx      = s_.fcRxPin;
+    const int8_t  oldTx      = s_.fcTxPin;
     char          oldMac[sizeof(s_.camMac)];
     char          oldSsid[sizeof(s_.apSsid)];
     char          oldPass[sizeof(s_.apPass)];
@@ -288,12 +301,22 @@ void WebConfig::handleSave(AsyncWebServerRequest* r) {
     if (boardHasVariants() && r->hasArg("bvar"))
         s_.boardVariant =
             (uint8_t)constrain(r->arg("bvar").toInt(), 0, (int)BoardVariant::_Count - 1);
+    if (r->hasArg("rx") && r->hasArg("tx")) {
+        s_.fcRxPin = (int8_t)constrain(r->arg("rx").toInt(), -1, 48);
+        s_.fcTxPin = (int8_t)constrain(r->arg("tx").toInt(), -1, 48);
+        // Keep only a pair the board would actually use
+        int rx, tx;
+        boardFcPins(s_.fcRxPin, s_.fcTxPin, rx, tx);
+        if ((s_.fcRxPin >= 0 && s_.fcRxPin != rx) || (s_.fcTxPin >= 0 && s_.fcTxPin != tx))
+            s_.fcRxPin = s_.fcTxPin = -1;
+    }
 
     s_.save();
     dirty_ = true;
 
     // Reboot after the response flushes if a boot-only field changed (write already committed)
     const bool needReboot = s_.camType != oldCamType || s_.boardVariant != oldBoard ||
+                            s_.fcRxPin != oldRx || s_.fcTxPin != oldTx ||
                             strncmp(s_.camMac, oldMac, sizeof(oldMac)) != 0 ||
                             strncmp(s_.apSsid, oldSsid, sizeof(oldSsid)) != 0 ||
                             strncmp(s_.apPass, oldPass, sizeof(oldPass)) != 0;

@@ -96,6 +96,9 @@ void setup() {
     cam = makeCamera(g_settings);
     // Start the BLE camera on its own core-0 task before the rest so NimBLE is up early
     xTaskCreatePinnedToCore(cameraTask, "camera", 8192, nullptr, 1, &s_cameraTask, 0);
+    int rxPin, txPin;
+    boardFcPins(g_settings.fcRxPin, g_settings.fcTxPin, rxPin, txPin);
+    fc.setPins(rxPin, txPin);
     fc.begin();
     applyActions();
     web.attachStatus(&cam->status(), &fc.rc());
