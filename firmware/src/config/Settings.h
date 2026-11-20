@@ -22,7 +22,7 @@ const char* osdFieldName(OsdField f);
 
 struct Settings {
     // Bump on any layout change; old layouts need a COMPAT entry or they reset to defaults
-    static constexpr uint16_t SCHEMA = 17;
+    static constexpr uint16_t SCHEMA = 18;
 
     uint32_t magic   = 0x53425247;  // 'SBRG'
     uint16_t version = SCHEMA;
@@ -68,6 +68,10 @@ struct Settings {
 
     // Board variant (BoardVariant in Board.h): 0 = auto-detect from the chip
     uint8_t boardVariant = 0;
+
+    // FC UART GPIOs; -1 = the board's default pin
+    int8_t fcRxPin = -1;
+    int8_t fcTxPin = -1;
 
     void setDefaults();
     void load();  // from NVS (falls back to defaults if missing/incompatible)

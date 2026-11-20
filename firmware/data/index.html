@@ -286,6 +286,21 @@
             GPS fix on the FC.
           </p>
         </div>
+        <div class="card" id="uartcard" hidden>
+          <h2>FC UART</h2>
+          <div class="row">
+            <label>RX pin</label>
+            <div class="ctl"><select id="rxpin"></select></div>
+          </div>
+          <div class="row">
+            <label>TX pin</label>
+            <div class="ctl"><select id="txpin"></select></div>
+          </div>
+          <p class="hint" id="uarthint">
+            GPIOs wired to the flight controller UART. RX goes to the FC's TX,
+            TX to the FC's RX. Changing them reboots the bridge.
+          </p>
+        </div>
         <div class="card">
           <h2>Betaflight bridge</h2>
           <p class="hint">
