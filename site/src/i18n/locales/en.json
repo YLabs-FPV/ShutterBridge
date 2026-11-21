@@ -7,6 +7,7 @@
   "nav": {
     "home": "Home",
     "flasher": "Flasher",
+    "configure": "Configurator",
     "docs": "Documentation",
     "links": "Links",
     "toggleMenu": "Toggle menu"
@@ -105,6 +106,14 @@
       }
     ]
   },
+  "configure": {
+    "pageTitle": "Configurator",
+    "heading": "ShutterBridge configurator",
+    "subtitle": "Configure your ShutterBridge from this page over a USB cable, no Wi-Fi needed.",
+    "frameTitle": "ShutterBridge settings",
+    "unsupportedTitle": "USB setup isn't available in this browser",
+    "unsupportedBody": "Open this page in desktop Chrome, Edge or another Chromium browser. Firefox, Safari and mobile browsers can't reach the bridge over USB, but you can still set it up from its own Wi-Fi page."
+  },
   "flash": {
     "pageTitle": "Flasher",
     "heading": "Web flasher",
@@ -118,6 +127,9 @@
     "infoWifiName": "ShutterBridge",
     "infoMiddle": "Wi-Fi access point to finish setup. The password is",
     "infoAfter": ".",
+    "infoUsbBefore": " Prefer a cable? ",
+    "infoUsbLink": "Set it up over USB",
+    "infoUsbAfter": ".",
     "ui": {
       "unsupportedTitle": "Web Serial isn't available here",
       "unsupportedBody": "Open this page in desktop Chrome, Edge or another Chromium browser. Firefox, Safari and mobile browsers can't flash.",

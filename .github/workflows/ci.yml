@@ -29,6 +29,7 @@ jobs:
               - '.github/workflows/ci.yml'
             site:
               - 'site/**'
+              - 'firmware/data/**'  # the site serves this UI as its USB configurator
               - '.github/workflows/ci.yml'
 
   firmware:

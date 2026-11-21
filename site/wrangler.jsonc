@@ -13,6 +13,8 @@
 		"run_worker_first": [
 			"/flash",
 			"/flash/",
+			"/configure",
+			"/configure/",
 			"/docs",
 			"/docs/*",
 			"!/docs/hardware/*",

@@ -17,6 +17,11 @@ const BOARD_NAMES = {
 
 const GOPRO_TYPE = 2;
 
+// The website's USB page swaps this for a cable hint
+const RECONNECT_HINT =
+  window.sbReconnectHint ||
+  "Reconnect to the ShutterBridge Wi-Fi, then tap Refresh.";
+
 const CH_MIN = 900,
   CH_MAX = 2100,
   STEP = 25,
@@ -391,8 +396,7 @@ async function rebootFlow(trigger = true) {
     }
     if (tries === 6) {
       // ~15s: auto-detect may have failed, offer a manual refresh
-      $("rebootText").textContent =
-        "Reconnect to the ShutterBridge Wi-Fi, then tap Refresh.";
+      $("rebootText").textContent = RECONNECT_HINT;
       $("rebootRefresh").hidden = false;
     }
   }

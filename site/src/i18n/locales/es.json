@@ -7,6 +7,7 @@
   "nav": {
     "home": "Inicio",
     "flasher": "Instalador",
+    "configure": "Configurador",
     "docs": "Documentación",
     "links": "Enlaces",
     "toggleMenu": "Abrir menú"
@@ -105,6 +106,14 @@
       }
     ]
   },
+  "configure": {
+    "pageTitle": "Configurador",
+    "heading": "Configurador de ShutterBridge",
+    "subtitle": "Configura tu ShutterBridge desde esta página con un cable USB, sin Wi-Fi.",
+    "frameTitle": "Ajustes de ShutterBridge",
+    "unsupportedTitle": "La configuración por USB no está disponible en este navegador",
+    "unsupportedBody": "Abre esta página en Chrome, Edge u otro navegador Chromium de escritorio. Firefox, Safari y los navegadores móviles no pueden conectar con el puente por USB, pero puedes configurarlo desde su propia página Wi-Fi."
+  },
   "flash": {
     "pageTitle": "Instalador",
     "heading": "Instalador web",
@@ -118,6 +127,9 @@
     "infoWifiName": "ShutterBridge",
     "infoMiddle": "para terminar la configuración. La contraseña es",
     "infoAfter": ".",
+    "infoUsbBefore": " ¿Prefieres un cable? ",
+    "infoUsbLink": "Configúralo por USB",
+    "infoUsbAfter": ".",
     "ui": {
       "unsupportedTitle": "Web Serial no está disponible aquí",
       "unsupportedBody": "Abre esta página en Chrome, Edge u otro navegador Chromium de escritorio. Firefox, Safari y los navegadores móviles no pueden instalar firmware.",

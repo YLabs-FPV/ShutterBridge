@@ -7,6 +7,7 @@
   "nav": {
     "home": "Головна",
     "flasher": "Прошивач",
+    "configure": "Конфігуратор",
     "docs": "Документація",
     "links": "Посилання",
     "toggleMenu": "Відкрити меню"
@@ -105,6 +106,14 @@
       }
     ]
   },
+  "configure": {
+    "pageTitle": "Конфігуратор",
+    "heading": "Конфігуратор ShutterBridge",
+    "subtitle": "Налаштуйте ShutterBridge прямо з цієї сторінки через USB-кабель, без Wi-Fi.",
+    "frameTitle": "Налаштування ShutterBridge",
+    "unsupportedTitle": "Налаштування через USB недоступне в цьому браузері",
+    "unsupportedBody": "Відкрийте цю сторінку в Chrome, Edge або іншому браузері на основі Chromium на комп'ютері. Firefox, Safari та мобільні браузери не можуть підключитися до моста через USB, але його можна налаштувати з його власної сторінки Wi-Fi."
+  },
   "flash": {
     "pageTitle": "Прошивач",
     "heading": "Веб-прошивач",
@@ -118,6 +127,9 @@
     "infoWifiName": "ShutterBridge",
     "infoMiddle": "щоб завершити налаштування. Пароль -",
     "infoAfter": ".",
+    "infoUsbBefore": " Зручніше кабелем? ",
+    "infoUsbLink": "Налаштуйте через USB",
+    "infoUsbAfter": ".",
     "ui": {
       "unsupportedTitle": "Web Serial тут недоступний",
       "unsupportedBody": "Відкрий цю сторінку в Chrome, Edge або іншому Chromium-браузері на комп'ютері. Firefox, Safari і мобільні браузери не можуть прошивати.",

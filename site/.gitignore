@@ -4,6 +4,8 @@ dist/
 .astro/
 # local firmware build artifact (served by the flasher in dev), one subfolder per board
 public/firmware/**/*.bin
+# copied from ../firmware/data by scripts/sync-device-ui.mjs
+public/device-ui/
 
 # dependencies
 node_modules/
