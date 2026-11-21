@@ -1,6 +1,7 @@
 // Board variants that share one firmware image, told apart at runtime
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 enum class BoardVariant : uint8_t {
@@ -20,3 +21,10 @@ BoardVariant boardInit(uint8_t setting);
 BoardVariant boardVariant();
 bool         boardLedGrb();  // status LED takes G, R, B byte order
 const char*  boardId();
+
+// GPIOs safe to offer for the FC UART on this chip and variant (call after boardInit)
+size_t boardUartPins(uint8_t* out, size_t max);
+
+// Saved FC UART pins (-1 = default) resolved to GPIOs; falls back to the build's pins
+// when either is not offered or both are the same
+void boardFcPins(int8_t rxSetting, int8_t txSetting, int& rx, int& tx);

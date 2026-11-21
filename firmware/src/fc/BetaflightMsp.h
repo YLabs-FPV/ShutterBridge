@@ -10,6 +10,7 @@ class BetaflightMsp : public FlightController {
     BetaflightMsp(HardwareSerial& serial, uint32_t baud, int rxPin, int txPin,
                   uint32_t rcPollMs = 50);
 
+    void           setPins(int rxPin, int txPin);  // before begin()
     void           begin() override;
     void           poll() override;
     const RcState& rc() const override {

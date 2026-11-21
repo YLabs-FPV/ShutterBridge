@@ -7,8 +7,14 @@ BetaflightMsp::BetaflightMsp(HardwareSerial& serial, uint32_t baud, int rxPin, i
     : serial_(serial), baud_(baud), rxPin_(rxPin), txPin_(txPin), rcPollMs_(rcPollMs) {
 }
 
+void BetaflightMsp::setPins(int rxPin, int txPin) {
+    rxPin_ = rxPin;
+    txPin_ = txPin;
+}
+
 void BetaflightMsp::begin() {
     serial_.begin(baud_, SERIAL_8N1, rxPin_, txPin_);
+    Serial.printf("[fc] UART rx=%d tx=%d\n", rxPin_, txPin_);
 }
 
 void BetaflightMsp::poll() {

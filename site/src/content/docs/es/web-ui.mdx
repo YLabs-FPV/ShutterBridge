@@ -153,6 +153,13 @@ Ajustes de todo el dispositivo.
   Necesita fijación GPS en el FC.
 - **UTC offset** - horas para desplazar desde UTC a la hora local (pasos de cuarto de hora).
 
+### FC UART
+
+- **RX pin** / **TX pin** - los GPIO conectados al UART del controlador de vuelo.
+  **Default** usa los pines estándar de tu placa; elige otros para usar
+  ShutterBridge en una placa con otro pinout. RX y TX deben ser distintos, y
+  cambiarlos reinicia la placa.
+
 ### Puente Betaflight
 
 - **Enable** - convierte la placa en un enlace MSP inalámbrico para el Betaflight

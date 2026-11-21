@@ -66,3 +66,45 @@ bool boardLedGrb() {
 const char* boardId() {
     return s_variant == BoardVariant::StampS3A ? "m5stamp-s3a" : BOARD_ID;
 }
+
+// Leaves out flash/PSRAM, native USB and boot-critical strapping pins
+#if CONFIG_IDF_TARGET_ESP32S3
+static const uint8_t UART_PINS[] = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14,
+                                    15, 16, 17, 18, 21, 38, 39, 40, 41, 42, 43, 44, 47, 48};
+#else
+static const uint8_t UART_PINS[] = {0, 1, 2, 3, 4, 5, 6, 7, 10, 20, 21};
+#endif
+
+static bool pinReserved(uint8_t pin) {
+    if (pin == STATUS_LED_PIN)
+        return true;
+#ifdef STAMP_S3A_LED_POWER_PIN
+    if (s_variant == BoardVariant::StampS3A && pin == STAMP_S3A_LED_POWER_PIN)
+        return true;
+#endif
+    return false;
+}
+
+size_t boardUartPins(uint8_t* out, size_t max) {
+    size_t n = 0;
+    for (uint8_t pin : UART_PINS)
+        if (!pinReserved(pin) && n < max)
+            out[n++] = pin;
+    return n;
+}
+
+static bool pinOffered(int pin) {
+    for (uint8_t p : UART_PINS)
+        if (p == pin)
+            return !pinReserved(p);
+    return false;
+}
+
+void boardFcPins(int8_t rxSetting, int8_t txSetting, int& rx, int& tx) {
+    rx = rxSetting < 0 ? FC_RX_PIN : rxSetting;
+    tx = txSetting < 0 ? FC_TX_PIN : txSetting;
+    if (rx == tx || !pinOffered(rx) || !pinOffered(tx)) {
+        rx = FC_RX_PIN;
+        tx = FC_TX_PIN;
+    }
+}

@@ -154,6 +154,13 @@ Device-wide settings.
   Needs a GPS fix on the FC.
 - **UTC offset** - hours to shift from UTC for local time (quarter-hour steps).
 
+### FC UART
+
+- **RX pin** / **TX pin** - the GPIOs wired to the flight controller UART.
+  **Default** uses your board's standard pins; pick others to run ShutterBridge on
+  a board with a different pinout. RX and TX must differ, and changing them
+  reboots the board.
+
 ### Betaflight bridge
 
 - **Enable** - turn the board into a wireless MSP link for the Betaflight

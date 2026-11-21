@@ -159,8 +159,11 @@ async function loadConfig() {
   if (cfg.bvar != null) {
     $("bvar").value = cfg.bvar;
     $("boardhint").textContent =
-      "Running as " + (BOARD_NAMES[cfg.board] || cfg.board) + ". Changing it reboots the bridge";
+      "Running as " +
+      (BOARD_NAMES[cfg.board] || cfg.board) +
+      ". Changing it reboots the bridge";
   }
+  renderUartPins();
   $("tz").value = (+cfg.tz || 0) / 60;
   $("op").value = +cfg.op || 0;
   $("rdly").value = +cfg.rdly || 0;
@@ -170,6 +173,24 @@ async function loadConfig() {
   applyOpMode();
   setDirty(false);
   hideLoadingIfReady();
+}
+
+function renderUartPins() {
+  $("uartcard").hidden = !cfg.pins;
+  if (!cfg.pins) return;
+  const opts = (def) =>
+    `<option value="-1">Default (GPIO${def})</option>` +
+    cfg.pins.map((p) => `<option value="${p}">GPIO${p}</option>`).join("");
+  $("rxpin").innerHTML = opts(cfg.rxd);
+  $("txpin").innerHTML = opts(cfg.txd);
+  $("rxpin").value = cfg.rx;
+  $("txpin").value = cfg.tx;
+}
+
+// Resolved GPIO for a pin select (-1 = the board default)
+function uartPin(id, def) {
+  const v = +$(id).value;
+  return v < 0 ? def : v;
 }
 
 function applyOpMode() {
@@ -309,6 +330,10 @@ function collectConfig() {
   if ($("clk").checked) b.set("clk", "1");
   if ($("wake").checked) b.set("wake", "1");
   if (cfg.bvar != null) b.set("bvar", $("bvar").value);
+  if (cfg.pins) {
+    b.set("rx", $("rxpin").value);
+    b.set("tx", $("txpin").value);
+  }
   b.set("tz", Math.round((parseFloat($("tz").value) || 0) * 60));
   return b;
 }
@@ -320,6 +345,10 @@ async function postSave() {
 }
 
 async function onSave() {
+  if (cfg.pins && uartPin("rxpin", cfg.rxd) === uartPin("txpin", cfg.txd)) {
+    toast("RX and TX need different pins", true);
+    return;
+  }
   const btn = $("save");
   btn.disabled = true;
   try {
