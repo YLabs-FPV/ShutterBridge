@@ -22,7 +22,7 @@ static OsdRenderer    osd(fc, g_settings, OSD_UPDATE_MS, OSD_REFRESH_MS);
 static WebConfig      web(g_settings);
 static StatusLed      led(STATUS_LED_PIN, STATUS_LED_RGB, STATUS_LED_ACTIVE_LOW);
 static BfBridge       bridge(FC_UART);
-static SerialConsole  console;
+static SerialConsole  console(web);
 static Camera*        cam = nullptr;
 
 // Betaflight bridge mode: runtime-only (never saved), reboot to exit. While set,
@@ -85,6 +85,7 @@ static void enterBridgeMode() {
 }
 
 void setup() {
+    Serial.setRxBufferSize(2048);
     Serial.begin(CONSOLE_BAUD);
     delay(300);
     Serial.println("\nShutterBridge starting");
