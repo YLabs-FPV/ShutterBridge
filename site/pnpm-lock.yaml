@@ -54,6 +54,9 @@ importers:
       '@types/w3c-web-serial':
         specifier: ^1.0.8
         version: 1.0.8
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       wrangler:
         specifier: ^4.129.0
         version: 4.129.0

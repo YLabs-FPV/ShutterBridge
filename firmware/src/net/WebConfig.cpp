@@ -33,7 +33,41 @@ namespace {
         return host.isEmpty() || host == kApIp.toString() ||
                host.equalsIgnoreCase("shutterbridge.local");
     }
+
+    class HttpArgs : public ApiArgs {
+       public:
+        explicit HttpArgs(AsyncWebServerRequest* r) : r_(r) {
+        }
+        bool has(const String& key) const override {
+            return r_->hasArg(key.c_str());
+        }
+        String get(const String& key) const override {
+            return r_->arg(key);
+        }
+
+       private:
+        AsyncWebServerRequest* r_;
+    };
 }  // namespace
+
+const WebConfig::Route WebConfig::kRoutes[] = {
+    {"/config.json", &WebConfig::handleConfig, false},
+    {"/status.json", &WebConfig::handleStatus, false},
+    {"/scan", &WebConfig::handleScan, false},
+    {"/preset", &WebConfig::handlePreset, false},
+    {"/mode", &WebConfig::handleMode, false},
+    {"/shutter", &WebConfig::handleShutter, false},
+    {"/bridge", &WebConfig::handleBridge, false},
+    {"/save", &WebConfig::handleSave, true},
+    {"/reboot", &WebConfig::handleReboot, false},
+};
+
+ApiReply WebConfig::call(const char* path, const ApiArgs& args) {
+    for (const Route& rt : kRoutes)
+        if (strcmp(rt.path, path) == 0)
+            return (this->*rt.handler)(args);
+    return ApiReply::text(404, "not found");
+}
 
 void WebConfig::begin() {
     if (routesSet_)
@@ -45,19 +79,11 @@ void WebConfig::begin() {
         Serial.println("[web] WARNING: web assets missing - run `pio run -t uploadfs`");
     }
 
-    server_.on("/config.json",
-               [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleConfig); });
-    server_.on("/status.json",
-               [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleStatus); });
-    server_.on("/scan", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleScan); });
-    server_.on("/preset", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handlePreset); });
-    server_.on("/mode", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleMode); });
-    server_.on("/shutter",
-               [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleShutter); });
-    server_.on("/bridge", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleBridge); });
-    server_.on("/save", HTTP_POST,
-               [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleSave); });
-    server_.on("/reboot", [this](AsyncWebServerRequest* r) { defer(r, &WebConfig::handleReboot); });
+    for (const Route& rt : kRoutes) {
+        const Handler h = rt.handler;
+        server_.on(rt.path, rt.postOnly ? HTTP_POST : HTTP_ANY,
+                   [this, h](AsyncWebServerRequest* r) { defer(r, h); });
+    }
 
     server_.serveStatic("/", LittleFS, "/")
         .setDefaultFile("index.html")
@@ -158,12 +184,15 @@ void WebConfig::runDeferred() {
         std::lock_guard<std::mutex> lock(pendingMu_);
         batch.swap(pending_);
     }
-    for (Pending& p : batch)
-        if (auto r = p.req.lock())
-            (this->*p.handler)(r.get());
+    for (Pending& p : batch) {
+        if (auto r = p.req.lock()) {
+            const ApiReply out = (this->*p.handler)(HttpArgs(r.get()));
+            r->send(out.code, out.type, out.body);
+        }
+    }
 }
 
-void WebConfig::handleConfig(AsyncWebServerRequest* r) {
+ApiReply WebConfig::handleConfig(const ApiArgs& a) {
     JsonDocument doc;
 
     JsonArray osd = doc["osd"].to<JsonArray>();
@@ -212,14 +241,12 @@ void WebConfig::handleConfig(AsyncWebServerRequest* r) {
 
     String out;
     serializeJson(doc, out);
-    r->send(200, "application/json", out);
+    return ApiReply::json(200, out);
 }
 
-void WebConfig::handleStatus(AsyncWebServerRequest* r) {
-    if (bridgeActive_) {
-        r->send(200, "application/json", "{\"bridge\":1}");
-        return;
-    }
+ApiReply WebConfig::handleStatus(const ApiArgs& a) {
+    if (bridgeActive_)
+        return ApiReply::json(200, "{\"bridge\":1}");
 
     JsonDocument doc;
     if (camStatus_) {
@@ -248,10 +275,10 @@ void WebConfig::handleStatus(AsyncWebServerRequest* r) {
 
     String out;
     serializeJson(doc, out);
-    r->send(200, "application/json", out);
+    return ApiReply::json(200, out);
 }
 
-void WebConfig::handleSave(AsyncWebServerRequest* r) {
+ApiReply WebConfig::handleSave(const ApiArgs& a) {
     // Boot-only fields: snapshot to detect a change that warrants a reboot
     const uint8_t oldCamType = s_.camType;
     const uint8_t oldBoard   = s_.boardVariant;
@@ -265,16 +292,16 @@ void WebConfig::handleSave(AsyncWebServerRequest* r) {
     strncpy(oldPass, s_.apPass, sizeof(oldPass));
 
     for (int i = 0; i < 4; i++) {
-        int v = r->arg("s" + String(i)).toInt();
+        int v = a.get("s" + String(i)).toInt();
         if (v >= 0 && v < (int)OsdField::_Count)
             s_.osdSlot[i] = (OsdField)v;
     }
 
     for (int i = 0; i < FUNC_COUNT; i++) {
         const String p  = "m" + String(i);
-        s_.modes[i].aux = (uint8_t)constrain(r->arg(p + "aux").toInt(), 0, 14);
-        uint16_t lo     = (uint16_t)constrain(r->arg(p + "min").toInt(), 900, 2100);
-        uint16_t hi     = (uint16_t)constrain(r->arg(p + "max").toInt(), 900, 2100);
+        s_.modes[i].aux = (uint8_t)constrain(a.get(p + "aux").toInt(), 0, 14);
+        uint16_t lo     = (uint16_t)constrain(a.get(p + "min").toInt(), 900, 2100);
+        uint16_t hi     = (uint16_t)constrain(a.get(p + "max").toInt(), 900, 2100);
         if (hi < lo) {
             uint16_t t = lo;
             lo         = hi;
@@ -284,26 +311,26 @@ void WebConfig::handleSave(AsyncWebServerRequest* r) {
         s_.modes[i].rangeMax = hi;
     }
 
-    s_.opMode             = (uint8_t)constrain(r->arg("op").toInt(), 0, 1);
-    s_.shutterVideoMode   = (uint8_t)constrain(r->arg("svm").toInt(), 0, 1);
-    s_.modeSwitchStyle    = (uint8_t)constrain(r->arg("msm").toInt(), 0, 1);
-    s_.recordStartDelayMs = (uint16_t)constrain(r->arg("rdly").toInt(), 0, 60000);
-    s_.recordStopDelayMs  = (uint16_t)constrain(r->arg("sdly").toInt(), 0, 60000);
-    s_.tzOffsetMin        = (int16_t)constrain(r->arg("tz").toInt(), -720, 840);
-    s_.clockSync          = r->hasArg("clk") ? 1 : 0;
-    s_.autoWake           = r->hasArg("wake") ? 1 : 0;
-    s_.camType            = (uint8_t)constrain(r->arg("ctype").toInt(), 0, 3);
-    setStr(s_.camMac, sizeof(s_.camMac), r->arg("mac"));
-    setStr(s_.apSsid, sizeof(s_.apSsid), r->arg("ssid"));
-    setStr(s_.apPass, sizeof(s_.apPass), r->arg("pass"));
-    s_.webuiDisarmedOnly = r->hasArg("dis") ? 1 : 0;
-    s_.bleTxPower        = (uint8_t)constrain(r->arg("ble").toInt(), 0, 2);
-    if (boardHasVariants() && r->hasArg("bvar"))
+    s_.opMode             = (uint8_t)constrain(a.get("op").toInt(), 0, 1);
+    s_.shutterVideoMode   = (uint8_t)constrain(a.get("svm").toInt(), 0, 1);
+    s_.modeSwitchStyle    = (uint8_t)constrain(a.get("msm").toInt(), 0, 1);
+    s_.recordStartDelayMs = (uint16_t)constrain(a.get("rdly").toInt(), 0, 60000);
+    s_.recordStopDelayMs  = (uint16_t)constrain(a.get("sdly").toInt(), 0, 60000);
+    s_.tzOffsetMin        = (int16_t)constrain(a.get("tz").toInt(), -720, 840);
+    s_.clockSync          = a.has("clk") ? 1 : 0;
+    s_.autoWake           = a.has("wake") ? 1 : 0;
+    s_.camType            = (uint8_t)constrain(a.get("ctype").toInt(), 0, 3);
+    setStr(s_.camMac, sizeof(s_.camMac), a.get("mac"));
+    setStr(s_.apSsid, sizeof(s_.apSsid), a.get("ssid"));
+    setStr(s_.apPass, sizeof(s_.apPass), a.get("pass"));
+    s_.webuiDisarmedOnly = a.has("dis") ? 1 : 0;
+    s_.bleTxPower        = (uint8_t)constrain(a.get("ble").toInt(), 0, 2);
+    if (boardHasVariants() && a.has("bvar"))
         s_.boardVariant =
-            (uint8_t)constrain(r->arg("bvar").toInt(), 0, (int)BoardVariant::_Count - 1);
-    if (r->hasArg("rx") && r->hasArg("tx")) {
-        s_.fcRxPin = (int8_t)constrain(r->arg("rx").toInt(), -1, 48);
-        s_.fcTxPin = (int8_t)constrain(r->arg("tx").toInt(), -1, 48);
+            (uint8_t)constrain(a.get("bvar").toInt(), 0, (int)BoardVariant::_Count - 1);
+    if (a.has("rx") && a.has("tx")) {
+        s_.fcRxPin = (int8_t)constrain(a.get("rx").toInt(), -1, 48);
+        s_.fcTxPin = (int8_t)constrain(a.get("tx").toInt(), -1, 48);
         // Keep only a pair the board would actually use
         int rx, tx;
         boardFcPins(s_.fcRxPin, s_.fcTxPin, rx, tx);
@@ -324,39 +351,33 @@ void WebConfig::handleSave(AsyncWebServerRequest* r) {
         rebootAtMs_ = millis() + 600;
         if (!rebootAtMs_)
             rebootAtMs_ = 1;
-        r->send(200, "text/plain", "reboot");
-    } else {
-        r->send(200, "text/plain", "ok");
+        return ApiReply::text(200, "reboot");
     }
+    return ApiReply::text(200, "ok");
 }
 
-void WebConfig::handleScan(AsyncWebServerRequest* r) {
+ApiReply WebConfig::handleScan(const ApiArgs& a) {
     // Async so the ~4 s scan doesn't block the loop: kick it off, answer {"scanning":1} until
     // done, then return the result array. The front-end polls until it gets the array
-    if (!NimBLEDevice::isInitialized()) {
-        r->send(200, "application/json", "[]");
-        return;
-    }
+    if (!NimBLEDevice::isInitialized())
+        return ApiReply::json(200, "[]");
 
     constexpr uint32_t SCAN_MS = 4000;
     NimBLEScan*        scan    = NimBLEDevice::getScan();
     const uint32_t     now     = millis();
 
     if (scanState_ == SCAN_IDLE) {
-        scanType_ = r->hasArg("type") ? r->arg("type").toInt() : s_.camType;
+        scanType_ = a.has("type") ? a.get("type").toInt() : s_.camType;
         scan->setActiveScan(true);
         scan->clearResults();
         scan->start(SCAN_MS, /*isContinue=*/false, /*restart=*/true);  // returns immediately
         scanState_   = SCAN_RUNNING;
         scanStartMs_ = now;
-        r->send(202, "application/json", "{\"scanning\":1}");
-        return;
+        return ApiReply::json(202, "{\"scanning\":1}");
     }
 
-    if (scan->isScanning() && (now - scanStartMs_) < SCAN_MS + 1000) {
-        r->send(202, "application/json", "{\"scanning\":1}");
-        return;
-    }
+    if (scan->isScanning() && (now - scanStartMs_) < SCAN_MS + 1000)
+        return ApiReply::json(202, "{\"scanning\":1}");
 
     // Done - classify each advertiser and report its backend type + model
     const NimBLEUUID  GOPRO_SVC((uint16_t)0xFEA6);
@@ -420,77 +441,65 @@ void WebConfig::handleScan(AsyncWebServerRequest* r) {
 
     String out;
     serializeJson(doc, out);
-    r->send(200, "application/json", out);
+    return ApiReply::json(200, out);
 }
 
-void WebConfig::handlePreset(AsyncWebServerRequest* r) {
+ApiReply WebConfig::handlePreset(const ApiArgs& a) {
     // GoPro-only: /preset?group=0|1|2 (video/photo/timelapse) or /preset?id=<hex|dec>
-    if (!camera_ || !camera_->supportsPresets()) {
-        r->send(409, "text/plain", "no preset-capable camera");
-        return;
-    }
-    if (!camera_->isConnected()) {
-        r->send(409, "text/plain", "camera offline");
-        return;
-    }
+    if (!camera_ || !camera_->supportsPresets())
+        return ApiReply::text(409, "no preset-capable camera");
+    if (!camera_->isConnected())
+        return ApiReply::text(409, "camera offline");
     bool ok = false;
-    if (r->hasArg("group")) {
-        const int g = r->arg("group").toInt();
+    if (a.has("group")) {
+        const int g = a.get("group").toInt();
         if (g >= 0 && g <= 2)
             ok = camera_->loadPresetGroup((PresetGroup)g);
-    } else if (r->hasArg("id")) {
+    } else if (a.has("id")) {
         // Accept 0x-prefixed hex or plain decimal
-        const String   v  = r->arg("id");
+        const String   v  = a.get("id");
         const uint32_t id = (uint32_t)strtoul(v.c_str(), nullptr, 0);
         ok                = camera_->loadPreset(id);
     }
-    r->send(ok ? 200 : 400, "text/plain", ok ? "ok" : "bad preset request");
+    return ApiReply::text(ok ? 200 : 400, ok ? "ok" : "bad preset request");
 }
 
-void WebConfig::handleMode(AsyncWebServerRequest* r) {
+ApiReply WebConfig::handleMode(const ApiArgs& a) {
     // /mode?m=photo|video - photo/video switch on backends that implement setMode
-    if (!camera_ || !camera_->isConnected()) {
-        r->send(409, "text/plain", "camera offline");
-        return;
-    }
-    if (!r->hasArg("m")) {
-        r->send(400, "text/plain", "need ?m=photo|video");
-        return;
-    }
-    const String  m  = r->arg("m");
+    if (!camera_ || !camera_->isConnected())
+        return ApiReply::text(409, "camera offline");
+    if (!a.has("m"))
+        return ApiReply::text(400, "need ?m=photo|video");
+    const String  m  = a.get("m");
     const CamMode cm = (m == "photo" || m == "0") ? CamMode::Photo : CamMode::Video;
     const bool    ok = camera_->setMode(cm);
-    r->send(ok ? 200 : 400, "text/plain", ok ? "ok" : "setMode failed / unsupported");
+    return ApiReply::text(ok ? 200 : 400, ok ? "ok" : "setMode failed / unsupported");
 }
 
-void WebConfig::handleShutter(AsyncWebServerRequest* r) {
-    if (!camera_ || !camera_->isConnected()) {
-        r->send(409, "text/plain", "camera offline");
-        return;
-    }
-    const String a = r->arg("a");
+ApiReply WebConfig::handleShutter(const ApiArgs& a) {
+    if (!camera_ || !camera_->isConnected())
+        return ApiReply::text(409, "camera offline");
+    const String act = a.get("a");
     bool         ok;
-    if (a == "start")
+    if (act == "start")
         ok = camera_->startRecord();
-    else if (a == "stop")
+    else if (act == "stop")
         ok = camera_->stopRecord();
-    else if (a == "photo")
+    else if (act == "photo")
         ok = camera_->takePhoto();
-    else {
-        r->send(400, "text/plain", "need ?a=start|stop|photo");
-        return;
-    }
-    r->send(ok ? 200 : 400, "text/plain", ok ? "ok" : "command failed");
+    else
+        return ApiReply::text(400, "need ?a=start|stop|photo");
+    return ApiReply::text(ok ? 200 : 400, ok ? "ok" : "command failed");
 }
 
-void WebConfig::handleBridge(AsyncWebServerRequest* r) {
+ApiReply WebConfig::handleBridge(const ApiArgs& a) {
     bridgeReq_ = true;
-    r->send(200, "text/plain", "bridge");
+    return ApiReply::text(200, "bridge");
 }
 
-void WebConfig::handleReboot(AsyncWebServerRequest* r) {
-    r->send(200, "text/plain", "rebooting");
+ApiReply WebConfig::handleReboot(const ApiArgs& a) {
     rebootAtMs_ = millis() + 300;  // let the response flush first
     if (!rebootAtMs_)
         rebootAtMs_ = 1;
+    return ApiReply::text(200, "rebooting");
 }

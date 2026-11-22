@@ -3,7 +3,7 @@ import MainLayout from "../../layouts/MainLayout.astro";
 import Flasher from "../../components/flasher/Flasher.svelte";
 import Admonition from "../../components/docs/Admonition.astro";
 import { SITE_TITLE } from "../../consts";
-import { getLangFromUrl, useData, useTranslations } from "../../i18n";
+import { getLangFromUrl, getLocalizedUrl, useData, useTranslations } from "../../i18n";
 import { getLangPaths } from "../../i18n/getLangPaths";
 
 export const getStaticPaths = getLangPaths;
@@ -40,6 +40,8 @@ const d = useData(lang);
       <code>{t("flash.infoWifiName")}</code>
       {t("flash.infoMiddle")}
       <code>shutterbridge</code>{t("flash.infoAfter")}
+      {t("flash.infoUsbBefore")}
+      <a href={getLocalizedUrl(lang, "/configure")}>{t("flash.infoUsbLink")}</a>{t("flash.infoUsbAfter")}
     </Admonition>
   </div>
 </MainLayout>

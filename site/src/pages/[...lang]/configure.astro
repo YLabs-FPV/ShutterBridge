@@ -1,0 +1,65 @@
+---
+import MainLayout from "../../layouts/MainLayout.astro";
+import AlertTriangle from "@lucide/svelte/icons/triangle-alert";
+import { SITE_TITLE } from "../../consts";
+import { getLangFromUrl, getLocalizedUrl, useTranslations } from "../../i18n";
+import { getLangPaths } from "../../i18n/getLangPaths";
+
+export const getStaticPaths = getLangPaths;
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const flashUrl = getLocalizedUrl(lang, "/flash");
+const uiUrl = `/device-ui/index.html?flash=${encodeURIComponent(flashUrl)}`;
+---
+
+<MainLayout
+  title={`${t("configure.pageTitle")} - ${SITE_TITLE}`}
+  description={t("configure.subtitle")}
+  class="px-4 py-4"
+>
+  <div class="max-w-3xl mx-auto">
+    <h1 class="sr-only">{t("configure.heading")}</h1>
+
+    <div
+      id="cfg-unsupported"
+      hidden
+      class="mt-8 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-card-bg))] p-6 md:p-8 shadow-sm"
+    >
+      <div
+        class="flex items-start gap-3 rounded-xl bg-[rgba(var(--color-accent),0.1)] border border-[rgba(var(--color-accent),0.25)] p-4"
+      >
+        <AlertTriangle
+          class="w-5 h-5 mt-0.5 shrink-0 text-[rgb(var(--color-accent))]"
+        />
+        <div class="text-sm">
+          <p class="font-semibold text-[rgb(var(--color-accent))]">
+            {t("configure.unsupportedTitle")}
+          </p>
+          <p class="mt-1 text-[rgb(var(--color-text-muted))]">
+            {t("configure.unsupportedBody")}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <iframe
+      id="cfg-frame"
+      data-src={uiUrl}
+      title={t("configure.frameTitle")}
+      allow="serial"
+      hidden
+      class="w-full h-[calc(100dvh-6rem)] min-h-120 rounded-xl border border-[rgb(var(--color-border))]"
+    ></iframe>
+  </div>
+</MainLayout>
+
+<script>
+  const frame = document.getElementById("cfg-frame") as HTMLIFrameElement;
+  if ("serial" in navigator) {
+    frame.src = frame.dataset.src!;
+    frame.hidden = false;
+  } else {
+    document.getElementById("cfg-unsupported")!.hidden = false;
+  }
+</script>

@@ -11,6 +11,7 @@
 #include "camera/Camera.h"
 #include "config/Settings.h"
 #include "fc/FlightController.h"
+#include "net/ApiTypes.h"
 
 class WebConfig {
    public:
@@ -54,23 +55,32 @@ class WebConfig {
         bridgeActive_ = v;
     }
 
+    // Runs an API route outside HTTP (the serial console). Call from the loop task only
+    ApiReply call(const char* path, const ApiArgs& args);
+
    private:
     void startAp();
     void stopAp();
-    using Handler = void (WebConfig::*)(AsyncWebServerRequest*);
+    using Handler = ApiReply (WebConfig::*)(const ApiArgs&);
     void defer(AsyncWebServerRequest* r, Handler h);
     void runDeferred();
 
-    void handleConfig(AsyncWebServerRequest* r);  // GET /config.json
-    void handleSave(AsyncWebServerRequest* r);    // POST /save
-    void handleStatus(AsyncWebServerRequest* r);  // GET /status.json
-    void handleScan(
-        AsyncWebServerRequest* r);  // GET /scan  (BLE scan for cameras of the selected type)
-    void handlePreset(AsyncWebServerRequest* r);   // GET /preset (GoPro-only preset switching)
-    void handleMode(AsyncWebServerRequest* r);     // GET /mode?m=photo|video (photo/video switch)
-    void handleShutter(AsyncWebServerRequest* r);  // GET /shutter?a=start|stop|photo (all backends)
-    void handleBridge(AsyncWebServerRequest* r);   // GET /bridge (enter Betaflight-bridge mode)
-    void handleReboot(AsyncWebServerRequest* r);   // GET /reboot
+    struct Route {
+        const char* path;
+        Handler     handler;
+        bool        postOnly;  // HTTP method restriction; the serial console ignores it
+    };
+    static const Route kRoutes[];
+
+    ApiReply handleConfig(const ApiArgs& a);   // GET /config.json
+    ApiReply handleSave(const ApiArgs& a);     // POST /save
+    ApiReply handleStatus(const ApiArgs& a);   // GET /status.json
+    ApiReply handleScan(const ApiArgs& a);     // GET /scan  (BLE scan for cameras)
+    ApiReply handlePreset(const ApiArgs& a);   // GET /preset (GoPro-only preset switching)
+    ApiReply handleMode(const ApiArgs& a);     // GET /mode?m=photo|video (photo/video switch)
+    ApiReply handleShutter(const ApiArgs& a);  // GET /shutter?a=start|stop|photo (all backends)
+    ApiReply handleBridge(const ApiArgs& a);   // GET /bridge (enter Betaflight-bridge mode)
+    ApiReply handleReboot(const ApiArgs& a);   // GET /reboot
 
     Settings&           s_;
     AsyncWebServer      server_;
