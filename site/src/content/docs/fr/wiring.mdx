@@ -1,0 +1,70 @@
+---
+title: Câblage du FC et Betaflight
+description: Connectez la carte à un UART Betaflight et configurez MSP/OSD.
+order: 20
+---
+
+import ThemedImage from "../../../components/docs/ThemedImage.astro"
+import { BOARDS } from "../../../consts"
+
+Connectez la carte à un UART libre de votre contrôleur de vol.
+
+## Connexions
+
+| Carte | Contrôleur de vol |
+| ----- | ----------------- |
+| TX    | UART RX           |
+| RX    | UART TX           |
+| GND   | GND               |
+| 5V    | 5V                |
+
+TX va sur RX et RX va sur TX - les lignes se croisent. Le GPIO correspondant
+dépend de votre carte :
+
+### {BOARDS["esp32s3-zero"].name}
+
+<ThemedImage
+    alt="Schéma de câblage de la Waveshare ESP32-S3-Zero"
+    lightSrc="/docs/wiring/light/diagram-s3.svg"
+    darkSrc="/docs/wiring/dark/diagram-s3.svg"
+    maxWidth="500px" />
+
+<hr />
+
+### {BOARDS["esp32c3-supermini"].name}
+
+<ThemedImage
+    alt="Schéma de câblage de l'ESP32-C3 Super Mini"
+    lightSrc="/docs/wiring/light/diagram-c3.svg"
+    darkSrc="/docs/wiring/dark/diagram-c3.svg"
+    maxWidth="500px" />
+
+Vous utilisez une autre carte ? Choisissez ses broches UART dans **System > FC UART** de
+l'[interface web](/docs/web-ui).
+
+## Betaflight
+
+Nécessite Betaflight 25.12 ou plus récent.
+
+### Onglet Ports
+Dans l'onglet **Ports**, activez **MSP** sur l'UART que vous avez câblé. Enregistrez et redémarrez.
+Le pont utilise MSP pour lire l'état du FC et afficher l'état de la caméra sur l'OSD.
+
+<ThemedImage
+    alt="Configuration de l'onglet Ports"
+    lightSrc="/docs/wiring/light/ports.webp"
+    darkSrc="/docs/wiring/dark/ports.webp"
+    maxWidth="550px" />
+
+*Dans la capture d'exemple ci-dessus, ShutterBridge est câblé sur l'UART3*
+
+### Onglet OSD
+
+Dans l'onglet OSD, activez et placez les éléments **Custom Message** : ils servent
+à afficher la télémétrie de la caméra (comme l'état d'enregistrement).
+
+<ThemedImage
+    alt="Configuration de l'onglet OSD"
+    lightSrc="/docs/wiring/light/osd.webp"
+    darkSrc="/docs/wiring/dark/osd.webp"
+    maxWidth="850px" />

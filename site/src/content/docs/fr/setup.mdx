@@ -1,0 +1,86 @@
+---
+title: Configuration initiale
+description: Appairez la caméra et configurez-la en Wi-Fi.
+order: 40
+---
+
+import Admonition from "../../../components/docs/Admonition.astro";
+
+Une fois le firmware flashé et la carte câblée à votre FC, tout le reste se fait depuis
+l'interface web embarquée, en Wi-Fi. Aucune application à installer.
+
+## 1. Connectez-vous au Wi-Fi de configuration
+
+Alimentez la carte (en USB ou via le FC). Elle crée un point d'accès Wi-Fi pour la configuration :
+
+- **Réseau :** `ShutterBridge`
+- **Mot de passe :** `shutterbridge`
+
+Connectez-vous-y depuis un téléphone ou un ordinateur portable, puis ouvrez **`http://10.0.0.1`** dans un
+navigateur. Vous arrivez sur l'onglet **Camera**.
+
+<Admonition type="tip">
+  Si votre téléphone coupe la connexion faute d'accès à Internet, choisissez « rester
+  connecté » quand il vous le propose. La LED de la carte passe au bleu fixe tant qu'un appareil
+  est connecté au Wi-Fi de configuration.
+</Admonition>
+
+## 2. Appairez votre caméra
+
+Dans l'onglet **Camera**, lancez l'assistant de connexion :
+
+1. **Camera type** - choisissez votre backend : `Osmo (Nano)`, `Action / 360` ou `GoPro`.
+2. **Scan** - la carte recherche les caméras à proximité en Bluetooth. Vérifiez que la
+   caméra est allumée et que son Bluetooth est activé.
+3. **Select camera** - choisissez la vôtre dans la liste. La carte l'enregistre et s'y
+   reconnectera automatiquement à chaque démarrage : cette étape n'est à faire qu'une fois.
+
+### Acceptez l'appairage
+
+La pastille **Connection** en haut indique où vous en êtes :
+
+- **connecting** - connexion à la caméra en cours.
+- **Accept PIN on camera** - une caméra DJI vous demande de confirmer l'appairage.
+  Validez le code PIN sur l'écran de la caméra.
+- **Camera online** - appairée et prête.
+- **Camera offline** - non connectée (hors de portée, éteinte ou pas encore appairée).
+
+<Admonition type="note">
+  Les caméras DJI Action confirment l'appairage par un code PIN sur la caméra elle-même ; la GoPro
+  s'appaire sur la caméra la première fois. Après ce premier appairage, la reconnexion est automatique.
+</Admonition>
+
+Une fois la caméra en ligne, son état en direct (enregistrement, batterie, SD, mode)
+s'affiche dans l'onglet Camera, et la LED de la carte passe au vert fixe.
+
+## 3. Associez vos commandes
+
+Passez à l'onglet **Channels** pour choisir comment la caméra est déclenchée :
+
+- **Mode** - `Record on arm` démarre/arrête l'enregistrement avec l'interrupteur d'armement du quad,
+  ou `Manual` pour la piloter entièrement depuis un interrupteur.
+- **Record start / stop delay** - de petits délais pour ne pas couper le début ou la fin
+  d'une prise.
+- **Channel mapping** - attribuez un canal AUX et une plage à des actions comme le déclencheur,
+  le mode photo/vidéo et le changement de préréglage.
+
+Consultez la [référence de l'interface web](/docs/web-ui) pour toutes les commandes de chaque onglet.
+
+## 4. Configurez l'OSD
+
+L'état de la caméra est affiché dans les emplacements OSD Custom Message de Betaflight. Attribuez un
+champ (état d'enregistrement, batterie, mode, espace SD libre, temps restant, résolution, FPS) à chaque
+emplacement dans l'onglet **OSD**, et pensez à activer et positionner ces éléments dans Betaflight -
+voir [Câblage du FC et Betaflight](/docs/wiring).
+
+## 5. Options système
+
+Dans l'onglet **System**, vous pouvez définir le nom et le mot de passe du Wi-Fi, couper le Wi-Fi une fois
+armé, choisir la puissance d'émission Bluetooth et (GoPro uniquement) synchroniser l'horloge de la caméra
+sur l'heure GPS de votre FC.
+
+## C'est prêt
+
+Armez sur l'établi (sans hélices) et vérifiez que l'OSD reflète bien la caméra. Si quelque chose
+ne fonctionne pas, la [LED d'état](/docs/status-led) vous indique l'état de la carte,
+et le [Dépannage](/docs/troubleshooting) couvre les problèmes courants.

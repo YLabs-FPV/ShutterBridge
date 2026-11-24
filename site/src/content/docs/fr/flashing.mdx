@@ -1,0 +1,32 @@
+---
+title: Flashage
+description: Installez le firmware depuis votre navigateur en USB.
+order: 30
+---
+
+import Admonition from "../../../components/docs/Admonition.astro";
+
+Utilisez le [flasheur web](/flash) dans un navigateur Chromium (Chrome ou Edge) - aucun pilote
+ni application de bureau nécessaire.
+
+<Admonition type="warning" title="Chromium uniquement">
+  Web Serial n'est pas disponible dans Firefox, Safari ni les navigateurs mobiles. Utilisez
+  Chrome ou Edge sur ordinateur.
+</Admonition>
+
+## Étapes
+
+1. Branchez la carte sur un port USB avec un câble USB-C capable de transférer des données.
+2. Ouvrez le [flasheur](/flash), cliquez sur **Connecter** et choisissez le port série de la carte quand le navigateur le demande.
+3. La carte est détectée automatiquement ; cliquez sur **Installer**.
+4. Attendez la fin de l'opération, puis débranchez et rebranchez la carte.
+
+Le flasheur écrit le bootloader, l'application et l'interface web de configuration embarquée en une seule fois.
+
+## Effacement complet
+
+Laissez **Effacement complet** désactivé pour conserver vos réglages et l'appairage de la caméra
+lors des mises à jour. Activez-le pour tout effacer et repartir de zéro. Notez qu'une mise à jour
+du firmware qui modifie le schéma des réglages les réinitialise d'elle-même aux valeurs par défaut.
+
+Recommandé lors du premier flashage.

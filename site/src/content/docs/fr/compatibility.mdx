@@ -1,0 +1,30 @@
+---
+title: Caméras compatibles
+description: Quelles caméras d'action fonctionnent, et ce que chacune permet.
+order: 5
+---
+
+import CameraMatrix from "../../../components/CameraMatrix.astro";
+import HardwareTable from "../../../components/HardwareTable.astro";
+import Admonition from "../../../components/docs/Admonition.astro";
+import { GITHUB_URL } from "../../../consts";
+
+ShutterBridge est compatible avec trois familles de caméras d'action en Bluetooth LE. La prise en charge
+varie selon le backend :
+
+<CameraMatrix />
+
+## Caméras testées
+
+La matrice ci-dessus montre ce que chaque _backend_ prend en charge. Ci-dessous, les modèles
+de caméra qui ont réellement été testés sur du matériel - par le mainteneur et par la
+communauté.
+
+<HardwareTable />
+
+<Admonition type="tip" title="Vous l'avez essayé avec votre caméra ? Dites-le-nous">
+  Ce tableau est construit à partir des retours - même « ça marche, tout simplement » est utile. Partagez votre résultat
+  avec le <a href={`${GITHUB_URL}/issues/new?template=camera_report.yml`}>rapport de
+  compatibilité caméra</a>. Indiquez le modèle, le backend sélectionné, la
+  version du firmware et tout ce qui n'a pas fonctionné.
+</Admonition>
