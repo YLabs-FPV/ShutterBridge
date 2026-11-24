@@ -1,0 +1,247 @@
+{
+  "site": {
+    "titleSuffix": "OSD et contrôle de caméra d'action pour Betaflight (DJI, GoPro)",
+    "description": "Firmware ESP32-S3 / ESP32-C3 qui relie Betaflight aux caméras DJI Osmo, DJI Action et GoPro - état de la caméra en direct sur votre OSD FPV, interrupteurs RC associés à l'enregistrement, à la photo et au mode.",
+    "docsTitleSuffix": "Documentation ShutterBridge"
+  },
+  "nav": {
+    "home": "Accueil",
+    "flasher": "Flasheur",
+    "configure": "Configurateur",
+    "docs": "Documentation",
+    "links": "Liens",
+    "toggleMenu": "Afficher le menu"
+  },
+  "hero": {
+    "by": "par",
+    "slogan": "Votre caméra sur l'OSD. Vos interrupteurs sur le déclencheur.",
+    "subtitle": "Firmware ESP32-S3 / ESP32-C3 qui relie un contrôleur de vol Betaflight à une caméra DJI Osmo, DJI Action ou GoPro - l'état de la caméra en direct affiché dans vos lunettes FPV, et des interrupteurs RC associés à l'enregistrement, à la photo et au changement de mode",
+    "flash": "Flasher le firmware",
+    "docs": "Lire la documentation",
+    "source": "Code source"
+  },
+  "gallery": {
+    "title": "En action",
+    "subtitle": "L'état de la caméra en direct, là où vous regardez",
+    "items": [
+      {
+        "label": "Armer pour enregistrer",
+        "caption": "L'enregistrement démarre dès que vous armez, sans appuyer sur aucun bouton."
+      },
+      {
+        "label": "L'OSD dans les lunettes",
+        "caption": "L'état de la caméra en direct, superposé là où vous regardez."
+      },
+      {
+        "label": "Interface web",
+        "caption": "Configurez tout depuis une interface claire dans le navigateur."
+      }
+    ]
+  },
+  "compat": {
+    "title": "Caméras compatibles",
+    "subtitle": "Trois backends BLE, un seul pont. En bref :",
+    "tested": "Testée",
+    "untested": "Non testée",
+    "featureHeader": "Fonction",
+    "legendSupported": "Prise en charge",
+    "legendPartial": "Partielle / sous conditions",
+    "legendUnsupported": "Non prise en charge",
+    "legendUntested": "Prise en charge, non testée",
+    "hardware": {
+      "columns": [
+        "Caméra",
+        "Backend",
+        "Résultat",
+        "Testé par"
+      ],
+      "results": {
+        "worksLimited": "Fonctionne (limitations*)",
+        "worksFull": "Fonctionne entièrement",
+        "worksPartial": "Fonctionne (pas entièrement testée)"
+      },
+      "by": {
+        "maintainer": "Mainteneur",
+        "community": "Communauté"
+      },
+      "note": "* Voir la limitation d'enregistrement indiquée plus haut."
+    },
+    "columns": [
+      "Osmo (Nano)",
+      "Action / 360",
+      "GoPro"
+    ],
+    "cameraNotes": [
+      "Connexion, télémétrie OSD, changement de mode, affichage résolution/FPS, enregistrement et photo. Protocole DUML, aucun appairage nécessaire.",
+      "Contrôle complet : changement de mode, affichage résolution/FPS, enregistrement et photo. Protocole R-SDK, avec DUML pour la batterie. Appairage par code PIN. Testée sur l'Action 4.",
+      "Changement de préréglage, chargement par ID et synchronisation de l'horloge sur l'heure GPS du FC. Appairage sur la caméra. Enregistrement et télémétrie OSD vérifiés sur une HERO 12 ; certaines fonctions ne sont pas encore confirmées."
+    ],
+    "featureLabels": [
+      "Connexion + reconnexion automatique",
+      "Télémétrie OSD (enregistrement, batterie, SD, minuteurs)",
+      "Affichage du mode (vidéo / photo)",
+      "Changement de mode photo / vidéo",
+      "Affichage résolution / FPS",
+      "Démarrer / arrêter l'enregistrement",
+      "Prendre une photo",
+      "Changement de préréglage",
+      "Synchronisation de l'horloge sur l'heure GPS du FC"
+    ]
+  },
+  "requirements": {
+    "title": "Ce qu'il vous faut",
+    "subtitle": "Trois choses pour décoller",
+    "items": [
+      {
+        "name": "L'une des deux cartes",
+        "detail": "Waveshare ESP32-S3-Zero (4 Mo de flash, 2 Mo de PSRAM, USB natif) ou ESP32-C3 Super Mini (4 Mo de flash, USB-Serial/JTAG)."
+      },
+      {
+        "name": "Betaflight 2025.12 ou plus récent",
+        "detail": "Contrôleur de vol sous Betaflight 25.12+. Il communique avec le pont via MSP ; les éléments OSD affichent l'état de la caméra."
+      },
+      {
+        "name": "Une caméra d'action compatible",
+        "detail": "Une DJI Osmo / Action ou une GoPro HERO9 ou plus récente. Voir la liste de compatibilité ci-dessus."
+      }
+    ]
+  },
+  "configure": {
+    "pageTitle": "Configurateur",
+    "heading": "Configurateur ShutterBridge",
+    "subtitle": "Configurez votre ShutterBridge depuis cette page avec un câble USB, sans Wi-Fi.",
+    "frameTitle": "Réglages ShutterBridge",
+    "unsupportedTitle": "La configuration USB n'est pas disponible dans ce navigateur",
+    "unsupportedBody": "Ouvrez cette page dans Chrome, Edge ou un autre navigateur Chromium sur ordinateur. Firefox, Safari et les navigateurs mobiles ne peuvent pas accéder au pont en USB, mais vous pouvez toujours le configurer depuis sa propre page Wi-Fi."
+  },
+  "flash": {
+    "pageTitle": "Flasheur",
+    "heading": "Flasheur web",
+    "subtitle": "Flashez votre carte ShutterBridge directement depuis votre navigateur.",
+    "warnTitle": "Avant de flasher",
+    "warnOnlyStrong": "Ne flashez qu'une carte prise en charge.",
+    "warnOnlyRest": "Le flasheur détecte votre carte automatiquement et ne propose que le firmware conçu pour elle. Flasher une carte non prise en charge ne fonctionnera pas et peut nécessiter une récupération manuelle.",
+    "warnReplaceStrong": "Le flashage remplace le firmware",
+    "warnReplaceRest": "déjà présent sur la carte.",
+    "infoBefore": "Première fois sur cette carte ? Après le flashage, connectez-vous au point d'accès Wi-Fi",
+    "infoWifiName": "ShutterBridge",
+    "infoMiddle": "pour terminer la configuration. Le mot de passe est",
+    "infoAfter": ".",
+    "infoUsbBefore": " Vous préférez un câble ? ",
+    "infoUsbLink": "Configurez-le en USB",
+    "infoUsbAfter": ".",
+    "ui": {
+      "unsupportedTitle": "Web Serial n'est pas disponible ici",
+      "unsupportedBody": "Ouvrez cette page dans Chrome, Edge ou un autre navigateur Chromium sur ordinateur. Firefox, Safari et les navigateurs mobiles ne peuvent pas flasher.",
+      "titleIdle": "Flasher ShutterBridge",
+      "titleDone": "Flashage réussi",
+      "titleError": "Échec du flashage",
+      "introIdle": "Installe le firmware directement depuis votre navigateur en USB. Pas d'application, pas de pilotes. Branchez votre carte pour la détecter automatiquement.",
+      "introNone": "Aucun firmware n'a encore été publié. Revenez après la sortie de la première version.",
+      "ready": "{board} détectée. Choisissez une version et flashez.",
+      "done": "Débranchez puis rebranchez la carte, puis scannez le code avec votre téléphone pour rejoindre son Wi-Fi et ouvrir la page de configuration dans votre navigateur.",
+      "checking": "Recherche des firmwares disponibles...",
+      "selectPort": "Sélectionnez le port série de votre carte...",
+      "connecting": "Connexion...",
+      "loading": "Chargement du firmware...",
+      "erasing": "Effacement, puis écriture...",
+      "writing": "Écriture du firmware...",
+      "errUnknownChip": "Puce non reconnue ({chip}) - aucune carte correspondante.",
+      "errNoFirmware": "Aucun firmware publié trouvé pour {board} ({chip}).",
+      "errFetch": "Impossible de récupérer {path} ({status}). Aucune image de firmware n'est encore publiée.",
+      "errNoImage": "Aucune image de firmware disponible.",
+      "connect": "Connecter",
+      "version": "Version",
+      "install": "Installer",
+      "wipe": "Effacement complet (supprime les réglages enregistrés et l'appairage)",
+      "wipeHint": "Efface les réglages enregistrés et l'appairage de la caméra. Laissez décoché pour conserver votre configuration lors des mises à jour.",
+      "cancel": "Annuler",
+      "tryAgain": "Réessayer",
+      "flashAnother": "Flasher une autre carte",
+      "log": "Journal",
+      "qrLabel": "QR code Wi-Fi pour {ssid}",
+      "network": "Réseau",
+      "password": "Mot de passe",
+      "setupPage": "Page de configuration",
+      "keptCreds": "Vous aviez déjà changé le nom ou le mot de passe du Wi-Fi ? Ceux que vous aviez enregistrés sont conservés, utilisez-les plutôt."
+    }
+  },
+  "notFound": {
+    "pageTitle": "404 - Signal perdu",
+    "linkLost": "404 - liaison caméra perdue",
+    "noSignal": "Pas de signal",
+    "heading": "Cette page est sortie de portée",
+    "message": "La caméra ne l'a jamais captée, et rien n'a été enregistré. La page que vous cherchez n'a jamais existé ou a été supprimée entre deux prises. On vous ramène sur la ligne de vol.",
+    "home": "Retour à l'accueil",
+    "docs": "Lire la documentation"
+  },
+  "docs": {
+    "sidebar": "Documentation",
+    "menuButton": "Docs",
+    "previous": "Précédent",
+    "next": "Suivant"
+  },
+  "admonition": {
+    "note": "Remarque",
+    "info": "Info",
+    "tip": "Astuce",
+    "warning": "Attention",
+    "danger": "Danger"
+  },
+  "led": {
+    "states": [
+      {
+        "label": "Connectée",
+        "pattern": "Fixe",
+        "meaning": "Caméra connectée et inactive (pas d'enregistrement)"
+      },
+      {
+        "label": "Enregistrement",
+        "pattern": "Clignotante",
+        "meaning": "Caméra connectée et en cours d'enregistrement"
+      },
+      {
+        "label": "Recherche",
+        "pattern": "Clignotante",
+        "meaning": "Recherche de la caméra - pas encore connectée"
+      },
+      {
+        "label": "Wi-Fi de config",
+        "pattern": "Fixe",
+        "meaning": "Un appareil est connecté au Wi-Fi ShutterBridge"
+      },
+      {
+        "label": "Mode pont",
+        "pattern": "Violette",
+        "meaning": "Pont Betaflight actif - clignote jusqu'à la connexion du Configurator, puis reste fixe"
+      }
+    ],
+    "statesMono": [
+      {
+        "label": "Connectée",
+        "pattern": "Fixe",
+        "meaning": "Caméra connectée et inactive (pas d'enregistrement)"
+      },
+      {
+        "label": "Enregistrement",
+        "pattern": "Clignotement rapide",
+        "meaning": "Caméra connectée et en cours d'enregistrement"
+      },
+      {
+        "label": "Recherche",
+        "pattern": "Clignotement lent",
+        "meaning": "Recherche de la caméra - pas encore connectée"
+      },
+      {
+        "label": "Wi-Fi de config",
+        "pattern": "Double flash",
+        "meaning": "Un appareil est connecté au Wi-Fi ShutterBridge"
+      },
+      {
+        "label": "Mode pont",
+        "pattern": "Clignotement rapide",
+        "meaning": "Pont Betaflight actif - clignotement rapide jusqu'à la connexion du Configurator, puis fixe"
+      }
+    ]
+  }
+}

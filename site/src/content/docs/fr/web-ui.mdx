@@ -1,0 +1,171 @@
+---
+title: Interface web
+description: L'interface de configuration embarquée, onglet par onglet.
+order: 42
+---
+
+import Admonition from "../../../components/docs/Admonition.astro";
+import ThemedImage from "../../../components/docs/ThemedImage.astro"
+
+Connectez-vous au point d'accès Wi-Fi `ShutterBridge` et ouvrez `http://10.0.0.1`.
+
+L'interface comporte quatre onglets - **Camera**, **Channels**, **OSD** et **System** -
+une pastille de version dans l'en-tête et un bouton **Save** fixé en bas. L'interface
+s'adapte à la caméra associée : les commandes qu'une caméra ne prend pas en charge sont masquées.
+
+<Admonition type="note" title="Enregistrement et redémarrages">
+  Save écrit tout sur la carte en une fois. La plupart des réglages s'appliquent immédiatement.
+  Changer la **caméra**, le **type** ou le **nom/mot de passe du Wi-Fi** redémarre la
+  carte pour les appliquer - l'interface s'en charge et se reconnecte d'elle-même.\
+  Voir la [configuration initiale](/docs/setup).
+</Admonition>
+
+## Camera
+
+État en direct et liaison avec la caméra.
+
+<ThemedImage
+    alt="Onglet Camera"
+    lightSrc="/docs/webui/light/camera.webp"
+    darkSrc="/docs/webui/dark/camera.webp"
+    maxWidth="600px" />
+
+### État en direct
+
+Quand une caméra est en ligne, cette carte reflète ce qu'elle fait :
+
+- Indicateur **REC** - allumé pendant l'enregistrement.
+- **Elapsed** - durée d'enregistrement en cours (mm:ss).
+- **Mode** - Photo ou Vidéo.
+- **Format** - résolution et fréquence d'images, par ex. `4K 60fps`.
+- **Battery** - pourcentage, avec une barre.
+- **SD free** - espace restant sur la carte.
+- **Time left** - durée d'enregistrement restante estimée sur la carte (mm:ss, ou `1h05` à partir d'une heure).
+
+### Connexion
+
+Affiche le modèle et l'adresse MAC de la caméra associée (ou **No camera / not bound**) et une
+pastille d'état :
+
+- **connecting** - connexion à la caméra en cours.
+- **Accept PIN on camera** - validez le code PIN d'appairage sur l'écran d'une caméra DJI.
+- **Camera online** - connectée et transmet ses données.
+- **Camera offline** - non connectée.
+
+### Association
+
+**Bind new camera** ouvre l'assistant d'appairage : choisissez le **Camera type** (DJI Osmo
+(Nano) / DJI Action / 360 / GoPro), lancez **Scan**, puis **Select camera** dans la liste.
+La carte enregistre le choix et redémarre pour se connecter. L'association n'est à faire qu'une fois ;
+ensuite, la reconnexion est automatique à chaque démarrage.
+
+### Commandes
+
+Commandes manuelles de la caméra associée. Cette carte apparaît une fois une caméra associée,
+et elle est désactivée tant que **Record on arm** est actif (dans ce
+mode, la caméra est pilotée automatiquement).
+
+- **Mode** - bascule la caméra entre **Video** et **Photo**.
+- **Preset group** (GoPro uniquement) - charge le groupe de préréglages **Video**, **Photo** ou **Timelapse**.
+- **Preset by ID** (GoPro uniquement) - charge un préréglage précis par son ID hexadécimal.
+
+## Channels
+
+Associez les interrupteurs RC aux actions de la caméra.
+
+<ThemedImage
+    alt="Onglet Channels"
+    lightSrc="/docs/webui/light/channels.webp"
+    darkSrc="/docs/webui/dark/channels.webp"
+    maxWidth="550px" />
+
+### Enregistrement
+
+- **Mode**
+  * **Record on arm (par défaut)** : démarre l'enregistrement quand vous armez et l'arrête quand vous désarmez
+  * **Manual** : pilote la caméra entièrement depuis les fonctions de canal
+  ci-dessous
+  (les commandes manuelles sont désactivées dans ce mode)
+- **Record start delay** / **Record stop delay** - millisecondes d'attente avant de
+  démarrer/arrêter, pour ne pas couper le début ou la fin d'un clip
+
+### Fonctions de canal
+
+Chaque fonction a un sélecteur de **canal AUX** et un curseur de **plage** (en
+microsecondes). La fonction est active tant que le canal se trouve dans la plage ; un
+repère vert indique la valeur actuelle du canal.\
+Régler le canal d'une fonction sur **Off** la désactive.
+
+Fonctions disponibles (l'interface masque celles que votre caméra ne prend pas en charge) :
+
+- **Shutter** - le déclencheur principal. En mode Photo, il prend une photo ; en mode Vidéo, il
+  enregistre. Son option **Video trigger** choisit le comportement : **Momentary** (chaque
+  bascule démarre/arrête l'enregistrement) ou **2-position** (enregistre tant que l'interrupteur est maintenu).
+- **Camera Mode** - bascule la caméra entre photo et vidéo depuis un canal.
+  **Momentary** alterne à chaque bascule ; **2-position** passe en
+  Photo dans la plage et en Vidéo en dehors.
+- **Preset Video / Preset Photo / Preset Timelapse** (GoPro uniquement) - charge un groupe
+  de préréglages depuis un canal.
+
+## OSD
+
+Choisissez la télémétrie affichée dans les quatre emplacements OSD.
+
+<ThemedImage
+    alt="Onglet OSD"
+    lightSrc="/docs/webui/light/osd.webp"
+    darkSrc="/docs/webui/dark/osd.webp"
+    maxWidth="500px" />
+
+Chaque emplacement **Custom Msg** (0-3) correspond à un champ : **Off**, **Rec status**,
+**Battery %**, **Mode**, **SD free**, **Time left**, **Resolution** ou **FPS**.
+Au-delà d'une heure, **Time left** affiche les heures sous la forme `1H05`.
+
+Attribuez un champ ici, puis activez et positionnez les éléments **Custom Message**
+correspondants dans l'onglet OSD de Betaflight - voir [Câblage du FC et Betaflight](/docs/wiring).
+
+## System
+
+Réglages généraux de l'appareil.
+
+<ThemedImage
+    alt="Onglet System"
+    lightSrc="/docs/webui/light/system.webp"
+    darkSrc="/docs/webui/dark/system.webp"
+    maxWidth="500px" />
+
+### Wi-Fi
+
+- **Name** / **Password** - les identifiants du point d'accès de configuration (les modifier
+  redémarre la carte).
+- **Off when armed** - coupe le Wi-Fi de configuration tant que le FC est armé, pour que la
+  radio soit dédiée à la liaison caméra en vol.
+
+### Bluetooth
+
+- **TX power** - **Low**, **Medium** ou **High**. Plus la puissance est élevée, plus la portée est grande, mais
+  plus elle risque de perturber un récepteur RC proche. Baissez-la si la portée de votre liaison radio
+  diminue quand le pont est allumé.
+
+### Horloge (GoPro uniquement)
+
+- **Sync from GPS** - règle l'horloge de la GoPro sur l'heure GPS du contrôleur de vol.
+  Nécessite un fix GPS sur le FC.
+- **UTC offset** - décalage en heures par rapport à l'UTC pour l'heure locale (par pas d'un quart d'heure).
+
+### FC UART
+
+- **RX pin** / **TX pin** - les GPIO câblés à l'UART du contrôleur de vol.
+  **Default** utilise les broches standard de votre carte ; choisissez-en d'autres pour faire tourner ShutterBridge sur
+  une carte au brochage différent. RX et TX doivent être différents, et les modifier
+  redémarre la carte.
+
+### Betaflight bridge
+
+- **Enable** - transforme la carte en liaison MSP sans fil pour le Betaflight
+  Configurator. Cela suspend toutes les fonctions caméra jusqu'au redémarrage de la carte - voir
+  [Pont Betaflight](/docs/betaflight-bridge).
+
+### Appareil
+
+- **Reboot** - redémarre la carte.

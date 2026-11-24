@@ -1,0 +1,46 @@
+---
+title: Pont Betaflight
+description: Transformez la carte en liaison MSP sans fil pour le Betaflight Configurator.
+order: 44
+---
+
+import Admonition from "../../../components/docs/Admonition.astro";
+
+Le mode pont transforme ShutterBridge en liaison MSP sans fil transparente : il expose
+le port série du contrôleur de vol en Wi-Fi pour que le Betaflight Configurator puisse
+se connecter au FC sans câble USB. La carte devient un simple relais - sans
+contrôle de la caméra ni OSD - jusqu'à son redémarrage.
+
+<Admonition type="warning" title="Les fonctions caméra s'arrêtent">
+  Passer en mode pont suspend toutes les fonctions caméra - enregistrement, OSD,
+  liaison Bluetooth - pour le reste de la session. La carte libère ainsi la
+  radio pour le Wi-Fi. C'est temporaire : un redémarrage rétablit le fonctionnement normal, et le
+  mode n'est jamais enregistré.
+</Admonition>
+
+## L'activer
+
+1. Ouvrez l'interface web (`http://10.0.0.1`) et allez dans l'onglet **System**.
+2. Sous **Betaflight bridge**, appuyez sur **Enable** et confirmez.
+
+La page affiche un avis en plein écran tant que le pont est actif. La LED embarquée
+passe au **violet** (voir [LED d'état](/docs/status-led)).
+
+## Connecter le Configurator
+
+Utilisez l'**application de bureau ou mobile** Betaflight Configurator :
+
+1. Dans le Configurator, choisissez l'option de connexion **Manual**.
+2. Saisissez l'adresse **`tcp://10.0.0.1:5761`**.
+3. Connectez-vous comme d'habitude.
+
+<Admonition type="info" title="Application installée uniquement">
+  La version navigateur sur app.betaflight.com ne peut pas atteindre le pont. Les navigateurs n'ont
+  pas d'API TCP brute, donc une cible `tcp://` est injoignable depuis une page web, quel que soit
+  le routage. Utilisez l'application de bureau ou mobile installée.
+</Admonition>
+
+## Quitter
+
+Redémarrez la carte pour quitter le mode pont et revenir au fonctionnement normal de la caméra - coupez
+puis rétablissez l'alimentation, ou appuyez sur **Reboot** dans l'avis affiché pendant que le pont est actif.

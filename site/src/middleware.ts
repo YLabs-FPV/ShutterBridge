@@ -49,7 +49,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  // Already locale-prefixed (/en/..., /es/..., /uk/...) - serve as-is.
+  // Already locale-prefixed (/en/..., /es/..., /fr/..., /uk/...) - serve as-is.
   if (hasLocaleInPath(pathname)) {
     return next();
   }
@@ -60,7 +60,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     detectBrowserLanguage(request.headers.get("accept-language"));
 
   // Root ("/") gets a trailing slash so the redirect target matches the URLs
-  // the navbar and language selector generate (/en/, /es/, /uk/).
+  // the navbar and language selector generate (/en/, /es/, /fr/, /uk/).
   const newUrl = new URL(
     `/${target}${pathname === "/" ? "/" : pathname}`,
     url.origin,

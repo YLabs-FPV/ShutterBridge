@@ -1,0 +1,29 @@
+---
+title: LED d'état
+description: Ce que signifient les couleurs et clignotements de la LED embarquée.
+order: 46
+---
+
+import LedStatus from "../../../components/docs/LedStatus.astro";
+import { BOARDS } from "../../../consts";
+
+ShutterBridge indique d'un coup d'œil ce qu'il fait grâce à la LED embarquée - ce que
+vous voyez dépend de votre carte.
+
+## {BOARDS["esp32s3-zero"].name}
+
+Cette carte a une LED RVB, les états se distinguent donc par la couleur :
+
+<LedStatus variant="rgb" />
+
+La LED reflète d'abord la liaison avec la caméra : dès qu'une caméra est connectée, elle est verte
+(ou rouge clignotante pendant l'enregistrement), quel que soit l'état du Wi-Fi. Le bleu n'apparaît que lorsqu'aucune
+caméra n'est connectée mais qu'un appareil est sur le Wi-Fi de configuration. Le violet prend le dessus
+sur tout le reste tant que le mode [pont Betaflight](/docs/betaflight-bridge) est actif.
+
+## {BOARDS["esp32c3-supermini"].name}
+
+Cette carte a une LED d'une seule couleur, les mêmes états se distinguent donc par
+le rythme de clignotement :
+
+<LedStatus variant="mono" />

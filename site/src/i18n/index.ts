@@ -1,10 +1,12 @@
 import enTranslations from "./locales/en.json";
 import esTranslations from "./locales/es.json";
+import frTranslations from "./locales/fr.json";
 import ukTranslations from "./locales/uk.json";
 
 export const languages = {
   en: "English",
   es: "Español",
+  fr: "Français",
   uk: "Українська",
 } as const;
 
@@ -15,6 +17,7 @@ export const defaultLang: Language = "en";
 export const ui = {
   en: enTranslations,
   es: esTranslations,
+  fr: frTranslations,
   uk: ukTranslations,
 } as const;
 

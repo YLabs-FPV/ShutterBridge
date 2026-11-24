@@ -17,8 +17,8 @@ interface Props {
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const { title, description, image = "/og.webp", lang = "en" } = Astro.props;
 
-const normalizedPath = Astro.url.pathname.replace(/^\/(en|es|uk)(?=\/|$)/, "");
-const locales = ["en", "es", "uk"];
+const normalizedPath = Astro.url.pathname.replace(/^\/(en|es|fr|uk)(?=\/|$)/, "");
+const locales = ["en", "es", "fr", "uk"];
 const altHref = (code: string) =>
   new URL(`/${code}${normalizedPath === "" ? "/" : normalizedPath}`, Astro.site)
     .href;
@@ -132,7 +132,7 @@ const jsonLd = {
 <meta property="og:site_name" content={SITE_TITLE} />
 <meta
   property="og:locale"
-  content={lang === "es" ? "es_ES" : lang === "uk" ? "uk_UA" : "en_US"}
+  content={lang === "es" ? "es_ES" : lang === "fr" ? "fr_FR" : lang === "uk" ? "uk_UA" : "en_US"}
 />
 
 <meta property="twitter:card" content="summary_large_image" />

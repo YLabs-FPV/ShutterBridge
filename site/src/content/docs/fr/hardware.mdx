@@ -1,0 +1,36 @@
+---
+title: Matériel
+description: La carte et les composants sur lesquels tourne ShutterBridge.
+order: 10
+---
+
+import { BOARDS } from "../../../consts";
+
+ShutterBridge prend en charge deux cartes - choisissez celle que vous avez déjà :
+
+### {BOARDS["esp32s3-zero"].name}
+
+{BOARDS["esp32s3-zero"].chip}. D'autres cartes ESP32-S3 peuvent fonctionner mais n'ont pas été testées.
+
+<img src={BOARDS["esp32s3-zero"].image} style={{ height: "150px" }} alt={BOARDS["esp32s3-zero"].name} />
+
+<hr />
+
+### {BOARDS["esp32c3-supermini"].name}
+
+{BOARDS["esp32c3-supermini"].chip}. D'autres cartes ESP32-C3 peuvent fonctionner mais n'ont pas été testées.
+
+<img src={BOARDS["esp32c3-supermini"].image} style={{ height: "150px" }} alt={BOARDS["esp32c3-supermini"].name} />
+
+<hr />
+
+## Il vous faut
+
+- L'une des cartes ci-dessus.
+- Un contrôleur de vol sous **Betaflight 2025.12 ou plus récent** avec un
+  UART libre.
+- Une caméra d'action compatible - une DJI Osmo / Action, ou une GoPro HERO9 ou plus récente.
+- Un câble USB-C capable de transférer des données pour le flashage.
+- Un fer à souder et des notions de base en soudure
+
+Consultez le [tableau de compatibilité](/docs/compatibility) pour la matrice complète des caméras compatibles.

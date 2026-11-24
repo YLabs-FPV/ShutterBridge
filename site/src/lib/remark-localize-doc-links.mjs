@@ -1,7 +1,7 @@
 export default function remarkLocalizeDocLinks() {
   return (tree, file) => {
     const path = (file.path || file.history?.[0] || "").replace(/\\/g, "/");
-    const match = path.match(/\/content\/docs\/(en|es|uk)\//);
+    const match = path.match(/\/content\/docs\/(en|es|fr|uk)\//);
     if (!match) return;
     const lang = match[1];
 

@@ -1,0 +1,86 @@
+---
+title: Dépannage
+description: Problèmes courants et comment les résoudre.
+order: 50
+---
+
+import Admonition from "../../../components/docs/Admonition.astro";
+import { GITHUB_URL } from "../../../consts";
+
+La plupart des problèmes entrent dans quelques catégories. La [LED d'état](/docs/status-led) de la carte
+est la première vérification la plus rapide - elle vous indique dans quel état se trouve réellement la carte.
+
+## La caméra ne se connecte pas ou ne s'appaire pas
+
+Vérifiez ces points dans l'ordre :
+
+- **Le bon backend est sélectionné.** Le **Camera type** de l'onglet Camera doit correspondre à votre
+  caméra (Osmo/Action/GoPro utilisent des protocoles différents). Avec le mauvais type, la connexion
+  n'aboutira jamais. Voir la [liste de compatibilité](/docs/compatibility).
+- **La caméra est détectable.** Allumez-la, activez le Bluetooth et mettez-la en mode
+  appairage pour la première connexion. Puis appuyez à nouveau sur **Scan**.
+- **Validez l'appairage.** Si l'interface web affiche **Accept PIN on camera**, confirmez le
+  code PIN sur l'écran de la caméra DJI. La GoPro s'appaire sur la caméra la première fois.
+- **Distance et puissance.** Si la caméra est loin de la carte, augmentez la **Bluetooth TX
+  power** (onglet System) de Low à Medium ou High et réessayez.
+
+<Admonition type="note">
+  Après le premier appairage réussi, la reconnexion est automatique à chaque démarrage -
+  inutile de relancer l'assistant. Il suffit d'allumer les deux appareils.
+</Admonition>
+
+## La caméra se connecte, puis décroche ou s'affiche « offline »
+
+L'onglet Camera n'indique **online** que tant que de la télémétrie récente arrive (dans les
+deux ou trois secondes). De courtes coupures signifient généralement un problème de portée ou d'interférences.
+
+<Admonition type="warning" title="Radio partagée">
+  Le BLE et le Wi-Fi de configuration partagent une seule antenne. Laisser un téléphone connecté au
+  Wi-Fi ShutterBridge pendant le vol peut perturber la liaison avec la caméra. Activez **Wi-Fi
+  off when armed** (onglet System) pour que la radio soit dédiée à la caméra en
+  vol.
+</Admonition>
+
+## Impossible d'accéder à la page de configuration
+
+- **Pas de réseau `ShutterBridge`.** La carte est-elle alimentée ? Si **Wi-Fi off when armed**
+  est activé et que votre FC est armé, le point d'accès est volontairement
+  coupé - désarmez et il revient.
+- **Connecté mais la page ne charge pas.** Ouvrez explicitement `http://10.0.0.1`, et quand
+  votre téléphone signale « pas d'Internet », choisissez de rester connecté.
+- **La page est vide ou cassée.** L'interface web se trouve dans l'image du système de fichiers. Reflashez
+  avec le [flasheur web](/flash) - il écrit aussi le système de fichiers, donc un flashage normal
+  la restaure.
+
+## Un réglage n'a pas été pris en compte
+
+La plupart des réglages s'appliquent en direct dès que vous enregistrez. Changer la **caméra**, le **type
+de caméra** ou le **nom/mot de passe du Wi-Fi** est différent : la carte **redémarre** pour les
+appliquer. L'interface s'en charge et se reconnecte automatiquement - attendez simplement qu'elle
+revienne (rejoignez le Wi-Fi si on vous le demande).
+
+## Rien ne s'affiche sur l'OSD
+
+- **MSP activé** sur l'UART que vous avez câblé, dans l'onglet Ports de Betaflight.
+- **TX/RX croisés** - TX de la carte vers RX du FC et inversement. Voir [Câblage du FC](/docs/wiring).
+- **Éléments Custom Message** activés et positionnés dans l'onglet OSD de Betaflight.
+- **Betaflight 2025.12 ou plus récent**, et la caméra bien **online** dans l'onglet Camera.
+
+## « Record on arm » ne se déclenche pas
+
+L'enregistrement à l'armement nécessite que la carte connaisse l'état d'armement, qu'elle lit depuis le FC
+via MSP. Si MSP n'est pas connecté (mauvais câblage ou MSP non activé sur cet UART), la
+carte ne voit jamais l'armement et ne déclenche rien. Corrigez d'abord la [liaison FC](/docs/wiring),
+puis vérifiez les délais de démarrage/arrêt dans l'onglet Channels.
+
+## Le déclencheur ne prend pas de photo
+
+Le déclencheur ne prend une photo que lorsque la caméra est en mode Photo ; en mode Vidéo, il
+enregistre à la place. Passez la caméra en Photo avec la fonction de canal **Camera Mode**
+ou les boutons **Mode** de l'interface web.\
+Voir [Interface web](/docs/web-ui).
+
+## Toujours bloqué
+
+Ouvrez une issue ou une discussion sur <a href={GITHUB_URL}>GitHub</a> en indiquant le modèle de votre
+caméra, la version du firmware et le comportement de la LED d'état.

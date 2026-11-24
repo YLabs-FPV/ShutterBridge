@@ -1,9 +1,9 @@
 ---
 // Root entry point. Server-rendered so it can read the request headers and
-// redirect visitors to the best matching locale (/en/, /es/, /uk/).
+// redirect visitors to the best matching locale (/en/, /es/, /fr/, /uk/).
 export const prerender = false;
 
-const available = ["en", "es", "uk"];
+const available = ["en", "es", "fr", "uk"];
 
 const acceptLanguage = Astro.request.headers.get("accept-language") || "";
 const preferred = acceptLanguage
