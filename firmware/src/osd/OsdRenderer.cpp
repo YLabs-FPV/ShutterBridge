@@ -4,12 +4,16 @@
 #include <stdio.h>
 #include <string.h>
 
-void OsdRenderer::formatField(OsdField f, const CameraStatus& st, bool online, char* out,
-                              size_t n) {
+void OsdRenderer::formatField(OsdField f, const CameraStatus& st, bool online, bool visible,
+                              bool waking, char* out, size_t n) {
     out[0] = '\0';
+    if (f == OsdField::RecStatus && visible && waking) {
+        snprintf(out, n, "CAM STARTING UP");
+        return;
+    }
     if (!online) {
         if (f == OsdField::RecStatus)
-            snprintf(out, n, "CAM OFF");
+            snprintf(out, n, visible ? "CAM OFF" : "NO CAMERA, WAKE");
         return;
     }
     switch (f) {
@@ -31,7 +35,7 @@ void OsdRenderer::formatField(OsdField f, const CameraStatus& st, bool online, c
             snprintf(out, n, "%s", st.mode == CamMode::Photo ? "PHOTO" : "VIDEO");
             break;
         case OsdField::SdFree:
-            snprintf(out, n, "%uG", (unsigned)((st.sdFreeMB + 512) / 1024));
+            snprintf(out, n, "FREE: %uG", (unsigned)((st.sdFreeMB + 512) / 1024));
             break;
         case OsdField::TimeLeft:
             if (st.recLeftS < 3600)
@@ -55,7 +59,7 @@ void OsdRenderer::formatField(OsdField f, const CameraStatus& st, bool online, c
     }
 }
 
-void OsdRenderer::update(const CameraStatus& st, bool online) {
+void OsdRenderer::update(const CameraStatus& st, bool online, bool visible, bool waking) {
     const uint32_t now = millis();
     if (now - lastMs_ < updateMs_)
         return;
@@ -72,7 +76,7 @@ void OsdRenderer::update(const CameraStatus& st, bool online) {
 
     for (uint8_t slot = 0; slot < 4; slot++) {
         char buf[32];
-        formatField(s_.osdSlot[slot], st, online, buf, sizeof(buf));
+        formatField(s_.osdSlot[slot], st, online, visible, waking, buf, sizeof(buf));
         if (buf[0] == '\0') {
             buf[0] = ' ';
             buf[1] = '\0';

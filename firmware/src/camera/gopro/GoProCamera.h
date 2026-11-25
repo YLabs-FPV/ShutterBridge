@@ -37,12 +37,32 @@ class GoProCamera : public Camera {
     bool isConnected() const override {
         return connected_;
     }
+    bool isAsleep() const override {
+        return !connected_ && lastCamOff_;
+    }
+    bool isVisible() const override {
+        return connected_ || visible_;
+    }
+    bool isWaking() const override {
+        // Shutter sent after the wake: hold "starting" until encoding shows up (or 5 s)
+        const uint32_t at = deferredRecAtMs_;
+        return wake_.active() || (at != 0 && millis() - at < 5000);
+    }
+    bool powerAware() const override {
+        return true;
+    }
+    bool canSleep() const override {
+        return true;
+    }
+    bool wake() override;
+    bool sleep() override;
 
    private:
     bool attempt();  // probe the advertisement, connect only if the camera is on
     bool connect();
 
     void updateBootWake();
+    void updatePendingSleep();
 
     bool writeCmd(const uint8_t* tlv, size_t len);
     bool writeQuery(const uint8_t* tlv, size_t len);
@@ -64,6 +84,15 @@ class GoProCamera : public Camera {
     bool          haveAddr_   = false;
     bool          lastCamOff_ = false;
     BootWake      wake_;
+
+    // Power control (visibility, wake-triggered record, sleep)
+    volatile bool     visible_         = false;  // advertisement seen recently
+    uint8_t           advMisses_       = 0;      // consecutive probes that saw no advertisement
+    bool              wakeRecord_      = false;  // start recording once the wake completes
+    volatile uint32_t deferredRecAtMs_ = 0;      // when the deferred record was sent; 0 = none
+    volatile uint32_t sleepReqMs_      = 0;      // sleep requested, waiting for the file to close
+    uint32_t          sleptAtMs_ = 0;      // sleep sent: don't reconnect (and re-wake) for a while
+    volatile bool     busy_      = false;  // status 8: camera busy (e.g. closing a file)
 
     NimBLEClient*               client_    = nullptr;
     NimBLERemoteCharacteristic* chCommand_ = nullptr;  // 0072

@@ -160,6 +160,7 @@ async function loadConfig() {
   $("ble").value = cfg.ble != null ? cfg.ble : 0;
   $("clk").checked = cfg.clk !== 0;
   $("wake").checked = !!cfg.wake;
+  $("wrec").checked = cfg.wrec !== 0;
   $("boardctl").hidden = cfg.bvar == null;
   if (cfg.bvar != null) {
     $("bvar").value = cfg.bvar;
@@ -334,6 +335,7 @@ function collectConfig() {
   b.set("ble", $("ble").value);
   if ($("clk").checked) b.set("clk", "1");
   if ($("wake").checked) b.set("wake", "1");
+  if ($("wrec").checked) b.set("wrec", "1");
   if (cfg.bvar != null) b.set("bvar", $("bvar").value);
   if (cfg.pins) {
     b.set("rx", $("rxpin").value);
@@ -399,6 +401,49 @@ async function rebootFlow(trigger = true) {
       $("rebootText").textContent = RECONNECT_HINT;
       $("rebootRefresh").hidden = false;
     }
+  }
+}
+
+// ---- Camera state + Controls card ----
+// Status pill per camera state (s.cam): online | waking | sleep | offline
+const CAM_STATES = {
+  online: ["Camera online", "ok"],
+  waking: ["Camera waking up", "warn"],
+  sleep: ["Camera asleep", ""],
+  offline: ["Camera offline", "bad"],
+};
+
+// Only offer what works in the current state: nothing but a hint when the camera can't be
+// reached, Power on when it sleeps, everything (plus Power off) when it's on
+function renderControls(cam, s) {
+  const power = !!s.power;
+  const msg = {
+    offline: power
+      ? "Camera not found, so it can't be woken remotely - switch it on with its own " +
+        "button. A camera stays wakeable only for a while after it was last on " +
+        "(GoPro about 8 hours, DJI Action about 30 minutes), and not after a battery swap."
+      : "Camera offline. Switch it on - the bridge reconnects automatically.",
+    waking: "Camera is starting up...",
+    sleep: "Camera is asleep. Power it on to use the controls.",
+  }[cam];
+  $("ctlmsg").hidden = !msg;
+  if (msg) $("ctlmsg").textContent = msg;
+  $("livectl").hidden = cam !== "online";
+  $("powerctl").hidden =
+    !power || (cam !== "sleep" && !(cam === "online" && s.psleep));
+  $("poweron").hidden = cam !== "sleep";
+  $("poweroff").hidden = cam !== "online" || !s.psleep;
+  $("poweroff").textContent = s.recording ? "Stop rec & power off" : "Power off";
+}
+
+async function sendPower(a) {
+  try {
+    const r = await fetch("/power?a=" + a);
+    if (r.ok)
+      toast(a === "on" ? "Waking camera" : "Putting camera to sleep");
+    else toast("Failed: " + (await r.text()), true);
+  } catch (e) {
+    toast("Failed", true);
   }
 }
 
@@ -568,13 +613,15 @@ async function tick() {
     }
 
     const c = $("conn");
-    const pairing = s.online && s.paired === 0;
-    c.textContent = pairing
-      ? "Accept PIN on camera"
-      : s.online
-        ? "Camera online"
-        : "Camera offline";
-    c.className = "pill " + (pairing ? "warn" : s.online ? "ok" : "bad");
+    // DJI Action is silent until its PIN is accepted, so "linked but unpaired" counts too
+    const pairing = s.paired === 0 && (s.online || s.conn);
+    const cam = s.cam || (s.online ? "online" : "offline");
+    const [label, cls] = pairing
+      ? ["Accept PIN on camera", "warn"]
+      : CAM_STATES[cam] || CAM_STATES.offline;
+    c.textContent = label;
+    c.className = "pill " + cls;
+    renderControls(cam, s);
     $("rec").style.display = s.recording ? "inline-flex" : "none";
     $("elapsed").textContent = s.online ? fmt(s.elapsed) : "--:--";
     $("mode").textContent = s.online ? (s.mode || "-").toUpperCase() : "-";
@@ -657,6 +704,8 @@ $("bfbridge").addEventListener("click", async () => {
 });
 $("bridgeReboot").addEventListener("click", rebootFlow);
 $("rebootRefresh").addEventListener("click", () => location.reload());
+$("poweron").addEventListener("click", () => sendPower("on"));
+$("poweroff").addEventListener("click", () => sendPower("off"));
 $("recstart").addEventListener("click", () => sendShutter("start"));
 $("recstop").addEventListener("click", () => sendShutter("stop"));
 $("takephoto").addEventListener("click", () => sendShutter("photo"));

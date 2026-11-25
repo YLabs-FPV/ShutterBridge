@@ -21,6 +21,7 @@ class ChannelActions {
     OpMode           opMode_                 = OpMode::Manual;
     bool             prevArmed_              = false;  // for record-on-arm edge detection
     bool             armPrimed_              = false;
+    bool             wakeReqSent_            = false;  // 2-pos hold: wake done or not wanted
 
     enum PendingRec : uint8_t { REC_NONE, REC_START, REC_STOP };
     void       scheduleRec(Camera& cam, bool start);

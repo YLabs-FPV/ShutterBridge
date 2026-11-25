@@ -81,6 +81,41 @@ class Camera {
 
     virtual const CameraStatus& status() const      = 0;
     virtual bool                isConnected() const = 0;
+
+    // Camera is known to be powered off (but wakeable). startRecord() on such a camera wakes
+    // it and records once it's up. Default: backends that can't tell report false
+    virtual bool isAsleep() const {
+        return false;
+    }
+
+    // Camera is in BLE range and advertising (on, or asleep but wakeable). False means it can't
+    // be reached at all and has to be switched on by hand. Default: backends that can't tell
+    // report true
+    virtual bool isVisible() const {
+        return true;
+    }
+
+    // Camera is being woken / booting, or a record started by the wake hasn't kicked in yet
+    virtual bool isWaking() const {
+        return false;
+    }
+
+    // Remote power control. powerAware() = the backend reports isVisible/isAsleep/isWaking and
+    // implements wake()/sleep(). wake() boots a sleeping camera; sleep() stops any recording,
+    // waits for the file to close and puts the camera to sleep (still wakeable afterwards)
+    virtual bool powerAware() const {
+        return false;
+    }
+    virtual bool wake() {
+        return false;
+    }
+    virtual bool sleep() {
+        return false;
+    }
+    // sleep() is available (some power-aware backends can only wake)
+    virtual bool canSleep() const {
+        return false;
+    }
 };
 
 inline const char* toString(RecState s) {

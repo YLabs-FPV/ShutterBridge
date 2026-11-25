@@ -49,6 +49,9 @@ class DjiOsmoCamera::ClientCB : public NimBLEClientCallbacks {
         owner_->chWrite_   = nullptr;
         owner_->chNotify_  = nullptr;
         owner_->status_    = CameraStatus{};
+
+        // Pending record work dies with the link
+        owner_->deferredRecAtMs_ = 0;
         Serial.printf("[dji] disconnected (reason 0x%02x)\n", reason);
     }
 
@@ -83,6 +86,12 @@ bool DjiOsmoCamera::attempt() {
         const std::string& m     = adv.mfr;
         const bool         known = m.size() >= 12 && (uint8_t)m[0] == 0xAA && (uint8_t)m[1] == 0x08;
         camOff_                  = known && ((uint8_t)m[11] & 0x01);
+        advMisses_               = 0;
+        visible_                 = true;
+    } else if (advMisses_ < 255 && ++advMisses_ >= 2 && visible_) {
+        // Two misses in a row: not advertising (out of range, battery out) - can't be woken
+        visible_ = false;
+        Serial.println("[dji] camera not advertising - switch it on by hand");
     }
     if (camOff_ != lastCamOff_) {
         Serial.println(camOff_ ? "[dji] camera powered off" : "[dji] camera powered on");
@@ -200,13 +209,21 @@ void DjiOsmoCamera::updateBootWake(uint32_t now) {
         return;
     if (wake_.expired()) {
         wake_.finish();
-        Serial.println("[dji] boot wake timed out - camera never came up");
+        wakeRecord_ = false;
+        Serial.println("[dji] wake timed out - camera never came up");
         return;
     }
     const bool fresh = status_.lastUpdateMs != 0 && now - status_.lastUpdateMs < 1500;
     if (connected_ && status_.ready && fresh && (!waking_ || wakeAccepted_)) {
         wake_.finish();
-        Serial.printf("[dji] camera up %lu ms after boot\n", (unsigned long)wake_.ageMs());
+        Serial.printf("[dji] camera up %lu ms after wake\n", (unsigned long)wake_.ageMs());
+        if (wakeRecord_) {
+            wakeRecord_ = false;
+            Serial.println("[dji] starting deferred record");
+            const uint8_t p = 0x01;
+            if (writeCmd(0x02, 0x02, &p, 1))
+                deferredRecAtMs_ = millis() | 1;  // never 0
+        }
     }
 }
 
@@ -275,7 +292,28 @@ bool DjiOsmoCamera::writeCmd(uint8_t cmdSet, uint8_t cmdId, const uint8_t* paylo
     return writeRaw(frame.data(), frame.size());
 }
 
+bool DjiOsmoCamera::wake() {
+    if (connected_ && status_.ready)
+        return true;  // already on
+    if (!visible_)
+        return false;  // not advertising: only the camera's own button can turn it on
+    if (!wake_.active())
+        wake_.start();
+    lastAttemptMs_ = 0;  // connect (and wake) on the next poll
+    Serial.println("[dji] wake requested");
+    return true;
+}
+
 bool DjiOsmoCamera::startRecord() {
+    // Powered off (and waking on record is enabled) or still waking: wake it, record once up
+    const bool up = connected_ && status_.ready;
+    if (!up && ((lastCamOff_ && g_settings.wakeOnRecord) || wake_.active())) {
+        if (!wakeRecord_) {
+            wakeRecord_ = true;
+            Serial.println("[dji] record requested while asleep - waking");
+        }
+        return wake() || wake_.active();
+    }
     if (!status_.ready) {  // asleep/standby: commanding it now wakes it erratically
         Serial.println("[dji] startRecord ignored - camera not in a shooting mode");
         return false;
@@ -284,6 +322,11 @@ bool DjiOsmoCamera::startRecord() {
     return writeCmd(0x02, 0x02, &p, 1);
 }
 bool DjiOsmoCamera::stopRecord() {
+    if (wakeRecord_) {
+        wakeRecord_ = false;
+        Serial.println("[dji] deferred record cancelled");
+        return true;
+    }
     const uint8_t p = 0x00;
     return writeCmd(0x02, 0x02, &p, 1);
 }
@@ -328,6 +371,8 @@ void DjiOsmoCamera::handleFrame(const duml::Frame& f) {
         status_.recLeftS     = le32(p + 17);
         status_.recElapsedS  = le32(p + 29);
         status_.lastUpdateMs = millis();
+        if (status_.recState == RecState::Recording)
+            deferredRecAtMs_ = 0;  // the wake-triggered record kicked in
         return;
     }
     if (f.cmdSet == 0x0d && f.cmdId == 0x02 && n >= 21) {  // battery

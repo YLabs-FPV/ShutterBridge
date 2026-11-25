@@ -57,6 +57,7 @@ const WebConfig::Route WebConfig::kRoutes[] = {
     {"/preset", &WebConfig::handlePreset, false},
     {"/mode", &WebConfig::handleMode, false},
     {"/shutter", &WebConfig::handleShutter, false},
+    {"/power", &WebConfig::handlePower, false},
     {"/bridge", &WebConfig::handleBridge, false},
     {"/save", &WebConfig::handleSave, true},
     {"/reboot", &WebConfig::handleReboot, false},
@@ -223,6 +224,8 @@ ApiReply WebConfig::handleConfig(const ApiArgs& a) {
     doc["tz"]    = s_.tzOffsetMin;
     doc["clk"]   = s_.clockSync;  // sync camera clock from FC GPS time
     doc["wake"]  = s_.autoWake;   // wake a powered-off camera on boot
+
+    doc["wrec"]  = s_.wakeOnRecord;  // wake a powered-off camera on a record request
     doc["fw"]    = FW_VERSION;
     doc["board"] = boardId();  // variant running now (resolved at boot)
     if (boardHasVariants())
@@ -262,6 +265,24 @@ ApiReply WebConfig::handleStatus(const ApiArgs& a) {
         doc["sd"]             = s.sdFreeMB;
         doc["batt"]           = s.batteryPct;
         doc["paired"]         = s.paired ? 1 : 0;
+
+        // Camera power state: online | waking | sleep (off, wakeable) | offline (not seen).
+        // Backends that can't tell report online/offline only
+        const char* cam = online ? "online" : "offline";
+        if (!online && camera_ && camera_->powerAware()) {
+            if (!camera_->isVisible())
+                cam = "offline";
+            else if (camera_->isWaking())
+                cam = "waking";
+            else if (camera_->isAsleep())
+                cam = "sleep";
+            else
+                cam = "waking";  // on and advertising, link coming up
+        }
+        doc["cam"]    = cam;
+        doc["power"]  = camera_ && camera_->powerAware() ? 1 : 0;
+        doc["psleep"] = camera_ && camera_->canSleep() ? 1 : 0;
+        doc["conn"]   = camera_ && camera_->isConnected() ? 1 : 0;  // link up (maybe pre-telemetry)
     } else {
         doc["online"] = 0;
     }
@@ -319,6 +340,7 @@ ApiReply WebConfig::handleSave(const ApiArgs& a) {
     s_.tzOffsetMin        = (int16_t)constrain(a.get("tz").toInt(), -720, 840);
     s_.clockSync          = a.has("clk") ? 1 : 0;
     s_.autoWake           = a.has("wake") ? 1 : 0;
+    s_.wakeOnRecord       = a.has("wrec") ? 1 : 0;
     s_.camType            = (uint8_t)constrain(a.get("ctype").toInt(), 0, 3);
     setStr(s_.camMac, sizeof(s_.camMac), a.get("mac"));
     setStr(s_.apSsid, sizeof(s_.apSsid), a.get("ssid"));
@@ -490,6 +512,24 @@ ApiReply WebConfig::handleShutter(const ApiArgs& a) {
     else
         return ApiReply::text(400, "need ?a=start|stop|photo");
     return ApiReply::text(ok ? 200 : 400, ok ? "ok" : "command failed");
+}
+
+ApiReply WebConfig::handlePower(const ApiArgs& a) {
+    // /power?a=on|off - wake a sleeping camera / stop recording and put it to sleep
+    if (!camera_ || !camera_->powerAware())
+        return ApiReply::text(409, "power control unsupported");
+    const String act = a.get("a");
+    if (act == "on") {
+        if (!camera_->isVisible())
+            return ApiReply::text(409, "camera not found");
+        return camera_->wake() ? ApiReply::text(200, "ok") : ApiReply::text(400, "wake failed");
+    }
+    if (act == "off") {
+        if (!camera_->canSleep())
+            return ApiReply::text(409, "this camera can't be put to sleep remotely");
+        return camera_->sleep() ? ApiReply::text(200, "ok") : ApiReply::text(409, "camera offline");
+    }
+    return ApiReply::text(400, "need ?a=on|off");
 }
 
 ApiReply WebConfig::handleBridge(const ApiArgs& a) {

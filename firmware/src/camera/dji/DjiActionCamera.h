@@ -27,6 +27,27 @@ class DjiActionCamera : public Camera {
         return connected_;
     }
 
+    // Power: there's no advertisement to read the camera's state from, so "asleep" means it was
+    // seen entering sleep mode (or sent there) less than 30 min ago - the wake broadcast's window
+    bool isAsleep() const override {
+        return !awake() && asleepKnown();
+    }
+    bool isVisible() const override {
+        return connected_ || asleepKnown() || wake_.active();
+    }
+    bool isWaking() const override {
+        const uint32_t at = deferredRecAtMs_;
+        return wake_.active() || (at != 0 && millis() - at < 5000);
+    }
+    bool powerAware() const override {
+        return true;
+    }
+    bool canSleep() const override {
+        return true;
+    }
+    bool wake() override;
+    bool sleep() override;
+
    private:
     enum ProtoState { PROTO_NONE, PROTO_CONNECTING, PROTO_CONNECTED };
 
@@ -37,6 +58,8 @@ class DjiActionCamera : public Camera {
     bool recordCtrl(uint8_t ctrl);  // 0 = start, 1 = stop
     bool awake() const;             // connected, reporting, and not in sleep mode
     void updateBootWake(uint32_t now);
+    void updatePendingSleep(uint32_t now);
+    bool asleepKnown() const;
     void advertiseWake();
     bool writeRaw(const uint8_t* data, size_t len);
     bool sendR(uint8_t cmdSet, uint8_t cmdId, uint8_t cmdType, const uint8_t* pl, size_t n,
@@ -70,4 +93,10 @@ class DjiActionCamera : public Camera {
     static constexpr uint32_t kBackoffMinMs  = 5000;
     static constexpr uint32_t kBackoffMaxMs  = 30000;
     uint32_t                  backoffMs_     = kBackoffMinMs;
+
+    // Power control (wake/sleep, wake-triggered record)
+    uint32_t          asleepAtMs_      = 0;      // sleep seen/sent; 0 = not known asleep
+    bool              wakeRecord_      = false;  // start recording once the wake completes
+    volatile uint32_t deferredRecAtMs_ = 0;      // deferred record sent; 0 = none
+    uint32_t          sleepReqMs_      = 0;      // sleep requested, waiting for rec to stop
 };

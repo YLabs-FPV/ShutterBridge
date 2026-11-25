@@ -15,6 +15,7 @@ void ChannelActions::loadFromModes(const ModeRange* modes, ShutterVideoMode svm,
     pendingRec_   = REC_NONE;  // cancel any queued record command on reconfigure
     primed_       = false;
     armPrimed_    = false;
+    wakeReqSent_  = false;
 }
 
 void ChannelActions::scheduleRec(Camera& cam, bool start) {
@@ -66,6 +67,23 @@ void ChannelActions::update(const RcState& rc, Camera& cam, bool armed) {
             prevActive_[i] = active[i];
         primed_ = true;
         return;
+    }
+
+    // 2-pos Shutter held in "record" while the camera sleeps (e.g. the switch was already on at
+    // boot): wake it and record. Only when the camera has been asleep since the hold began - one
+    // seen awake during the hold and then put to sleep (by hand, from the Web UI) stays asleep -
+    // and at most once per hold, so a camera that fails to wake isn't woken over and over
+    const int  sh   = (int)Func::Shutter;
+    const bool held = svm_ == ShutterVideoMode::TwoPos && active[sh];
+    if (!held) {
+        wakeReqSent_ = false;
+    } else if (!wakeReqSent_) {
+        if (cam.isAsleep()) {
+            wakeReqSent_ = true;
+            cam.startRecord();
+        } else if (cam.isConnected()) {
+            wakeReqSent_ = true;
+        }
     }
 
     for (int i = 0; i < FUNC_COUNT; i++) {

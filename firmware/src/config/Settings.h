@@ -22,7 +22,7 @@ const char* osdFieldName(OsdField f);
 
 struct Settings {
     // Bump on any layout change; old layouts need a COMPAT entry or they reset to defaults
-    static constexpr uint16_t SCHEMA = 18;
+    static constexpr uint16_t SCHEMA = 19;
 
     uint32_t magic   = 0x53425247;  // 'SBRG'
     uint16_t version = SCHEMA;
@@ -72,6 +72,9 @@ struct Settings {
     // FC UART GPIOs; -1 = the board's default pin
     int8_t fcRxPin = -1;
     int8_t fcTxPin = -1;
+
+    // Wake a powered-off camera when a record is requested, and record once it's up (1 = on)
+    uint8_t wakeOnRecord = 1;
 
     void setDefaults();
     void load();  // from NVS (falls back to defaults if missing/incompatible)
