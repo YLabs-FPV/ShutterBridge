@@ -83,14 +83,16 @@ class GoProCamera : public Camera {
     NimBLEAddress addr_;
     bool          haveAddr_   = false;
     bool          lastCamOff_ = false;
-    volatile bool visible_    = false;  // advertisement seen recently
-    uint8_t       advMisses_  = 0;      // consecutive probes that saw no advertisement
     BootWake      wake_;
-    bool          wakeRecord_ = false;  // start recording once the wake completes
-    volatile uint32_t deferredRecAtMs_ = 0;  // when the deferred record was sent; 0 = none
-    volatile uint32_t sleepReqMs_      = 0;  // sleep requested, waiting for the file to close
-    uint32_t          sleptAtMs_       = 0;  // sleep sent: don't reconnect (and re-wake) for a while
-    volatile bool     busy_            = false;  // status 8: camera busy (e.g. closing a file)
+
+    // Power control (visibility, wake-triggered record, sleep)
+    volatile bool     visible_         = false;  // advertisement seen recently
+    uint8_t           advMisses_       = 0;      // consecutive probes that saw no advertisement
+    bool              wakeRecord_      = false;  // start recording once the wake completes
+    volatile uint32_t deferredRecAtMs_ = 0;      // when the deferred record was sent; 0 = none
+    volatile uint32_t sleepReqMs_      = 0;      // sleep requested, waiting for the file to close
+    uint32_t          sleptAtMs_ = 0;      // sleep sent: don't reconnect (and re-wake) for a while
+    volatile bool     busy_      = false;  // status 8: camera busy (e.g. closing a file)
 
     NimBLEClient*               client_    = nullptr;
     NimBLERemoteCharacteristic* chCommand_ = nullptr;  // 0072

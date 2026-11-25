@@ -77,10 +77,6 @@ class DjiOsmoCamera : public Camera {
     uint8_t                   lastWorkMode_  = 0xFF;   // for logging work-mode changes
     bool                      camOff_        = false;  // last advert said powered off
     bool                      lastCamOff_    = false;
-    volatile bool             visible_       = false;  // advertisement seen recently
-    uint8_t                   advMisses_     = 0;      // consecutive probes without one
-    bool                      wakeRecord_    = false;  // start recording once the wake completes
-    volatile uint32_t         deferredRecAtMs_ = 0;    // deferred record sent; 0 = none
     BootWake                  wake_;
     volatile bool             waking_          = false;  // this link was opened to wake the camera
     bool                      wakeAccepted_    = false;
@@ -88,4 +84,10 @@ class DjiOsmoCamera : public Camera {
     static constexpr uint32_t kBackoffMinMs    = 3000;
     static constexpr uint32_t kBackoffMaxMs    = 30000;
     uint32_t                  backoffMs_       = kBackoffMinMs;
+
+    // Power control (visibility, wake-triggered record)
+    volatile bool     visible_         = false;  // advertisement seen recently
+    uint8_t           advMisses_       = 0;      // consecutive probes without one
+    bool              wakeRecord_      = false;  // start recording once the wake completes
+    volatile uint32_t deferredRecAtMs_ = 0;      // deferred record sent; 0 = none
 };

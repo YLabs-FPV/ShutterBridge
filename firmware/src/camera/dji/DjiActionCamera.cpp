@@ -25,6 +25,7 @@ namespace {
     constexpr uint32_t kWakeAdvMs   = 2000;
     constexpr uint32_t kWakeRetryMs = 8000;
     constexpr uint32_t kFreshMs     = 2000;  // status push runs at 2 Hz
+
     constexpr uint32_t kWakeWindowMs = 30UL * 60 * 1000;  // wake broadcast works this long
 
     inline void put_le16(uint8_t* p, uint16_t v) {
@@ -395,8 +396,6 @@ void DjiActionCamera::handleR(const djir::Frame& f) {
         const uint8_t  camMode   = p[0];
         const uint8_t  camStatus = p[1];
         status_.recState         = (camStatus == 0x03) ? RecState::Recording : RecState::Idle;
-        if (status_.recState == RecState::Recording)
-            deferredRecAtMs_ = 0;
         status_.mode             = (camMode == 0x05) ? CamMode::Photo : CamMode::Video;
         strncpy(status_.resolution, dji::resolutionName(p[2]), sizeof(status_.resolution) - 1);
         status_.resolution[sizeof(status_.resolution) - 1] = '\0';
@@ -413,6 +412,8 @@ void DjiActionCamera::handleR(const djir::Frame& f) {
         }
         if (f.payloadLen >= 38)  // battery rides at the tail of the same push
             status_.batteryPct = p[37];
+        if (status_.recState == RecState::Recording)
+            deferredRecAtMs_ = 0;  // the wake-triggered record kicked in
         status_.lastUpdateMs = millis();
         return;
     }

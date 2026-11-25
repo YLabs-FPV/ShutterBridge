@@ -46,10 +46,12 @@ class DjiOsmoCamera::ClientCB : public NimBLEClientCallbacks {
     void onDisconnect(NimBLEClient*, int reason) override {
         owner_->connected_ = false;
         owner_->waking_    = false;
-        owner_->deferredRecAtMs_ = 0;
         owner_->chWrite_   = nullptr;
         owner_->chNotify_  = nullptr;
         owner_->status_    = CameraStatus{};
+
+        // Pending record work dies with the link
+        owner_->deferredRecAtMs_ = 0;
         Serial.printf("[dji] disconnected (reason 0x%02x)\n", reason);
     }
 
@@ -365,12 +367,12 @@ void DjiOsmoCamera::handleFrame(const duml::Frame& f) {
                                : (workMode == 1) ? CamMode::Video
                                                  : CamMode::Unknown;
         status_.recState     = static_cast<RecState>((masked >> 6) & 0x3);
-        if (status_.recState == RecState::Recording)
-            deferredRecAtMs_ = 0;
         status_.sdFreeMB     = le32(p + 9);
         status_.recLeftS     = le32(p + 17);
         status_.recElapsedS  = le32(p + 29);
         status_.lastUpdateMs = millis();
+        if (status_.recState == RecState::Recording)
+            deferredRecAtMs_ = 0;  // the wake-triggered record kicked in
         return;
     }
     if (f.cmdSet == 0x0d && f.cmdId == 0x02 && n >= 21) {  // battery

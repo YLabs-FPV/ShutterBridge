@@ -224,6 +224,7 @@ ApiReply WebConfig::handleConfig(const ApiArgs& a) {
     doc["tz"]    = s_.tzOffsetMin;
     doc["clk"]   = s_.clockSync;  // sync camera clock from FC GPS time
     doc["wake"]  = s_.autoWake;   // wake a powered-off camera on boot
+
     doc["wrec"]  = s_.wakeOnRecord;  // wake a powered-off camera on a record request
     doc["fw"]    = FW_VERSION;
     doc["board"] = boardId();  // variant running now (resolved at boot)
@@ -255,6 +256,16 @@ ApiReply WebConfig::handleStatus(const ApiArgs& a) {
         const CameraStatus& s = *camStatus_;
         bool online           = s.connected && s.lastUpdateMs && (millis() - s.lastUpdateMs < 2500);
         doc["online"]         = online ? 1 : 0;
+        doc["recording"]      = s.isRecording() ? 1 : 0;
+        doc["mode"]           = toString(s.mode);
+        doc["res"]            = s.resolution;  // "" when unreported
+        doc["fps"]            = s.fps;         // 0 when unreported
+        doc["elapsed"]        = s.recElapsedS;
+        doc["left"]           = s.recLeftS;
+        doc["sd"]             = s.sdFreeMB;
+        doc["batt"]           = s.batteryPct;
+        doc["paired"]         = s.paired ? 1 : 0;
+
         // Camera power state: online | waking | sleep (off, wakeable) | offline (not seen).
         // Backends that can't tell report online/offline only
         const char* cam = online ? "online" : "offline";
@@ -268,19 +279,10 @@ ApiReply WebConfig::handleStatus(const ApiArgs& a) {
             else
                 cam = "waking";  // on and advertising, link coming up
         }
-        doc["cam"]   = cam;
+        doc["cam"]    = cam;
         doc["power"]  = camera_ && camera_->powerAware() ? 1 : 0;
         doc["psleep"] = camera_ && camera_->canSleep() ? 1 : 0;
         doc["conn"]   = camera_ && camera_->isConnected() ? 1 : 0;  // link up (maybe pre-telemetry)
-        doc["recording"]      = s.isRecording() ? 1 : 0;
-        doc["mode"]           = toString(s.mode);
-        doc["res"]            = s.resolution;  // "" when unreported
-        doc["fps"]            = s.fps;         // 0 when unreported
-        doc["elapsed"]        = s.recElapsedS;
-        doc["left"]           = s.recLeftS;
-        doc["sd"]             = s.sdFreeMB;
-        doc["batt"]           = s.batteryPct;
-        doc["paired"]         = s.paired ? 1 : 0;
     } else {
         doc["online"] = 0;
     }

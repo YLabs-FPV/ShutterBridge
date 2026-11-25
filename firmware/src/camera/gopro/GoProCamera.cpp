@@ -210,11 +210,12 @@ class GoProCamera::ClientCB : public NimBLEClientCallbacks {
     }
     void onDisconnect(NimBLEClient*, int reason) override {
         owner_->connected_   = false;
-        owner_->systemReady_     = false;
+        owner_->systemReady_ = false;
+        owner_->status_      = CameraStatus{};
+        // Pending power/record work dies with the link
         owner_->deferredRecAtMs_ = 0;
         owner_->sleepReqMs_      = 0;
         owner_->busy_            = false;
-        owner_->status_          = CameraStatus{};
         Serial.printf("[gopro] disconnected (reason 0x%02x)\n", reason);
     }
 
@@ -428,9 +429,9 @@ void GoProCamera::updatePendingSleep() {
     const uint32_t at = sleepReqMs_;
     if (!at || !connected_)
         return;
-    const uint32_t age      = millis() - at;
-    const bool     polled   = (int32_t)(status_.lastUpdateMs - at) > 1200;
-    const bool     idle     = !status_.isRecording() && !busy_;
+    const uint32_t age    = millis() - at;
+    const bool     polled = (int32_t)(status_.lastUpdateMs - at) > 1200;
+    const bool     idle   = !status_.isRecording() && !busy_;
     if (!(polled && idle) && age < 10000)
         return;
     sleepReqMs_ = 0;

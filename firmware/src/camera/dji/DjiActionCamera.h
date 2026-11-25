@@ -88,13 +88,15 @@ class DjiActionCamera : public Camera {
     uint8_t                   powerMode_  = 0;  // from the status push: 0 normal, 3 sleep
     BootWake                  wake_;
     uint32_t                  lastWakeAdvMs_ = 0;
-    uint32_t                  asleepAtMs_    = 0;      // sleep seen/sent; 0 = not known asleep
-    bool                      wakeRecord_    = false;  // start recording once the wake completes
-    volatile uint32_t         deferredRecAtMs_ = 0;    // deferred record sent; 0 = none
-    uint32_t                  sleepReqMs_      = 0;    // sleep requested, waiting for rec to stop
     uint32_t                  lastAttemptMs_ = 0;
     uint32_t                  connectedAtMs_ = 0;
     static constexpr uint32_t kBackoffMinMs  = 5000;
     static constexpr uint32_t kBackoffMaxMs  = 30000;
     uint32_t                  backoffMs_     = kBackoffMinMs;
+
+    // Power control (wake/sleep, wake-triggered record)
+    uint32_t          asleepAtMs_      = 0;      // sleep seen/sent; 0 = not known asleep
+    bool              wakeRecord_      = false;  // start recording once the wake completes
+    volatile uint32_t deferredRecAtMs_ = 0;      // deferred record sent; 0 = none
+    uint32_t          sleepReqMs_      = 0;      // sleep requested, waiting for rec to stop
 };
