@@ -50,7 +50,23 @@ estado:
 - **connecting** - contactando con la cámara.
 - **Accept PIN on camera** - aprueba el PIN de emparejamiento en la pantalla de una cámara DJI.
 - **Camera online** - conectada y reportando.
-- **Camera offline** - no conectada.
+- **Camera waking up** - la cámara arranca tras despertarla, o el enlace se está estableciendo.
+- **Camera asleep** - apagada pero sigue anunciándose, así que el puente puede despertarla.
+- **Camera offline** - no encontrada: enciende la cámara con su propio botón.
+
+Dos opciones bajo la píldora encienden a distancia una cámara dormida:
+
+- **Wake camera on boot** - al arrancar el puente, enciende la cámara si está apagada.
+- **Wake camera on record** (activada por defecto) - si la cámara está apagada cuando
+  se pide grabar (interruptor Shutter, armado en **Record on arm** o **Start rec**), la
+  despierta y empieza a grabar en cuanto arranca, en unos segundos.
+
+<Admonition type="note" title="Cuánto tiempo se puede despertar la cámara">
+  Una cámara dormida solo se puede despertar por Bluetooth durante un tiempo tras su
+  último uso: unas 8 horas en una GoPro y unos 30 minutos en una DJI Action / 360 (el
+  puente tiene que haberla visto entrar en reposo). Tras cambiar la batería ya no se
+  puede despertar: enciéndela con su botón y el puente se reconecta solo.
+</Admonition>
 
 ### Vinculación
 
@@ -65,9 +81,17 @@ Controles manuales para la cámara vinculada. Esta tarjeta aparece una vez vincu
 cámara, y se desactiva mientras **Record on arm** está activo (en ese
 modo la cámara se controla automáticamente).
 
+Lo que ofrece la tarjeta depende del estado de la cámara: si está **offline**, solo un
+aviso para encenderla a mano; si está **asleep**, solo **Power on**; mientras está
+**waking up**, un aviso de arranque; y si está **online**, todo lo de abajo.
+
 - **Mode** - cambia la cámara entre **Video** y **Photo**.
 - **Preset group** (solo GoPro) - carga el grupo de presets de **Video**, **Photo** o **Timelapse**.
 - **Preset by ID** (solo GoPro) - carga un preset concreto por su ID hexadecimal.
+- **Shutter** - **Start rec** / **Stop rec** en Video, **Take photo** en Photo.
+- **Power off** (GoPro, DJI Action / 360) - pone la cámara en reposo; se puede volver a
+  despertar. Mientras graba aparece como **Stop rec & power off**: detiene la grabación,
+  cierra el archivo y después duerme la cámara. La Osmo Nano solo se puede despertar.
 
 ## Channels
 
@@ -120,6 +144,11 @@ Elige qué telemetría muestran los cuatro slots del OSD.
 Cada slot **Custom Msg** (0-3) se asigna a un campo: **Off**, **Rec status**,
 **Battery %**, **Mode**, **SD free**, **Time left**, **Resolution** o **FPS**.
 Por encima de una hora, **Time left** muestra las horas como `1H05`.
+
+**Rec status** muestra `REC m:ss` o `NOT REC`, `CAM STARTING UP` mientras la cámara
+despierta e inicia una grabación pedida al despertarla, `CAM OFF` cuando está en reposo
+(se puede despertar) y `NO CAMERA, WAKE` cuando no se encuentra: enciéndela a mano.
+**SD free** se muestra como `FREE: 61G`.
 
 Asigna un campo aquí, luego activa y coloca los elementos **Custom Message**
 correspondientes en la pestaña OSD de Betaflight - consulta [Cableado del FC y Betaflight](/docs/wiring).

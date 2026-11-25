@@ -50,7 +50,25 @@ pastille d'état :
 - **connecting** - connexion à la caméra en cours.
 - **Accept PIN on camera** - validez le code PIN d'appairage sur l'écran d'une caméra DJI.
 - **Camera online** - connectée et transmet ses données.
-- **Camera offline** - non connectée.
+- **Camera waking up** - la caméra démarre après un réveil, ou la liaison s'établit.
+- **Camera asleep** - éteinte mais toujours visible en Bluetooth : le bridge peut la réveiller.
+- **Camera offline** - introuvable : allumez la caméra avec son propre bouton.
+
+Deux options sous la pastille allument à distance une caméra en veille :
+
+- **Wake camera on boot** - au démarrage du bridge, allume la caméra si elle est éteinte.
+- **Wake camera on record** (activée par défaut) - si la caméra est éteinte au moment
+  de lancer un enregistrement (interrupteur Shutter, armement en **Record on arm** ou
+  **Start rec**), la réveille et lance l'enregistrement dès qu'elle a démarré, en
+  quelques secondes.
+
+<Admonition type="note" title="Combien de temps une caméra reste réveillable">
+  Une caméra en veille ne peut être réveillée en Bluetooth que pendant un certain temps
+  après sa dernière utilisation : environ 8 heures pour une GoPro, environ 30 minutes
+  pour une DJI Action / 360 (le bridge doit l'avoir vue passer en veille). Après un
+  changement de batterie, elle ne peut plus être réveillée : allumez-la avec son bouton
+  et le bridge se reconnecte tout seul.
+</Admonition>
 
 ### Association
 
@@ -65,9 +83,18 @@ Commandes manuelles de la caméra associée. Cette carte apparaît une fois une 
 et elle est désactivée tant que **Record on arm** est actif (dans ce
 mode, la caméra est pilotée automatiquement).
 
+Le contenu de la carte suit l'état de la caméra : **offline**, seulement une indication
+pour l'allumer à la main ; **asleep**, seulement **Power on** ; **waking up**, une
+indication de démarrage ; **online**, tout ce qui suit.
+
 - **Mode** - bascule la caméra entre **Video** et **Photo**.
 - **Preset group** (GoPro uniquement) - charge le groupe de préréglages **Video**, **Photo** ou **Timelapse**.
 - **Preset by ID** (GoPro uniquement) - charge un préréglage précis par son ID hexadécimal.
+- **Shutter** - **Start rec** / **Stop rec** en Video, **Take photo** en Photo.
+- **Power off** (GoPro, DJI Action / 360) - met la caméra en veille ; elle reste
+  réveillable. Pendant un enregistrement, le bouton devient **Stop rec & power off** :
+  l'enregistrement s'arrête, le fichier est fermé, puis la caméra se met en veille.
+  L'Osmo Nano peut seulement être réveillée.
 
 ## Channels
 
@@ -120,6 +147,11 @@ Choisissez la télémétrie affichée dans les quatre emplacements OSD.
 Chaque emplacement **Custom Msg** (0-3) correspond à un champ : **Off**, **Rec status**,
 **Battery %**, **Mode**, **SD free**, **Time left**, **Resolution** ou **FPS**.
 Au-delà d'une heure, **Time left** affiche les heures sous la forme `1H05`.
+
+**Rec status** affiche `REC m:ss` ou `NOT REC`, `CAM STARTING UP` pendant que la caméra
+se réveille et lance un enregistrement demandé au réveil, `CAM OFF` quand elle est en
+veille (réveillable) et `NO CAMERA, WAKE` quand elle est introuvable : allumez-la à la
+main. **SD free** s'affiche sous la forme `FREE: 61G`.
 
 Attribuez un champ ici, puis activez et positionnez les éléments **Custom Message**
 correspondants dans l'onglet OSD de Betaflight - voir [Câblage du FC et Betaflight](/docs/wiring).
