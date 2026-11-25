@@ -25,6 +25,23 @@ class DjiOsmoCamera : public Camera {
         return connected_;
     }
 
+    // Power: the advertisement says on/off, so state and wake work like GoPro. There's no known
+    // command to put it to sleep, so no sleep()
+    bool isAsleep() const override {
+        return !connected_ && lastCamOff_;
+    }
+    bool isVisible() const override {
+        return connected_ || visible_;
+    }
+    bool isWaking() const override {
+        const uint32_t at = deferredRecAtMs_;
+        return wake_.active() || (at != 0 && millis() - at < 5000);
+    }
+    bool powerAware() const override {
+        return true;
+    }
+    bool wake() override;
+
    private:
     bool attempt();         // resolve address (once) then connect
     bool resolveAddress();  // pinned MAC, or scan by name
@@ -60,6 +77,10 @@ class DjiOsmoCamera : public Camera {
     uint8_t                   lastWorkMode_  = 0xFF;   // for logging work-mode changes
     bool                      camOff_        = false;  // last advert said powered off
     bool                      lastCamOff_    = false;
+    volatile bool             visible_       = false;  // advertisement seen recently
+    uint8_t                   advMisses_     = 0;      // consecutive probes without one
+    bool                      wakeRecord_    = false;  // start recording once the wake completes
+    volatile uint32_t         deferredRecAtMs_ = 0;    // deferred record sent; 0 = none
     BootWake                  wake_;
     volatile bool             waking_          = false;  // this link was opened to wake the camera
     bool                      wakeAccepted_    = false;

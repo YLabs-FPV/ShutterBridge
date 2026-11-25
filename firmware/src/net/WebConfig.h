@@ -79,6 +79,7 @@ class WebConfig {
     ApiReply handlePreset(const ApiArgs& a);   // GET /preset (GoPro-only preset switching)
     ApiReply handleMode(const ApiArgs& a);     // GET /mode?m=photo|video (photo/video switch)
     ApiReply handleShutter(const ApiArgs& a);  // GET /shutter?a=start|stop|photo (all backends)
+    ApiReply handlePower(const ApiArgs& a);    // GET /power?a=on|off (power-aware backends)
     ApiReply handleBridge(const ApiArgs& a);   // GET /bridge (enter Betaflight-bridge mode)
     ApiReply handleReboot(const ApiArgs& a);   // GET /reboot
 

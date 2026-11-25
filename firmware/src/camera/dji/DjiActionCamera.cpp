@@ -25,6 +25,7 @@ namespace {
     constexpr uint32_t kWakeAdvMs   = 2000;
     constexpr uint32_t kWakeRetryMs = 8000;
     constexpr uint32_t kFreshMs     = 2000;  // status push runs at 2 Hz
+    constexpr uint32_t kWakeWindowMs = 30UL * 60 * 1000;  // wake broadcast works this long
 
     inline void put_le16(uint8_t* p, uint16_t v) {
         p[0] = v & 0xFF;
@@ -163,6 +164,9 @@ void DjiActionCamera::poll() {
     }
 
     updateBootWake(now);
+    updatePendingSleep(now);
+    if (asleepAtMs_ && powerMode_ != POWER_MODE_SLEEP && awake())
+        asleepAtMs_ = 0;  // woken (here or by hand)
 
     // Reconnect at exponential backoff, throttled while connected to the Web UI; retry at once
     // while waking the camera
@@ -194,12 +198,20 @@ void DjiActionCamera::updateBootWake(uint32_t now) {
         return;
     if (wake_.expired()) {
         wake_.finish();
-        Serial.println("[act] boot wake timed out - camera never came up");
+        wakeRecord_ = false;
+        Serial.println("[act] wake timed out - camera never came up");
         return;
     }
     if (awake()) {
         wake_.finish();
-        Serial.printf("[act] camera up %lu ms after boot\n", (unsigned long)wake_.ageMs());
+        asleepAtMs_ = 0;
+        Serial.printf("[act] camera up %lu ms after wake\n", (unsigned long)wake_.ageMs());
+        if (wakeRecord_) {
+            wakeRecord_ = false;
+            Serial.println("[act] starting deferred record");
+            if (recordCtrl(0x00))
+                deferredRecAtMs_ = millis() | 1;  // never 0
+        }
         return;
     }
     const bool asleep = !connected_ || powerMode_ == POWER_MODE_SLEEP ||
@@ -207,6 +219,66 @@ void DjiActionCamera::updateBootWake(uint32_t now) {
     if (asleep && (lastWakeAdvMs_ == 0 || now - lastWakeAdvMs_ >= kWakeRetryMs)) {
         lastWakeAdvMs_ = now;
         advertiseWake();
+    }
+}
+
+bool DjiActionCamera::asleepKnown() const {
+    return asleepAtMs_ != 0 && millis() - asleepAtMs_ < kWakeWindowMs;
+}
+
+bool DjiActionCamera::wake() {
+    if (awake())
+        return true;
+    if (mac_.empty())
+        return false;
+    if (!wake_.active()) {
+        wake_.start();
+        lastWakeAdvMs_ = 0;  // broadcast right away
+    }
+    Serial.println("[act] wake requested");
+    return true;
+}
+
+bool DjiActionCamera::sleep() {
+    if (proto_ != PROTO_CONNECTED) {
+        if (!wake_.active())
+            return false;
+        wake_.finish();  // still waking: call it off
+        wakeRecord_ = false;
+        Serial.println("[act] wake cancelled");
+        return true;
+    }
+    wakeRecord_      = false;
+    deferredRecAtMs_ = 0;
+    if (wake_.active())
+        wake_.finish();
+    if (status_.isRecording())
+        recordCtrl(0x01);
+    sleepReqMs_ = millis() | 1;
+    Serial.println("[act] sleep requested");
+    return true;
+}
+
+// Power mode 3 (sleep, CmdSet 0x00 / CmdID 0x1A) once a status push after the request shows
+// recording stopped, or after 10 s regardless. The camera goes silent once asleep
+void DjiActionCamera::updatePendingSleep(uint32_t now) {
+    if (!sleepReqMs_)
+        return;
+    if (proto_ != PROTO_CONNECTED) {
+        sleepReqMs_ = 0;
+        return;
+    }
+    const uint32_t age    = now - sleepReqMs_;
+    const bool     polled = (int32_t)(status_.lastUpdateMs - sleepReqMs_) > 700;
+    if (!(polled && !status_.isRecording()) && age < 10000)
+        return;
+    sleepReqMs_      = 0;
+    const uint8_t pl = POWER_MODE_SLEEP;
+    if (sendR(0x00, 0x1A, djir::CMD_RESPONSE_OR_NOT, &pl, 1, seq_++)) {
+        asleepAtMs_ = millis() | 1;
+        Serial.printf("[act] sleep sent %lu ms after request\n", (unsigned long)age);
+    } else {
+        Serial.println("[act] sleep command failed");
     }
 }
 
@@ -254,9 +326,23 @@ bool DjiActionCamera::recordCtrl(uint8_t ctrl) {
 }
 
 bool DjiActionCamera::startRecord() {
+    // Asleep (and waking on record is enabled) or still waking: wake it and defer the record
+    if (!awake() && ((isAsleep() && g_settings.wakeOnRecord) || wake_.active())) {
+        if (!wakeRecord_) {
+            wakeRecord_ = true;
+            Serial.println("[act] record requested while asleep - waking");
+        }
+        wake();
+        return true;
+    }
     return recordCtrl(0x00);
 }
 bool DjiActionCamera::stopRecord() {
+    if (wakeRecord_) {
+        wakeRecord_ = false;
+        Serial.println("[act] deferred record cancelled");
+        return true;
+    }
     return recordCtrl(0x01);
 }
 bool DjiActionCamera::takePhoto() {
@@ -309,6 +395,8 @@ void DjiActionCamera::handleR(const djir::Frame& f) {
         const uint8_t  camMode   = p[0];
         const uint8_t  camStatus = p[1];
         status_.recState         = (camStatus == 0x03) ? RecState::Recording : RecState::Idle;
+        if (status_.recState == RecState::Recording)
+            deferredRecAtMs_ = 0;
         status_.mode             = (camMode == 0x05) ? CamMode::Photo : CamMode::Video;
         strncpy(status_.resolution, dji::resolutionName(p[2]), sizeof(status_.resolution) - 1);
         status_.resolution[sizeof(status_.resolution) - 1] = '\0';
@@ -318,6 +406,8 @@ void DjiActionCamera::handleR(const djir::Frame& f) {
         status_.recLeftS                                   = le32(p + 23);
         if (f.payloadLen >= 29 && p[28] != powerMode_) {  // 0 normal, 3 sleep
             powerMode_ = p[28];
+            if (powerMode_ == POWER_MODE_SLEEP && !asleepAtMs_)
+                asleepAtMs_ = millis() | 1;  // went to sleep (timer, button): wakeable a while
             Serial.printf("[act] power_mode=%u%s\n", powerMode_,
                           powerMode_ == POWER_MODE_SLEEP ? " (asleep)" : "");
         }
@@ -334,6 +424,11 @@ void DjiActionCamera::handleR(const djir::Frame& f) {
 
     if (f.cmdSet == 0x1D && f.cmdId == 0x04 && f.isResponse() && f.payloadLen >= 1) {
         Serial.printf("[act] mode-switch response ret_code=%u\n", f.payload[0]);
+        return;
+    }
+
+    if (f.cmdSet == 0x00 && f.cmdId == 0x1A && f.isResponse() && f.payloadLen >= 1) {
+        Serial.printf("[act] power-mode response ret_code=%u\n", f.payload[0]);
         return;
     }
 }

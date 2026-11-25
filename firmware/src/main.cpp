@@ -133,7 +133,9 @@ void loop() {
 
     const CameraStatus s = cam->status();  // snapshot (written by the camera task)
     const bool online = cam->isConnected() && s.lastUpdateMs != 0 && (now - s.lastUpdateMs < 2500);
-    osd.update(s, online);
+    const bool visible = cam->isVisible();
+    const bool waking  = cam->isWaking();
+    osd.update(s, online, visible, waking);
 
     web.poll(armed);
     if (web.takeDirty()) {
@@ -158,7 +160,7 @@ void loop() {
     if (now - lastStatus >= 1000) {
         lastStatus = now;
         Serial.printf("cam:%s %s %02lu:%02lu batt %u%%  |  AUX1=%u armed:%u rc:%s\n",
-                      online ? "on" : "off", toString(s.recState),
+                      !visible ? "none" : waking ? "wake" : online ? "on" : "off", toString(s.recState),
                       (unsigned long)(s.recElapsedS / 60), (unsigned long)(s.recElapsedS % 60),
                       s.batteryPct, rc.aux(1), armed, rc.valid ? "ok" : "--");
     }

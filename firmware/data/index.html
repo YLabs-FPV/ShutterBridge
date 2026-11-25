@@ -78,54 +78,78 @@
             When the bridge powers up, turn the camera on if it's switched off.
             The camera must have been connected to the bridge recently.
           </p>
+          <div class="row">
+            <label>Wake camera on record</label>
+            <div class="ctl">
+              <label class="switch"
+                ><input type="checkbox" id="wrec" /><span class="track"></span
+              ></label>
+            </div>
+          </div>
+          <p class="hint">
+            If the camera is off when a recording is triggered, turn it on and
+            start recording once it has booted (a few seconds).
+          </p>
         </div>
 
         <div class="card" id="controlscard" hidden>
           <h2>Controls</h2>
-          <p class="hint">Trigger camera actions directly</p>
-          <div class="row">
-            <label>Shutter</label>
-            <div class="ctl btns">
-              <button type="button" id="recstart">Start rec</button>
-              <button type="button" id="recstop">Stop rec</button>
-              <button type="button" id="takephoto">Take photo</button>
-            </div>
-          </div>
-          <div id="modectl" hidden>
+          <p class="hint" id="ctlmsg" hidden></p>
+          <div id="powerctl" hidden>
             <div class="row">
-              <label>Mode</label>
+              <label>Power</label>
               <div class="ctl btns">
-                <button type="button" id="modevideo">Video</button>
-                <button type="button" id="modephoto">Photo</button>
+                <button type="button" id="poweron">Power on</button>
+                <button type="button" id="poweroff">Power off</button>
               </div>
             </div>
           </div>
-          <div id="presetctl" hidden>
+          <div id="livectl" hidden>
+            <p class="hint">Trigger camera actions directly</p>
             <div class="row">
-              <label>Preset group</label>
+              <label>Shutter</label>
               <div class="ctl btns">
-                <button type="button" class="preset" data-group="0">
-                  Video
-                </button>
-                <button type="button" class="preset" data-group="1">
-                  Photo
-                </button>
-                <button type="button" class="preset" data-group="2">
-                  Timelapse
-                </button>
+                <button type="button" id="recstart">Start rec</button>
+                <button type="button" id="recstop">Stop rec</button>
+                <button type="button" id="takephoto">Take photo</button>
               </div>
             </div>
-            <div class="row">
-              <label>Preset by ID</label>
-              <div class="ctl split">
-                <input
-                  id="presetid"
-                  placeholder="0x00000000"
-                  autocomplete="off"
-                  autocapitalize="off"
-                  spellcheck="false"
-                />
-                <button type="button" id="presetload">Load</button>
+            <div id="modectl" hidden>
+              <div class="row">
+                <label>Mode</label>
+                <div class="ctl btns">
+                  <button type="button" id="modevideo">Video</button>
+                  <button type="button" id="modephoto">Photo</button>
+                </div>
+              </div>
+            </div>
+            <div id="presetctl" hidden>
+              <div class="row">
+                <label>Preset group</label>
+                <div class="ctl btns">
+                  <button type="button" class="preset" data-group="0">
+                    Video
+                  </button>
+                  <button type="button" class="preset" data-group="1">
+                    Photo
+                  </button>
+                  <button type="button" class="preset" data-group="2">
+                    Timelapse
+                  </button>
+                </div>
+              </div>
+              <div class="row">
+                <label>Preset by ID</label>
+                <div class="ctl split">
+                  <input
+                    id="presetid"
+                    placeholder="0x00000000"
+                    autocomplete="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                  />
+                  <button type="button" id="presetload">Load</button>
+                </div>
               </div>
             </div>
           </div>

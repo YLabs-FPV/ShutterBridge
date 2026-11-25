@@ -16,6 +16,7 @@ namespace {
     }
 
     constexpr uint8_t CMD_SET_SHUTTER       = 0x01;
+    constexpr uint8_t CMD_SLEEP             = 0x05;
     constexpr uint8_t CMD_SET_DATETIME      = 0x0D;
     constexpr uint8_t CMD_LOAD_PRESET_GROUP = 0x3E;
     constexpr uint8_t CMD_LOAD_PRESET       = 0x40;
@@ -209,8 +210,11 @@ class GoProCamera::ClientCB : public NimBLEClientCallbacks {
     }
     void onDisconnect(NimBLEClient*, int reason) override {
         owner_->connected_   = false;
-        owner_->systemReady_ = false;
-        owner_->status_      = CameraStatus{};
+        owner_->systemReady_     = false;
+        owner_->deferredRecAtMs_ = 0;
+        owner_->sleepReqMs_      = 0;
+        owner_->busy_            = false;
+        owner_->status_          = CameraStatus{};
         Serial.printf("[gopro] disconnected (reason 0x%02x)\n", reason);
     }
 
@@ -241,8 +245,17 @@ bool GoProCamera::begin() {
 // connect when the advertisement says the camera is on, or to wake it right after boot
 bool GoProCamera::attempt() {
     AdvertInfo adv;
-    if (!probeAdvert(mac_, namePrefix_, 3000, adv))
+    if (!probeAdvert(mac_, namePrefix_, 3000, adv)) {
+        // Two misses in a row (~10 s): the camera stopped advertising (asleep > 8 h, battery
+        // swapped, out of range) and can't be woken over BLE any more
+        if (advMisses_ < 255 && ++advMisses_ >= 2 && visible_) {
+            visible_ = false;
+            Serial.println("[gopro] camera not advertising - switch it on by hand");
+        }
         return false;
+    }
+    advMisses_ = 0;
+    visible_   = true;
     if (!haveAddr_) {
         addr_     = adv.addr;
         haveAddr_ = true;
@@ -260,6 +273,8 @@ bool GoProCamera::attempt() {
         if (!wake_.active())
             return false;
         Serial.println("[gopro] waking camera");
+    } else if (sleptAtMs_ && millis() - sleptAtMs_ < 10000 && !wake_.active()) {
+        return false;  // just put to sleep, still shutting down: connecting would wake it again
     }
     return connect();
 }
@@ -346,6 +361,7 @@ void GoProCamera::poll() {
     }
 
     updateBootWake();
+    updatePendingSleep();
 
     if (!connected_ && now - lastAttemptMs_ > (wake_.active() ? 500u : 5000u)) {
         lastAttemptMs_ = now;
@@ -359,12 +375,74 @@ void GoProCamera::updateBootWake() {
         return;
     if (wake_.expired()) {
         wake_.finish();
-        Serial.println("[gopro] boot wake timed out - camera never came up");
+        wakeRecord_ = false;
+        Serial.println("[gopro] wake timed out - camera never came up");
         return;
     }
     if (connected_ && systemReady_) {
         wake_.finish();
-        Serial.printf("[gopro] camera up %lu ms after boot\n", (unsigned long)wake_.ageMs());
+        Serial.printf("[gopro] camera up %lu ms after wake\n", (unsigned long)wake_.ageMs());
+        if (wakeRecord_) {
+            wakeRecord_ = false;
+            Serial.println("[gopro] starting deferred record");
+            if (startRecord())
+                deferredRecAtMs_ = millis() | 1;  // never 0
+        }
+    }
+}
+
+bool GoProCamera::wake() {
+    if (connected_)
+        return true;  // already on
+    if (!visible_)
+        return false;  // not advertising: only the camera's own button can turn it on
+    sleptAtMs_ = 0;
+    if (!wake_.active())
+        wake_.start();
+    Serial.println("[gopro] wake requested");
+    return true;
+}
+
+bool GoProCamera::sleep() {
+    // Still waking: just call the wake off
+    if (!connected_) {
+        if (!wake_.active())
+            return false;
+        wake_.finish();
+        wakeRecord_ = false;
+        Serial.println("[gopro] wake cancelled");
+        return true;
+    }
+    wakeRecord_      = false;
+    deferredRecAtMs_ = 0;
+    if (status_.isRecording())
+        stopRecord();
+    sleepReqMs_ = millis() | 1;  // never 0; the camera task sends Sleep once the file is closed
+    Serial.println("[gopro] sleep requested");
+    return true;
+}
+
+// Sleep is sent once a status poll after the request shows the camera idle (not encoding, not
+// busy closing the file), or after 10 s regardless
+void GoProCamera::updatePendingSleep() {
+    const uint32_t at = sleepReqMs_;
+    if (!at || !connected_)
+        return;
+    const uint32_t age      = millis() - at;
+    const bool     polled   = (int32_t)(status_.lastUpdateMs - at) > 1200;
+    const bool     idle     = !status_.isRecording() && !busy_;
+    if (!(polled && idle) && age < 10000)
+        return;
+    sleepReqMs_ = 0;
+    if (wake_.active())
+        wake_.finish();
+    const uint8_t tlv[] = {0x01, CMD_SLEEP};
+    if (writeCmd(tlv, sizeof(tlv))) {
+        sleptAtMs_  = millis() | 1;
+        lastCamOff_ = true;  // it is about to be; the next advert probe confirms
+        Serial.printf("[gopro] sleep sent %lu ms after request\n", (unsigned long)age);
+    } else {
+        Serial.println("[gopro] sleep command failed");
     }
 }
 
@@ -385,10 +463,27 @@ bool GoProCamera::writeSetting(const uint8_t* tlv, size_t len) {
 }
 
 bool GoProCamera::startRecord() {
+    // Camera off (and waking on record is enabled) or still booting: wake it and defer the
+    // shutter until it reports ready
+    if ((!connected_ || !systemReady_) &&
+        ((lastCamOff_ && g_settings.wakeOnRecord) || wake_.active())) {
+        if (!wakeRecord_) {
+            wakeRecord_ = true;
+            Serial.println("[gopro] record requested while asleep - waking");
+        }
+        if (!wake_.active())
+            wake_.start();
+        return true;
+    }
     const uint8_t on[] = {0x03, CMD_SET_SHUTTER, 0x01, 0x01};
     return writeCmd(on, sizeof(on));
 }
 bool GoProCamera::stopRecord() {
+    if (wakeRecord_) {  // stop before the camera came up: just drop the deferred start
+        wakeRecord_ = false;
+        Serial.println("[gopro] deferred record cancelled");
+        return true;
+    }
     const uint8_t off[] = {0x03, CMD_SET_SHUTTER, 0x01, 0x00};
     return writeCmd(off, sizeof(off));
 }
@@ -511,8 +606,13 @@ void GoProCamera::handleQueryResponse(const uint8_t* tlv, size_t len) {
             }
         } else {
             switch (id) {
+                case ST_BUSY:
+                    busy_ = vl >= 1 && v[0];
+                    break;
                 case ST_ENCODING:
                     status_.recState = (vl >= 1 && v[0]) ? RecState::Recording : RecState::Idle;
+                    if (status_.recState == RecState::Recording)
+                        deferredRecAtMs_ = 0;
                     break;
                 case ST_ENC_DURATION:
                     if (vl >= 1)

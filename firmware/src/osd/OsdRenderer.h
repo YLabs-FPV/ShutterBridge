@@ -15,11 +15,14 @@ class OsdRenderer {
         : fc_(fc), s_(s), updateMs_(updateMs), refreshMs_(refreshMs) {
     }
 
-    // `online` = camera connected AND telemetry is fresh.
-    void update(const CameraStatus& st, bool online);
+    // `online` = camera connected AND telemetry is fresh. `visible` = camera advertising
+    // (reachable, wakeable); false = it has to be switched on by hand. `waking` = camera is
+    // booting after a wake, or its wake-triggered record hasn't started yet
+    void update(const CameraStatus& st, bool online, bool visible = true, bool waking = false);
 
    private:
-    void formatField(OsdField f, const CameraStatus& st, bool online, char* out, size_t n);
+    void formatField(OsdField f, const CameraStatus& st, bool online, bool visible, bool waking,
+                     char* out, size_t n);
 
     FlightController& fc_;
     Settings&         s_;

@@ -19,6 +19,7 @@ static const CompatVersion COMPAT[] = {
     {15, offsetof(Settings, autoWake)},
     {16, offsetof(Settings, boardVariant)},
     {17, offsetof(Settings, fcRxPin)},
+    {18, offsetof(Settings, wakeOnRecord)},
 };
 
 const char* osdFieldName(OsdField f) {
